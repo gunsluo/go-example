@@ -22,4 +22,4 @@ _testmain.go
 *.exe
 *.test
 *.prof
-goroutine/test.go
+test.go
