@@ -5,8 +5,9 @@ go test -v -run=^$ -bench=^BenchmarkHi$ -benchtime=2s -cpuprofile=prof.cpu
 
 go test -v -run=^$ -bench=. -benchtime=3s -memprofile=prof.mem -cpuprofile=prof.cpu
 
-go tool pprof demo.test prof.cpu
-go tool pprof demo.test prof.mem
+go tool pprof web.test prof.cpu
+go tool pprof -alloc_objects web.test prof.mem
+go tool pprof -text -alloc_objects -cum web.test prof.mem
 
 go test -cover -covermode count -coverprofile cover.out
 go tool cover -html=cover.out
