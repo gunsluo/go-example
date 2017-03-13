@@ -7,3 +7,6 @@ go test -v -run=^$ -bench=. -benchtime=3s -memprofile=prof.mem -cpuprofile=prof.
 
 go tool pprof demo.test prof.cpu
 go tool pprof demo.test prof.mem
+
+go test -cover -covermode count -coverprofile cover.out
+go tool cover -html=cover.out
