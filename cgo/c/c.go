@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/gunsluo/go-example/cgo/add"
+	"github.com/gunsluo/go-example/cgo/c/add"
 )
 
 func main() {
