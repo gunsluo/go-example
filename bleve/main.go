@@ -52,6 +52,7 @@ func main() {
 		fmt.Println("failed to open indexer:", err)
 		os.Exit(1)
 	}
+	i.EnableKVStore()
 
 	var total int
 	all := testdata()
@@ -86,9 +87,22 @@ func main() {
 	query := bleve.NewMatchQuery("luoji")
 	//query := bleve.NewQueryStringQuery("luoji")
 	search := bleve.NewSearchRequest(query)
-	search.Highlight = bleve.NewHighlight()
-	res, err := i.Search(search)
-	fmt.Printf("Indexing result: %s %v.\n", res, err)
+	//search.Highlight = bleve.NewHighlight()
+	ret, err := i.Search(search)
+	if err != nil {
+		fmt.Printf("Indexing Search failed: %v", err)
+	}
+	fmt.Printf("Indexing result: %s\n", ret)
+
+	for _, hit := range ret.Hits {
+		bt := &bitTorrent{}
+		err = i.GetInternal(hit.ID, bt)
+		if err != nil {
+			fmt.Printf("Indexing GetInternal failed: %v", err)
+		} else {
+			fmt.Printf("Indexing id %s, source: %v\n", hit.ID, bt)
+		}
+	}
 
 	// Remove any existing indexes.
 	if err := i.Clear(); err != nil {

@@ -10,6 +10,8 @@ type Indexer interface {
 	Search(req *bleve.SearchRequest) (*bleve.SearchResult, error)
 	SetShardingDirStrategy(ShardingDirStrategyFn)
 	SetIndexMapping(imfn IndexMappingFn)
+	GetInternal(id string, v interface{}) error
+	EnableKVStore()
 	Close() error
 	Clear() error
 }

@@ -13,22 +13,27 @@ import (
 
 // ShardingIndex represents the indexing engine.
 type ShardingIndex struct {
-	path     string                 // Path to bleve storage
-	shards   map[string]bleve.Index // Index shards i.e. bleve indexes
-	shardsMu sync.RWMutex           // rw mutex
-	alias    bleve.IndexAlias       // All bleve indexes as one reference, for search
-	sdsfn    ShardingDirStrategyFn  // sharding dir strategy func.
-	imfn     IndexMappingFn         // index mapping func.
+	path             string                 // Path to bleve storage
+	shards           map[string]bleve.Index // Index shards i.e. bleve indexes
+	shardsMu         sync.RWMutex           // rw mutex
+	alias            bleve.IndexAlias       // All bleve indexes as one reference, for search
+	sdsfn            ShardingDirStrategyFn  // sharding dir strategy func.
+	imfn             IndexMappingFn         // index mapping func.
+	kvStore          bool                   // if enable key value store option, default false
+	kvStoreMarshal   KVStoreMarshal         // marshal kv store
+	kvStoreUnmarshal KVStoreUnmarshal       // unmarshal kv store
 }
 
 // New returns a new indexer.
 func NewShardingIndex(path string) *ShardingIndex {
 	return &ShardingIndex{
-		path:   path,
-		shards: make(map[string]bleve.Index),
-		alias:  bleve.NewIndexAlias(),
-		sdsfn:  defaultShardingDirStrategyFn,
-		imfn:   defaultIndexMappingFn,
+		path:             path,
+		shards:           make(map[string]bleve.Index),
+		alias:            bleve.NewIndexAlias(),
+		sdsfn:            defaultShardingDirStrategyFn,
+		imfn:             defaultIndexMappingFn,
+		kvStoreMarshal:   defaultKVStoreMarshal,
+		kvStoreUnmarshal: defaultKVStoreUnmarshal,
 	}
 }
 
@@ -100,6 +105,19 @@ func (i *ShardingIndex) Batch(ms map[string]interface{}) error {
 		if e = batch.Index(id, data); e != nil {
 			return errors.Wrap(e, 0)
 		}
+
+		// kv store
+		if i.kvStore {
+			vBuf, e := i.kvStoreMarshal(data)
+			if e != nil {
+				return e
+			}
+
+			e = b.SetInternal([]byte(id), vBuf)
+			if e != nil {
+				return e
+			}
+		}
 	}
 
 	for prefix, batch := range mb {
@@ -170,8 +188,30 @@ func (i *ShardingIndex) SetIndexMapping(imfn IndexMappingFn) {
 	i.imfn = imfn
 }
 
+// Search query form index
 func (i *ShardingIndex) Search(req *bleve.SearchRequest) (*bleve.SearchResult, error) {
 	return i.alias.Search(req)
+}
+
+// EnableKVStore enable kv store option
+func (i *ShardingIndex) EnableKVStore() {
+	i.kvStore = true
+}
+
+// GetInternal get kv store, need enable kvStore.
+func (i *ShardingIndex) GetInternal(id string, v interface{}) error {
+	prefix := i.sdsfn(id)
+	b := i.getIndex(prefix)
+	if b == nil {
+		return errors.Errorf("index id:%s not exist.", id)
+	}
+
+	vBuf, err := b.GetInternal([]byte(id))
+	if err != nil {
+		return errors.Wrap(err, 0)
+	}
+
+	return i.kvStoreUnmarshal(vBuf, v)
 }
 
 func (i *ShardingIndex) Close() error {
