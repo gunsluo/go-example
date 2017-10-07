@@ -9,6 +9,7 @@ import (
 	"github.com/blevesearch/bleve/mapping"
 	"github.com/facebookgo/errgroup"
 	"github.com/go-errors/errors"
+	"github.com/toolkits/file"
 )
 
 // ShardingIndex represents the indexing engine.
@@ -17,6 +18,7 @@ type ShardingIndex struct {
 	shards   map[string]bleve.Index // Index shards i.e. bleve indexes
 	shardsMu sync.RWMutex           // rw mutex
 	alias    bleve.IndexAlias       // All bleve indexes as one reference, for search
+	sdsfn    ShardingDirStrategyFn  // sharding dir strategy func.
 }
 
 // New returns a new indexer.
@@ -25,27 +27,38 @@ func NewShardingIndex(path string) *ShardingIndex {
 		path:   path,
 		shards: make(map[string]bleve.Index),
 		alias:  bleve.NewIndexAlias(),
+		sdsfn:  defaultShardingDirStrategyFn,
 	}
 }
 
 // Open opens the indexer, preparing it for indexing.
 func (i *ShardingIndex) Open() error {
-	if err := os.MkdirAll(i.path, 0755); err != nil {
-		return errors.Errorf("unable to create index directory %s", i.path)
+	if file.IsExist(i.path) == false {
+		if err := os.MkdirAll(i.path, 0755); err != nil {
+			return errors.Errorf("unable to create index directory %s", i.path)
+		}
+
+		return nil
 	}
 
-	/*
-		for s := 0; s < cap(i.shards); s++ {
-			path := filepath.Join(i.path, strconv.Itoa(s))
-			b, err := bleve.New(path, indexMapping())
-			if err != nil {
-				return fmt.Errorf("index %d at %s: %s", s, path, err.Error())
-			}
+	// each path for load index
+	subDirs, err := file.DirsUnder(i.path)
+	if err != nil {
+		return errors.Wrap(err, 0)
+	}
 
-			i.shards = append(i.shards, b)
-			i.alias.Add(b)
+	for _, subDir := range subDirs {
+		path := filepath.Join(i.path, subDir)
+		nb, err := bleve.Open(path)
+		if err != nil {
+			return errors.Errorf("index %s at %s: %s", subDir, path, err.Error())
 		}
-	*/
+
+		i.shardsMu.Lock()
+		i.shards[subDir] = nb
+		i.shardsMu.Unlock()
+		i.alias.Add(nb)
+	}
 
 	return nil
 }
@@ -53,7 +66,7 @@ func (i *ShardingIndex) Open() error {
 // Index indexes the given docs, dividing the docs evenly across the shards.
 // Blocks until all documents have been indexed.
 func (i *ShardingIndex) Index(id string, data interface{}) error {
-	prefix := i.key(id)
+	prefix := i.sdsfn(id)
 	b, _, e := i.newIndex(prefix)
 	if e != nil {
 		return e
@@ -70,7 +83,7 @@ func (i *ShardingIndex) Batch(ms map[string]interface{}) error {
 
 	// classified batch
 	for id, data := range ms {
-		prefix := i.key(id)
+		prefix := i.sdsfn(id)
 		b, _, e := i.newIndex(prefix)
 		if e != nil {
 			return e
@@ -89,9 +102,9 @@ func (i *ShardingIndex) Batch(ms map[string]interface{}) error {
 	}
 
 	for prefix, batch := range mb {
-		b, _, e := i.newIndex(prefix)
-		if e != nil {
-			return e
+		b := i.getIndex(prefix)
+		if b == nil {
+			continue
 		}
 
 		if e := b.Batch(batch); e != nil {
@@ -100,14 +113,6 @@ func (i *ShardingIndex) Batch(ms map[string]interface{}) error {
 	}
 
 	return nil
-}
-
-func (i *ShardingIndex) key(id string) string {
-	if len(id) < 2 {
-		return ""
-	}
-
-	return id[0:2]
 }
 
 // new index by sub dir
@@ -138,51 +143,25 @@ func (i *ShardingIndex) newIndex(prefix string) (bleve.Index, bool, error) {
 	return nb, true, nil
 }
 
-/*
-func (i *ShardingIndex) Index(docs [][]byte) error {
-	base := 0
-	docsPerShard := (len(docs) / len(i.shards))
-	var wg sync.WaitGroup
-
-	wg.Add(len(i.shards))
-	for _, s := range i.shards {
-		go func(b bleve.Index, ds [][]byte) {
-			defer wg.Done()
-
-			batch := b.NewBatch()
-			n := 0
-
-			// Just index whole batches.
-			for n = 0; n < len(ds)-(len(ds)%i.batchSz); n++ {
-				data := struct {
-					Body string
-				}{
-					Body: string(ds[n]),
-				}
-
-				if err := batch.Index(strconv.Itoa(n), data); err != nil {
-					panic(fmt.Sprintf("failed to index doc: %s", err.Error()))
-				}
-
-				if batch.Size() == i.batchSz {
-					if err := b.Batch(batch); err != nil {
-						panic(fmt.Sprintf("failed to index batch: %s", err.Error()))
-					}
-					batch = b.NewBatch()
-				}
-			}
-		}(s, docs[base:base+docsPerShard])
-		base = base + docsPerShard
+func (i *ShardingIndex) getIndex(prefix string) bleve.Index {
+	i.shardsMu.RLock()
+	ob, ok := i.shards[prefix]
+	i.shardsMu.RUnlock()
+	if ok {
+		return ob
 	}
 
-	wg.Wait()
 	return nil
 }
-*/
 
 // Count returns the total number of documents indexed.
 func (i *ShardingIndex) Count() (uint64, error) {
 	return i.alias.DocCount()
+}
+
+// RegisterShardingDirStrategy register ShardingDirStrategyFn
+func (i *ShardingIndex) RegisterShardingDirStrategy(sdsfn ShardingDirStrategyFn) {
+	i.sdsfn = sdsfn
 }
 
 func (i *ShardingIndex) Search(req *bleve.SearchRequest) (*bleve.SearchResult, error) {
@@ -201,6 +180,14 @@ func (i *ShardingIndex) Close() error {
 	i.shardsMu.Unlock()
 
 	return g.Wait()
+}
+
+func (i *ShardingIndex) Clear() error {
+	if err := os.RemoveAll(i.path); err != nil {
+		return errors.Errorf("failed to remove %s, %v.", i.path, err)
+	}
+
+	return nil
 }
 
 func indexMapping() mapping.IndexMapping {

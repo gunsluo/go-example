@@ -134,7 +134,7 @@ func BenchmarkIndexAlias(b *testing.B) {
 		return
 	}
 
-	if err := os.RemoveAll(indexPath); err != nil {
+	if err := i.Clear(); err != nil {
 		b.Errorf("failed to remove %s.", indexPath)
 		return
 	}

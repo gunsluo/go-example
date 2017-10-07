@@ -34,16 +34,17 @@ var csv = flag.Bool("csv", false, "summary CSV output")
 //./bleve -docs 1000 -maxprocs 8 -batchSize 100
 func main() {
 	flag.Parse()
-
 	runtime.GOMAXPROCS(*maxprocs)
 
-	// Remove any existing indexes.
-	if err := os.RemoveAll(*indexPath); err != nil {
-		fmt.Println("failed to remove %s.", *indexPath)
-		os.Exit(1)
-	}
+	var i store.Indexer
+	i = store.NewShardingIndex(*indexPath)
+	i.RegisterShardingDirStrategy(func(id string) string {
+		if len(id) < 3 {
+			return ""
+		}
 
-	i := store.NewShardingIndex(*indexPath)
+		return id[0:3]
+	})
 	if err := i.Open(); err != nil {
 		fmt.Println("failed to open indexer:", err)
 		os.Exit(1)
@@ -84,6 +85,12 @@ func main() {
 	search := bleve.NewSearchRequest(query)
 	res, err := i.Search(search)
 	fmt.Printf("Indexing result: %s %v.\n", res, err)
+
+	// Remove any existing indexes.
+	if err := i.Clear(); err != nil {
+		fmt.Println("failed to remove %s.", *indexPath)
+		os.Exit(1)
+	}
 }
 
 func testdata() []map[string]interface{} {
