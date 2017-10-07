@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve"
+	"github.com/blevesearch/bleve/analysis/lang/en"
+	"github.com/blevesearch/bleve/mapping"
 	"github.com/gunsluo/go-example/bleve/store"
 )
 
@@ -38,13 +40,14 @@ func main() {
 
 	var i store.Indexer
 	i = store.NewShardingIndex(*indexPath)
-	i.RegisterShardingDirStrategy(func(id string) string {
+	i.SetShardingDirStrategy(func(id string) string {
 		if len(id) < 3 {
 			return ""
 		}
 
 		return id[0:3]
 	})
+	i.SetIndexMapping(btIndexMapping)
 	if err := i.Open(); err != nil {
 		fmt.Println("failed to open indexer:", err)
 		os.Exit(1)
@@ -83,6 +86,7 @@ func main() {
 	query := bleve.NewMatchQuery("luoji")
 	//query := bleve.NewQueryStringQuery("luoji")
 	search := bleve.NewSearchRequest(query)
+	search.Highlight = bleve.NewHighlight()
 	res, err := i.Search(search)
 	fmt.Printf("Indexing result: %s %v.\n", res, err)
 
@@ -138,4 +142,26 @@ func testdata() []map[string]interface{} {
 	docs[nbt.InfoHash] = nbt
 
 	return all
+}
+
+func btIndexMapping() mapping.IndexMapping {
+	// Keyword, a generic reusable mapping for english text
+	keywordJustIndexed := bleve.NewTextFieldMapping()
+	keywordJustIndexed.Store = true
+	keywordJustIndexed.IncludeTermVectors = false
+	keywordJustIndexed.Analyzer = en.AnalyzerName
+
+	nameJustIndexed := bleve.NewTextFieldMapping()
+	nameJustIndexed.Store = false
+	nameJustIndexed.IncludeTermVectors = false
+	nameJustIndexed.Analyzer = en.AnalyzerName
+
+	btMapping := bleve.NewDocumentMapping()
+	btMapping.AddFieldMappingsAt("Keyword", keywordJustIndexed)
+	btMapping.AddFieldMappingsAt("Name", nameJustIndexed)
+
+	indexMapping := bleve.NewIndexMapping()
+	indexMapping.DefaultMapping = btMapping
+	indexMapping.DefaultAnalyzer = en.AnalyzerName
+	return indexMapping
 }

@@ -8,7 +8,8 @@ type Indexer interface {
 	Batch(ms map[string]interface{}) error
 	Count() (uint64, error)
 	Search(req *bleve.SearchRequest) (*bleve.SearchResult, error)
-	RegisterShardingDirStrategy(ShardingDirStrategyFn)
+	SetShardingDirStrategy(ShardingDirStrategyFn)
+	SetIndexMapping(imfn IndexMappingFn)
 	Close() error
 	Clear() error
 }

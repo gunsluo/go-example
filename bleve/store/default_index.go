@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/blevesearch/bleve"
-	"github.com/blevesearch/bleve/mapping"
 	"github.com/facebookgo/errgroup"
 	"github.com/go-errors/errors"
 	"github.com/toolkits/file"
@@ -19,6 +18,7 @@ type ShardingIndex struct {
 	shardsMu sync.RWMutex           // rw mutex
 	alias    bleve.IndexAlias       // All bleve indexes as one reference, for search
 	sdsfn    ShardingDirStrategyFn  // sharding dir strategy func.
+	imfn     IndexMappingFn         // index mapping func.
 }
 
 // New returns a new indexer.
@@ -28,6 +28,7 @@ func NewShardingIndex(path string) *ShardingIndex {
 		shards: make(map[string]bleve.Index),
 		alias:  bleve.NewIndexAlias(),
 		sdsfn:  defaultShardingDirStrategyFn,
+		imfn:   defaultIndexMappingFn,
 	}
 }
 
@@ -130,7 +131,7 @@ func (i *ShardingIndex) newIndex(prefix string) (bleve.Index, bool, error) {
 	}
 
 	path := filepath.Join(i.path, prefix)
-	nb, err := bleve.New(path, indexMapping())
+	nb, err := bleve.New(path, i.imfn())
 	if err != nil {
 		return nil, false, errors.Errorf("index %s at %s: %s", prefix, path, err.Error())
 	}
@@ -159,9 +160,14 @@ func (i *ShardingIndex) Count() (uint64, error) {
 	return i.alias.DocCount()
 }
 
-// RegisterShardingDirStrategy register ShardingDirStrategyFn
-func (i *ShardingIndex) RegisterShardingDirStrategy(sdsfn ShardingDirStrategyFn) {
+// SetShardingDirStrategy set ShardingDirStrategyFn
+func (i *ShardingIndex) SetShardingDirStrategy(sdsfn ShardingDirStrategyFn) {
 	i.sdsfn = sdsfn
+}
+
+// SetIndexMapping set indexMapping
+func (i *ShardingIndex) SetIndexMapping(imfn IndexMappingFn) {
+	i.imfn = imfn
 }
 
 func (i *ShardingIndex) Search(req *bleve.SearchRequest) (*bleve.SearchResult, error) {
@@ -188,23 +194,4 @@ func (i *ShardingIndex) Clear() error {
 	}
 
 	return nil
-}
-
-func indexMapping() mapping.IndexMapping {
-	// a generic reusable mapping for english text
-	standardJustIndexed := bleve.NewTextFieldMapping()
-	standardJustIndexed.Store = false
-	//standardJustIndexed.IncludeInAll = false
-	standardJustIndexed.IncludeTermVectors = false
-	standardJustIndexed.Analyzer = "standard"
-
-	articleMapping := bleve.NewDocumentMapping()
-
-	// body
-	articleMapping.AddFieldMappingsAt("Body", standardJustIndexed)
-
-	indexMapping := bleve.NewIndexMapping()
-	indexMapping.DefaultMapping = articleMapping
-	indexMapping.DefaultAnalyzer = "standard"
-	return indexMapping
 }
