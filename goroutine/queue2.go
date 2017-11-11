@@ -20,8 +20,8 @@ func main() {
 			//time.Sleep(100 * time.Microsecond)
 		}
 
-		fmt.Println("send ok.")
 		close(ch)
+		fmt.Println("send ok.")
 		wg.Done()
 	}()
 
@@ -31,7 +31,7 @@ func main() {
 	}()
 
 	wg.Wait()
-	fmt.Println("task over")
+	fmt.Println("over")
 }
 
 func reqeust(ch chan int, i int) {
@@ -66,4 +66,6 @@ func task(wg *sync.WaitGroup, ch chan int, cn int32) {
 			c = 0
 		}
 	}
+
+	fmt.Println("task over")
 }
