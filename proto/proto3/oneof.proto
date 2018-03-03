@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+message SampleMessage {
+  oneof test_oneof {
+    string name = 4;
+    int32 sub_message = 9;
+  }
+}
