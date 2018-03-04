@@ -1,0 +1,6 @@
+syntax = "proto3";
+
+message MapsMessage {
+  string name = 1;
+  map<int32, string> map_filed = 2;
+}

@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package p.test;
+option go_package = "test";
+
+message TestData {
+  string name = 1;
+  int32 id = 2;
+}
+
+message TestDataResp {
+  int32 code = 1;
+  TestData data = 2;
+}

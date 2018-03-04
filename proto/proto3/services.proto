@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+// protoc --go_out=plugins=grpc:. services.proto
+service Auth {
+  rpc Search(SearchRequest) returns (SearchResponse) {}
+  rpc Auth2(SearchRequest) returns (SearchResponse) {}
+}
+
+message SearchRequest {
+  int32 user_id = 1;
+  string user_name = 2;
+}
+
+message SearchResponse {
+  int32 code = 1;
+  string err_msg = 2;
+}

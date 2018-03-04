@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+import "package.proto";
+option go_package = "test";
+
+message TestDataResp {
+  int32 code = 1;
+  p.test.TestData data = 2;
+}
