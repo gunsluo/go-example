@@ -1,0 +1,5 @@
+p, anonymous, /register, read
+p, manager, /manage/*, *
+p, admin, /*, *
+g, luoji, admin
+g, luoji, admin1
