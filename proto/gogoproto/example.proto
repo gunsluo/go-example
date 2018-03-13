@@ -1,0 +1,19 @@
+syntax = "proto3";
+package test;
+option go_package = "test";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.goproto_getters_all) = false;
+option (gogoproto.goproto_enum_prefix_all) = false;
+
+message A {
+  string Description = 1 [ (gogoproto.nullable) = true ];
+  int64 Number = 2 [ (gogoproto.nullable) = true ];
+  bytes Id = 3 [
+    (gogoproto.customtype) = "github.com/gogo/protobuf/test/custom.Uuid",
+    (gogoproto.nullable) = true
+  ];
+}
