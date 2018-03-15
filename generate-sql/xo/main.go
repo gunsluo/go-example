@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/gunsluo/go-example/xo/models"
+	"github.com/gunsluo/go-example/generate-sql/xo/models"
 	"github.com/jmoiron/sqlx"
 	"github.com/knq/dburl"
 	_ "github.com/lib/pq"
