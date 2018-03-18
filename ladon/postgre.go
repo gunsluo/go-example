@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/jmoiron/sqlx"
@@ -41,6 +42,21 @@ var pols = []ladon.Policy{
 		Actions:     []string{"broadcast"},
 		Resources:   []string{"<.*>"},
 		Effect:      ladon.DenyAccess,
+	},
+	&ladon.DefaultPolicy{
+		ID: "4",
+		Description: `This policy allows max, peter, zac and ken to create, delete and get the listed resources,
+			but only if the client ip matches and the request states that they are the owner of those resources as well.`,
+		Subjects:  []string{"luoji"},
+		Resources: []string{"myrn:some.domain.com:resource:123", "myrn:some.domain.com:resource:345", "myrn:something:foo:<.+>"},
+		Actions:   []string{"<create|delete>", "get"},
+		Effect:    ladon.AllowAccess,
+		Conditions: ladon.Conditions{
+			"owner": &ladon.EqualsSubjectCondition{},
+			"clientIP": &ladon.CIDRCondition{
+				CIDR: "127.0.0.1/32",
+			},
+		},
 	},
 }
 
@@ -133,7 +149,8 @@ func main() {
 	// You can find all of the supported MySQL connection string options for the
 	// driver at: https://github.com/go-sql-driver/mysql
 	//
-	db, err := sqlx.Open("postgres", "user=root host=127.0.0.1 port=26257 dbname=ladon sslmode=disable") // Your driver and data source.
+	db, err := sqlx.Open("postgres", "user=root password=root host=127.0.0.1 port=5432 dbname=ladon sslmode=disable") // Your driver and data source.
+	//db, err := sqlx.Open("postgres", "user=root host=127.0.0.1 port=26257 dbname=ladon sslmode=disable") // Your driver and data source.
 	// Or, if using postgres:
 	//  import _ "github.com/lib/pq"
 	//
@@ -158,39 +175,44 @@ func main() {
 	warden := &ladon.Ladon{
 		Manager: manager,
 	}
-
-	warden = warden
-	/*
-		// Add the policies defined above to the memory manager.
-		for _, pol := range pols {
-			err := warden.Manager.Create(pol)
-			if err != nil {
-				panic(err)
-			}
-		}
-
-		//	for k, c := range cases {
-		//	err := warden.IsAllowed(c.accessRequest)
-		//	if err != nil {
-		//		fmt.Printf("case=%d-%s   :%s\n", k, c.description, err)
-		//	} else {
-		//		fmt.Printf("case=%d-%s   :success\n", k, c.description)
-		//	}
-		//}
-		accessRequest := &ladon.Request{
-			Subject:  "max",
-			Action:   "update",
-			Resource: "myrn:something:foo:100",
-			Context: ladon.Context{
-				"owner":    "max",
-				"clientIP": "127.0.0.1",
-			},
-		}
-		err := warden.IsAllowed(accessRequest)
+	// Add the policies defined above to the memory manager.
+	for _, pol := range pols {
+		err := warden.Manager.Create(pol)
 		if err != nil {
-			fmt.Printf("case=   :%s\n", err)
-		} else {
-			fmt.Printf("case=   :success\n")
+			panic(err)
 		}
-	*/
+	}
+
+	//one, err := manager.Get("1")
+	//fmt.Println("-->", one, err)
+
+	all, err := manager.GetAll(10, 0)
+	fmt.Println("-->", len(all), err)
+	for _, one := range all {
+		fmt.Println("===>", one)
+	}
+
+	//	for k, c := range cases {
+	//	err := warden.IsAllowed(c.accessRequest)
+	//	if err != nil {
+	//		fmt.Printf("case=%d-%s   :%s\n", k, c.description, err)
+	//	} else {
+	//		fmt.Printf("case=%d-%s   :success\n", k, c.description)
+	//	}
+	//}
+	accessRequest := &ladon.Request{
+		Subject:  "max",
+		Action:   "update",
+		Resource: "myrn:something:foo:100",
+		Context: ladon.Context{
+			"owner":    "max",
+			"clientIP": "127.0.0.1",
+		},
+	}
+	err = warden.IsAllowed(accessRequest)
+	if err != nil {
+		fmt.Printf("case=   :%s\n", err)
+	} else {
+		fmt.Printf("case=   :success\n")
+	}
 }
