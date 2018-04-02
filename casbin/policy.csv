@@ -1,5 +1,6 @@
 p, anonymous, /register, read
-p, manager, /manage/*, *
-p, admin, /*, *
-g, luoji, admin
-g, luoji, admin1
+p, member, /member/a, write
+p, admin, /a, write
+g, member, admin
+g, luoji, member
+g, tom, admin

@@ -4,15 +4,58 @@ import (
 	"fmt"
 
 	"github.com/casbin/casbin"
+	gormadapter "github.com/casbin/gorm-adapter"
 )
 
+var policys = [][]interface{}{
+	[]interface{}{"anonymous", "/register", "read"},
+	[]interface{}{"member", "/member/a", "write"},
+	[]interface{}{"admin", "/a", "write"},
+}
+
+var roleUsers = map[string]string{
+	"admin":  "member",
+	"member": "v0",
+	"luoji":  "admin",
+	"tom":    "member",
+	/*
+		"member": "admin",
+		"luoji":  "member",
+		"tom":    "admin",
+		"v0":     "member",
+	*/
+}
+
 func main() {
-	e := casbin.NewEnforcer("model.conf", "policy.csv")
+	a := gormadapter.NewAdapter("postgres", "user=root password=root host=127.0.0.1 port=5432 sslmode=disable") // Your driver and data source.
+	e := casbin.NewEnforcer("model.conf", a)
+	for _, p := range policys {
+		if ok := e.AddPolicy(p...); !ok {
+			fmt.Printf("policy %s exist already.\n", p)
+		}
+	}
+
+	for user, role := range roleUsers {
+		if ok := e.AddRoleForUser(user, role); !ok {
+			fmt.Printf("add role[%s] for user[%s] already.\n", role, user)
+		}
+	}
+	e.SavePolicy()
 
 	test(e, "luoji", "/a", "write")
 	test(e, "luoji", "/member/a", "write")
 	test(e, "tom", "/a", "write")
 	test(e, "tom", "/member/a", "write")
+
+	roles := e.GetRolesForUser("luoji")
+	fmt.Println("-->", roles)
+	roles = e.GetRolesForUser("tom")
+	fmt.Println("-->", roles)
+
+	users := e.GetUsersForRole("member")
+	fmt.Println("-->", users)
+	users = e.GetUsersForRole("admin")
+	fmt.Println("-->", users)
 
 	//test(e, "anonymous", "/register", "read")
 }
