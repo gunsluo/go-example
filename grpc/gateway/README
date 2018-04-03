@@ -1,0 +1,9 @@
+
+```
+go run main.go server
+
+go run client.go
+
+
+curl -X POST -k https://localhost:50052/hello_world -d '{"referer": "restful_api"}'
+```
