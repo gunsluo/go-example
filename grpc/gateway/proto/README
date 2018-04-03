@@ -1,0 +1,12 @@
+
+
+# 编译google.api
+protoc -I . --go_out=plugins=grpc,Mgoogle/protobuf/descriptor.proto=github.com/golang/protobuf/protoc-gen-go/descriptor:. google/api/*.proto
+
+#编译hello_http.proto为hello_http.pb.proto
+protoc -I . --go_out=plugins=grpc,Mgoogle/api/annotations.proto=github.com/gunsluo/go-example/grpc/gateway/proto/google/api:. ./hello.proto
+
+#编译hello_http.proto为hello_http.pb.gw.proto
+go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
+protoc --grpc-gateway_out=logtostderr=true:. ./hello.proto
+
