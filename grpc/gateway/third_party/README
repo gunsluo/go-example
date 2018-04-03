@@ -1,0 +1,8 @@
+
+下载
+git clone https://github.com/swagger-api/swagger-ui.git
+
+并将其下载的dist目录下的所有文件拷贝到swagger-ui目录下
+
+安装
+go get -u github.com/jteeuwen/go-bindata/...

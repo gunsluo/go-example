@@ -10,3 +10,7 @@ protoc -I . --go_out=plugins=grpc,Mgoogle/api/annotations.proto=github.com/gunsl
 go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
 protoc --grpc-gateway_out=logtostderr=true:. ./hello.proto
 
+
+swagger
+protoc -I/usr/local/include -I. -I$GOPATH/src/github.com/gunsluo/go-example/grpc/gateway/proto/google/api --swagger_out=logtostderr=true:. ./hello.proto
+
