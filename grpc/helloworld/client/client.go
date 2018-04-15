@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/gunsluo/go-example/grpc/pb"
+	"github.com/gunsluo/go-example/grpc/helloworld/pb"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )

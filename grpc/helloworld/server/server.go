@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	"github.com/gunsluo/go-example/grpc/pb"
+	"github.com/gunsluo/go-example/grpc/helloworld/pb"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
