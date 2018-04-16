@@ -1,8 +1,11 @@
 package main
 
-import "bytes"
-import "fmt"
-import "regexp"
+import (
+	"bytes"
+	"fmt"
+	"regexp"
+	"strings"
+)
 
 func main() {
 	// 测试模式是否匹配字符串，括号里面的意思是
@@ -63,4 +66,38 @@ func main() {
 	in := []byte("a peach")
 	out := r.ReplaceAllFunc(in, bytes.ToUpper)
 	fmt.Println(string(out))
+
+	var schema = `
+	type FillStation {
+		id: ID!
+		stationName: String!
+		company: Company
+		managerProfile: Profile
+		phoneNo: String
+		fuelTypes: String
+		openTime: String
+		closeTime: String
+		location: Location
+		status: String
+		createdBy: UserProfile
+		createdDate: Time
+		changedDate: Time
+		deletedDate: Time
+	}
+
+	type FillStationConnection {
+		pageInfo: PageInfo!
+		edges: [FillStationEdge]
+		totalCount: Int
+		fillStations: [FillStation]
+	}
+	`
+
+	r = regexp.MustCompile(`type FillStation {[^\}]*}`)
+	//mstr := r.FindString(schema)
+	//fmt.Println(mstr)
+	nstr := r.ReplaceAllStringFunc(schema, func(repl string) string {
+		return strings.Replace(repl, "}", "recentOrders: Int\n}", 1)
+	})
+	fmt.Println(nstr)
 }
