@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/gunsluo/go-example/grpc/helloworld/pb"
 	"github.com/sirupsen/logrus"
+	"github.com/soheilhy/cmux"
 	"google.golang.org/grpc"
 )
 
@@ -30,9 +32,17 @@ func main() {
 
 	listener, err := net.Listen("tcp", sAddress)
 	if err != nil {
-		panic(err)
+		logrus.WithError(err).Fatalf("Can't connect serve")
 	}
 
+	m := cmux.New(listener)
+	//grpcl := m.Match(cmux.HTTP2HeaderFieldPrefix("content-type", "application/grpc"))
+	grpcl := m.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
+
 	logrus.WithField("addr", sAddress).Println("Starting server")
-	server.Serve(listener)
+	go server.Serve(grpcl)
+
+	if err := m.Serve(); !strings.Contains(err.Error(), "use of closed network connection") {
+		logrus.WithError(err).Fatalf("multiplex port serve")
+	}
 }

@@ -1,7 +1,8 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-option java_package = "io.grpc.examples.helloworld";
+option java_package = "com.examples.helloworld";
+option java_generic_services = true;
 option java_outer_classname = "HelloWorldProto";
 option go_package = "pb";
 
