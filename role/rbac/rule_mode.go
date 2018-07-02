@@ -141,8 +141,8 @@ func (md model) HasRule(sec string, ptype string, rule []string) bool {
 	return false
 }
 
-// AddRule adds a rule to the model.
-func (md model) AddRule(sec string, ptype string, rule []string) bool {
+// Add adds a rule to the model.
+func (md model) Add(sec string, ptype string, rule []string) bool {
 	if !md.HasRule(sec, ptype, rule) {
 		md[sec][ptype].Rule = append(md[sec][ptype].Rule, rule)
 		return true
@@ -206,4 +206,47 @@ func (md model) buildRoleLinks(rl *roleLinks) {
 	//for _, ast := range md["g"] {
 	//	ast.buildRoleLinks(rl)
 	//}
+}
+
+/*
+func (ast *Assertion) buildRoleLinks(rl *roleLinks) {
+	ast.RL = rl
+	count := strings.Count(ast.Value, "_")
+	for _, rule := range ast.Rule {
+		if count < 2 {
+			panic(errors.New("the number of \"_\" in role definition should be at least 2"))
+		}
+		if len(rule) < count {
+			panic(errors.New("grouping policy elements do not meet role definition"))
+		}
+
+		if count == 2 {
+			ast.RL.AddLink(rule[0], rule[1])
+		} else if count == 3 {
+			ast.RL.AddLink(rule[0], rule[1], rule[2])
+		} else if count == 4 {
+			ast.RL.AddLink(rule[0], rule[1], rule[2], rule[3])
+		}
+	}
+
+	//LogPrint("Role links for: " + ast.Key)
+	//ast.RL.PrintRoles()
+}
+*/
+
+// loadRuleLine loads a text line as a rule to model.
+func loadRuleLine(line string, md model) {
+	if line == "" {
+		return
+	}
+
+	if strings.HasPrefix(line, "#") {
+		return
+	}
+
+	tokens := strings.Split(line, ", ")
+
+	key := tokens[0]
+	sec := key[:1]
+	md[sec][key].Rule = append(md[sec][key].Rule, tokens[1:])
 }

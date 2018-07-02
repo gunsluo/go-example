@@ -10,19 +10,19 @@ func TestRuleMode(t *testing.T) {
 		t.Fatalf("rule mode: %s", err)
 	}
 
-	if !model.AddRule("g", "g", []string{"user 1", "member", "S"}) {
+	if !model.Add("g", "g", []string{"user 1", "member", "S"}) {
 		t.Fatal("failed: add rule")
 	}
 
-	if !model.AddRule("g", "g", []string{"user 2", "member", "S"}) {
+	if !model.Add("g", "g", []string{"user 2", "member", "S"}) {
 		t.Fatal("failed: add rule")
 	}
 
-	if !model.AddRule("g", "g", []string{"user 3", "admin", "S"}) {
+	if !model.Add("g", "g", []string{"user 3", "admin", "S"}) {
 		t.Fatal("failed: add rule")
 	}
 
-	if !model.AddRule("g", "g", []string{"admin", "member", "R"}) {
+	if !model.Add("g", "g", []string{"admin", "member", "R"}) {
 		t.Fatal("failed: add rule")
 	}
 
