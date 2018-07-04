@@ -212,7 +212,7 @@ func (s *roleStore) GetByName(name string) (*Role, error) {
 }
 
 // GetAll gets roles from the storage.
-func (s *roleStore) GetAll(limit, offset int64, conditions ...string) ([]Role, error) {
+func (s *roleStore) GetAll(limit, offset int64, conditions ...string) ([]*Role, error) {
 	var query string
 	var args []interface{}
 	if len(conditions) == 0 || conditions[0] == "" {
@@ -231,7 +231,7 @@ func (s *roleStore) GetAll(limit, offset int64, conditions ...string) ([]Role, e
 	}
 	defer rows.Close()
 
-	roles := []Role{}
+	roles := []*Role{}
 	for rows.Next() {
 		var id int64
 		var s sql.NullString
@@ -240,7 +240,7 @@ func (s *roleStore) GetAll(limit, offset int64, conditions ...string) ([]Role, e
 			return nil, errors.WithStack(err)
 		}
 
-		r := Role{ID: id}
+		r := &Role{ID: id}
 		if s.Valid {
 			r.Name = s.String
 		}

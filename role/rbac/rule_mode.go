@@ -1,6 +1,7 @@
 package rbac
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -202,22 +203,23 @@ func (md model) GetValuesForFieldInRule(sec string, ptype string, fieldIndex int
 
 // buildRoleLinks build the rules to roleLinks.
 func (md model) buildRoleLinks(rl *roleLinks) {
-	// TODO:
-	//for _, ast := range md["g"] {
-	//	ast.buildRoleLinks(rl)
-	//}
+	for _, ast := range md["g"] {
+		ast.buildRoleLinks(rl)
+	}
 }
 
-/*
 func (ast *Assertion) buildRoleLinks(rl *roleLinks) {
 	ast.RL = rl
 	count := strings.Count(ast.Value, "_")
+
 	for _, rule := range ast.Rule {
 		if count < 2 {
-			panic(errors.New("the number of \"_\" in role definition should be at least 2"))
+			//fmt.Pritln("the number of \"_\" in role definition should be at least 2")
+			continue
 		}
 		if len(rule) < count {
-			panic(errors.New("grouping policy elements do not meet role definition"))
+			//fmt.Pritln("grouping policy elements do not meet role definition")
+			continue
 		}
 
 		if count == 2 {
@@ -229,10 +231,9 @@ func (ast *Assertion) buildRoleLinks(rl *roleLinks) {
 		}
 	}
 
-	//LogPrint("Role links for: " + ast.Key)
-	//ast.RL.PrintRoles()
+	fmt.Println("Role links for: " + ast.Key)
+	ast.RL.PrintRoles()
 }
-*/
 
 // loadRuleLine loads a text line as a rule to model.
 func loadRuleLine(line string, md model) {

@@ -54,17 +54,17 @@ func TestRuleAdapter(t *testing.T) {
 	})
 
 	a := newRuleAdapter(db)
-	err := a.Add("g", []string{"user 1", "member", "S"})
+	err := a.Add("g", []string{"user 1", "member", "U"})
 	if err != nil {
 		t.Fatalf("Failed to add rule: %s", err)
 	}
 
-	err = a.Add("g", []string{"user 2", "member", "S"})
+	err = a.Add("g", []string{"user 2", "member", "U"})
 	if err != nil {
 		t.Fatalf("Failed to add rule: %s", err)
 	}
 
-	err = a.Add("g", []string{"user 3", "admin", "S"})
+	err = a.Add("g", []string{"user 3", "admin", "U"})
 	if err != nil {
 		t.Fatalf("Failed to add rule: %s", err)
 	}
@@ -74,7 +74,7 @@ func TestRuleAdapter(t *testing.T) {
 		t.Fatalf("Failed to add rule: %s", err)
 	}
 
-	exist, err := a.Has("g", []string{"user 3", "admin", "S"})
+	exist, err := a.Has("g", []string{"user 3", "admin", "U"})
 	if err != nil {
 		t.Fatalf("Failed to has rule: %s", err)
 	}
@@ -98,7 +98,7 @@ func TestRuleAdapter(t *testing.T) {
 		t.Fatal("failed: get filtered rule")
 	}
 
-	rules, err = a.GetFiltered("g", 2, "S")
+	rules, err = a.GetFiltered("g", 2, "U")
 	if err != nil {
 		t.Fatalf("Failed to get filtered rule: %s", err)
 	}
@@ -106,7 +106,7 @@ func TestRuleAdapter(t *testing.T) {
 		t.Fatal("failed: get filtered rule")
 	}
 
-	rules, err = a.GetFiltered("g", 1, "member", "S")
+	rules, err = a.GetFiltered("g", 1, "member", "U")
 	if err != nil {
 		t.Fatalf("Failed to get filtered rule: %s", err)
 	}
@@ -127,12 +127,12 @@ func TestRuleAdapter(t *testing.T) {
 		t.Fatalf("Failed to remove rule: %s", err)
 	}
 
-	err = a.RemoveFiltered("g", 1, "member", "S")
+	err = a.RemoveFiltered("g", 1, "member", "U")
 	if err != nil {
 		t.Fatalf("Failed to remove filtered rule: %s", err)
 	}
 
-	err = a.RemoveFiltered("g", 2, "S")
+	err = a.RemoveFiltered("g", 2, "U")
 	if err != nil {
 		t.Fatalf("Failed to remove filtered rule: %s", err)
 	}

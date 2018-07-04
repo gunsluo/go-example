@@ -10,15 +10,15 @@ func TestRuleMode(t *testing.T) {
 		t.Fatalf("rule mode: %s", err)
 	}
 
-	if !model.Add("g", "g", []string{"user 1", "member", "S"}) {
+	if !model.Add("g", "g", []string{"user 1", "member", "U"}) {
 		t.Fatal("failed: add rule")
 	}
 
-	if !model.Add("g", "g", []string{"user 2", "member", "S"}) {
+	if !model.Add("g", "g", []string{"user 2", "member", "U"}) {
 		t.Fatal("failed: add rule")
 	}
 
-	if !model.Add("g", "g", []string{"user 3", "admin", "S"}) {
+	if !model.Add("g", "g", []string{"user 3", "admin", "U"}) {
 		t.Fatal("failed: add rule")
 	}
 
@@ -26,7 +26,7 @@ func TestRuleMode(t *testing.T) {
 		t.Fatal("failed: add rule")
 	}
 
-	if !model.HasRule("g", "g", []string{"user 3", "admin", "S"}) {
+	if !model.HasRule("g", "g", []string{"user 3", "admin", "U"}) {
 		t.Fatal("failed: rule not exist")
 	}
 
@@ -39,12 +39,12 @@ func TestRuleMode(t *testing.T) {
 		t.Fatal("failed: get rule")
 	}
 
-	roles = model.GetFilteredRule("g", "g", 2, "S")
+	roles = model.GetFilteredRule("g", "g", 2, "U")
 	if len(roles) != 3 {
 		t.Fatal("failed: get filtered rule")
 	}
 
-	roles = model.GetFilteredRule("g", "g", 1, "member", "S")
+	roles = model.GetFilteredRule("g", "g", 1, "member", "U")
 	if len(roles) != 2 {
 		t.Fatal("failed: get filtered rule")
 	}
@@ -73,11 +73,11 @@ func TestRuleMode(t *testing.T) {
 		t.Fatal("failed: remove rule")
 	}
 
-	if !model.RemoveFilteredRule("g", "g", 1, "member", "S") {
+	if !model.RemoveFilteredRule("g", "g", 1, "member", "U") {
 		t.Fatal("failed: remove rule")
 	}
 
-	if !model.RemoveFilteredRule("g", "g", 2, "S") {
+	if !model.RemoveFilteredRule("g", "g", 2, "U") {
 		t.Fatal("failed: remove rule")
 	}
 
