@@ -10,20 +10,17 @@ func TestRoleCache(t *testing.T) {
 		t.Fatalf("Failed to create cache: %s", err)
 	}
 
-	err = cache.Create("qs:admin", "test")
+	err = cache.Insert(&Role{Name: "qs:admin", Description: "test"})
 	if err != nil {
 		t.Fatalf("Failed to add role: %s", err)
 	}
-	err = cache.BatchCreate([]*Role{
-		&Role{
-			Name:        "qs:member",
-			Description: "test",
-		},
-		&Role{
-			Name:        "qs:anonymous",
-			Description: "This is a system reservation role, match all role.",
-		},
-	})
+
+	err = cache.Insert(&Role{Name: "qs:member", Description: "test"})
+	if err != nil {
+		t.Fatalf("Failed to add role: %s", err)
+	}
+
+	err = cache.Insert(&Role{Name: "qs:anonymous", Description: "test"})
 	if err != nil {
 		t.Fatalf("Failed to add role: %s", err)
 	}
@@ -33,7 +30,7 @@ func TestRoleCache(t *testing.T) {
 		t.Fatalf("Failed to get role: %s", err)
 	}
 
-	role, err := cache.GetByName("qs:admin")
+	role, err := cache.Get("qs:admin")
 	if err != nil {
 		t.Fatalf("Failed to get all role: %s", err)
 	}

@@ -1,5 +1,6 @@
 package rbac
 
+/*
 import (
 	"strings"
 
@@ -43,12 +44,25 @@ func (relation *roleRelation) buildRoleLinks() {
 	relation.rules.buildRoleLinks(relation.rlinks)
 }
 
-// AddRoleForUser adds a role for a user.
-// Returns false if the user already has the role (aka not affected).
-func (relation *roleRelation) AddRoleForUser(user, role string) error {
+// AddRoleForUser adds a role to a user.
+func (relation *roleRelation) AddRoleForUser(role, user string) error {
+	return relation.addRule("g", "g", user, role, UserForRoleRelation)
+}
+*/
+
+/*
+// AddRoleForUsers adds the same role to multiple users
+func (relation *roleRelation) AddRoleForUsers(role, users []string) error {
 	return relation.addRule("g", "g", user, role, UserForRoleRelation)
 }
 
+// AddRolesForUser adds multiple roles to a users
+func (relation *roleRelation) AddRolesForUser(user, roles []string) error {
+	return relation.addRule("g", "g", user, role, UserForRoleRelation)
+}
+*/
+
+/*
 func (relation *roleRelation) addRule(sec string, ptype string, params ...string) error {
 	notExist := relation.rules.Add(sec, ptype, params)
 	if !notExist {
@@ -91,3 +105,4 @@ func (relation *roleRelation) addLinks(sec, ptype string, params ...string) erro
 
 	return nil
 }
+*/

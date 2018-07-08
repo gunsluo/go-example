@@ -16,20 +16,10 @@ func newRoleCache() (*roleCache, error) {
 	return &roleCache{roles: model}, nil
 }
 
-// Create adds a role to the cache.
-func (cache *roleCache) Create(role, desc string) error {
+// Insert adds a role to the cache.
+func (cache *roleCache) Insert(role *Role) error {
 	// The role name comes at the end of the arguments and is easy to find role by name
-	return cache.add("g", "g", desc, role)
-}
-
-func (cache *roleCache) BatchCreate(roles []*Role) error {
-	for _, role := range roles {
-		if err := cache.add("g", "g", role.Description, role.Name); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return cache.add("g", "g", role.Description, role.Name)
 }
 
 func (cache *roleCache) add(sec string, ptype string, params ...string) error {
@@ -58,8 +48,8 @@ func (cache *roleCache) Exist(role string) (bool, error) {
 	return len(roles) > 0, nil
 }
 
-// GetByName gets a role by role' name from the cache.
-func (cache *roleCache) GetByName(name string) (*Role, error) {
+// Get gets a role by name from the cache.
+func (cache *roleCache) Get(name string) (*Role, error) {
 	roles := cache.getFiltered("g", "g", 1, name)
 	if len(roles) == 0 {
 		return nil, errors.New("role not exist")

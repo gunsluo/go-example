@@ -8,11 +8,12 @@ import (
 
 func TestRuleAdapter(t *testing.T) {
 	db := createDB(t, func(mock sqlmock.Sqlmock) error {
-		for i := 0; i < 4; i++ {
-			mock.ExpectBegin()
+		mock.ExpectBegin()
+		for i := 0; i < 3; i++ {
 			mock.ExpectExec("INSERT INTO rule").WillReturnResult(sqlmock.NewResult(1, 1))
-			mock.ExpectCommit()
 		}
+		mock.ExpectCommit()
+		mock.ExpectExec("INSERT INTO rule").WillReturnResult(sqlmock.NewResult(1, 1))
 
 		for i := 0; i < 2; i++ {
 			mock.ExpectQuery("^SELECT (.+) FROM rule (.+)").
@@ -42,9 +43,7 @@ func TestRuleAdapter(t *testing.T) {
 				AddRow(1, 2, 3, 4, 5, 6, 7, 8))
 
 		for i := 0; i < 3; i++ {
-			mock.ExpectBegin()
 			mock.ExpectExec("DELETE FROM rule").WillReturnResult(sqlmock.NewResult(1, 1))
-			mock.ExpectCommit()
 		}
 
 		mock.ExpectQuery("^SELECT (.+) FROM rule").
@@ -53,28 +52,37 @@ func TestRuleAdapter(t *testing.T) {
 		return nil
 	})
 
-	a := newRuleAdapter(db)
-	err := a.Add("g", []string{"user 1", "member", "U"})
+	a := newRuleAdapter()
+	tx, err := db.Beginx()
+	if err != nil {
+		t.Fatalf("Failed to begin transaction: %s", err)
+	}
+
+	err = a.Insert(tx, "g", []string{"user 1", "member", "U"})
 	if err != nil {
 		t.Fatalf("Failed to add rule: %s", err)
 	}
 
-	err = a.Add("g", []string{"user 2", "member", "U"})
+	err = a.Insert(tx, "g", []string{"user 2", "member", "U"})
 	if err != nil {
 		t.Fatalf("Failed to add rule: %s", err)
 	}
 
-	err = a.Add("g", []string{"user 3", "admin", "U"})
+	err = a.Insert(tx, "g", []string{"user 3", "admin", "U"})
 	if err != nil {
 		t.Fatalf("Failed to add rule: %s", err)
 	}
 
-	err = a.Add("g", []string{"admin", "member", "R"})
+	if err = tx.Commit(); err != nil {
+		t.Fatalf("Failed to commit transaction: %s", err)
+	}
+
+	err = a.Insert(db, "g", []string{"admin", "member", "R"})
 	if err != nil {
 		t.Fatalf("Failed to add rule: %s", err)
 	}
 
-	exist, err := a.Has("g", []string{"user 3", "admin", "U"})
+	exist, err := a.Has(db, "g", []string{"user 3", "admin", "U"})
 	if err != nil {
 		t.Fatalf("Failed to has rule: %s", err)
 	}
@@ -82,7 +90,7 @@ func TestRuleAdapter(t *testing.T) {
 		t.Fatalf("Failed to rule not exists")
 	}
 
-	exist, err = a.Has("g", []string{"admin", "member", "R"})
+	exist, err = a.Has(db, "g", []string{"admin", "member", "R"})
 	if err != nil {
 		t.Fatalf("Failed to has rule: %s", err)
 	}
@@ -90,7 +98,7 @@ func TestRuleAdapter(t *testing.T) {
 		t.Fatalf("Failed to rule not exists")
 	}
 
-	rules, err := a.GetFiltered("g", 0)
+	rules, err := a.GetFiltered(db, "g", 0)
 	if err != nil {
 		t.Fatalf("Failed to get filtered rule: %s", err)
 	}
@@ -98,7 +106,7 @@ func TestRuleAdapter(t *testing.T) {
 		t.Fatal("failed: get filtered rule")
 	}
 
-	rules, err = a.GetFiltered("g", 2, "U")
+	rules, err = a.GetFiltered(db, "g", 2, "U")
 	if err != nil {
 		t.Fatalf("Failed to get filtered rule: %s", err)
 	}
@@ -106,7 +114,7 @@ func TestRuleAdapter(t *testing.T) {
 		t.Fatal("failed: get filtered rule")
 	}
 
-	rules, err = a.GetFiltered("g", 1, "member", "U")
+	rules, err = a.GetFiltered(db, "g", 1, "member", "U")
 	if err != nil {
 		t.Fatalf("Failed to get filtered rule: %s", err)
 	}
@@ -114,7 +122,7 @@ func TestRuleAdapter(t *testing.T) {
 		t.Fatal("failed: get filtered rule")
 	}
 
-	rules, err = a.GetFiltered("g", 0, "admin", "member", "R")
+	rules, err = a.GetFiltered(db, "g", 0, "admin", "member", "R")
 	if err != nil {
 		t.Fatalf("Failed to get filtered rule: %s", err)
 	}
@@ -122,22 +130,22 @@ func TestRuleAdapter(t *testing.T) {
 		t.Fatal("failed: get filtered rule")
 	}
 
-	err = a.Remove("g", []string{"admin", "member", "R"})
+	err = a.Delete(db, "g", []string{"admin", "member", "R"})
 	if err != nil {
 		t.Fatalf("Failed to remove rule: %s", err)
 	}
 
-	err = a.RemoveFiltered("g", 1, "member", "U")
+	err = a.RemoveFiltered(db, "g", 1, "member", "U")
 	if err != nil {
 		t.Fatalf("Failed to remove filtered rule: %s", err)
 	}
 
-	err = a.RemoveFiltered("g", 2, "U")
+	err = a.RemoveFiltered(db, "g", 2, "U")
 	if err != nil {
 		t.Fatalf("Failed to remove filtered rule: %s", err)
 	}
 
-	count, err := a.Count()
+	count, err := a.Count(db)
 	if err != nil {
 		t.Fatalf("Failed to count rule: %s", err)
 	}

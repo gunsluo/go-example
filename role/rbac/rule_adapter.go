@@ -21,77 +21,14 @@ type Rule struct {
 }
 
 // ruleAdapter represents the sqlx adapter for rule storage.
-type ruleAdapter struct {
-	db       *sqlx.DB
-	database string
+type ruleAdapter struct{}
+
+func newRuleAdapter() *ruleAdapter {
+	return &ruleAdapter{}
 }
 
-func newRuleAdapter(db *sqlx.DB) *ruleAdapter {
-	database := db.DriverName()
-	switch database {
-	case "pgx", "pq":
-		database = "postgres"
-	}
-
-	return &ruleAdapter{
-		db:       db,
-		database: database,
-	}
-}
-
-// Add adds a rule to the storage.
-func (a *ruleAdapter) Add(ptype string, rule []string) error {
-	tx, err := a.db.Beginx()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	if err = a.create(tx, ptype, rule); err != nil {
-		return errors.WithStack(err)
-	}
-
-	if err = tx.Commit(); err != nil {
-		if rollErr := tx.Rollback(); rollErr != nil {
-			return errors.Wrap(err, rollErr.Error())
-		}
-		return errors.WithStack(err)
-	}
-
-	return err
-}
-
-// AddMulti adds multi rules to the storage.
-func (a *ruleAdapter) AddMulti(rules []*Rule) error {
-	if len(rules) == 0 {
-		return nil
-	}
-
-	tx, err := a.db.Beginx()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	for _, r := range rules {
-		rule := []string{r.V0, r.V1, r.V2, r.V3, r.V4, r.V5}
-		if err = a.create(tx, r.PType, rule); err != nil {
-			if rollErr := tx.Rollback(); rollErr != nil {
-				return errors.Wrap(err, rollErr.Error())
-			}
-			return errors.WithStack(err)
-		}
-	}
-
-	if err = tx.Commit(); err != nil {
-		if rollErr := tx.Rollback(); rollErr != nil {
-			return errors.Wrap(err, rollErr.Error())
-		}
-		return errors.WithStack(err)
-	}
-
-	return err
-}
-
-func (a *ruleAdapter) create(tx *sqlx.Tx, ptype string, rule []string) error {
+// Insert adds a rule to the storage.
+func (a *ruleAdapter) Insert(db XODB, ptype string, rule []string) error {
 	params := []interface{}{ptype}
 	for i := range rule {
 		params = append(params, rule[i])
@@ -108,66 +45,15 @@ func (a *ruleAdapter) create(tx *sqlx.Tx, ptype string, rule []string) error {
 	// TODO
 	//query := Migrations[a.database].QueryInsertRule
 	query := "INSERT INTO rule (p_type, v0, v1, v2, v3, v4, v5) SELECT $1::varchar, $2::varchar, $3::varchar, $4::varchar, $5::varchar, $6::varchar, $7::varchar WHERE NOT EXISTS (SELECT 1 FROM rule WHERE p_type = $1 and v0 = $2 and v1 = $3 and v2 = $4 and v3 = $5 and v4 = $6 and v5 = $7)"
-	if _, err := tx.Exec(tx.Rebind(query), params...); err != nil {
-		return errors.WithStack(err)
+	if _, err := db.Exec(db.Rebind(query), params...); err != nil {
+		return errors.Wrap(err, "insert rule")
 	}
 
 	return nil
 }
 
-// Remove removes a rule from the storage.
-func (a *ruleAdapter) Remove(ptype string, rule []string) error {
-	tx, err := a.db.Beginx()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	if err = a.delete(tx, ptype, rule); err != nil {
-		return errors.WithStack(err)
-	}
-
-	if err = tx.Commit(); err != nil {
-		if rollErr := tx.Rollback(); rollErr != nil {
-			return errors.Wrap(err, rollErr.Error())
-		}
-		return errors.WithStack(err)
-	}
-
-	return nil
-}
-
-// RemoveMulti removes multi rules from the storage.
-func (a *ruleAdapter) RemoveMulti(rules []*Rule) error {
-	if len(rules) == 0 {
-		return nil
-	}
-
-	tx, err := a.db.Beginx()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	for _, r := range rules {
-		rule := []string{r.V0, r.V1, r.V2, r.V3, r.V4, r.V5}
-		if err = a.delete(tx, r.PType, rule); err != nil {
-			if rollErr := tx.Rollback(); rollErr != nil {
-				return errors.Wrap(err, rollErr.Error())
-			}
-			return errors.WithStack(err)
-		}
-	}
-
-	if err = tx.Commit(); err != nil {
-		if rollErr := tx.Rollback(); rollErr != nil {
-			return errors.Wrap(err, rollErr.Error())
-		}
-		return errors.WithStack(err)
-	}
-
-	return nil
-}
-
-func (a *ruleAdapter) delete(tx *sqlx.Tx, ptype string, rule []string) error {
+// Delete removes a rule from the storage.
+func (a *ruleAdapter) Delete(db XODB, ptype string, rule []string) error {
 	params := []interface{}{ptype}
 	for i := range rule {
 		params = append(params, rule[i])
@@ -181,45 +67,37 @@ func (a *ruleAdapter) delete(tx *sqlx.Tx, ptype string, rule []string) error {
 		}
 	}
 
-	_, err := tx.Exec(a.db.Rebind("DELETE FROM rule WHERE p_type=? and v0=? and v1=? and v2=? and v3=? and v4=? and v5=?"), params...)
-	return errors.WithStack(err)
+	_, err := db.Exec(db.Rebind("DELETE FROM rule WHERE p_type=? and v0=? and v1=? and v2=? and v3=? and v4=? and v5=?"), params...)
+	return errors.Wrap(err, "delete rule")
 }
 
 // RemoveFiltered removes rules that match the filter from the storage.
-func (a *ruleAdapter) RemoveFiltered(ptype string, fieldIndex int, fieldValues ...string) error {
-	tx, err := a.db.Beginx()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
+func (a *ruleAdapter) RemoveFiltered(db XODB, ptype string, fieldIndex int, fieldValues ...string) error {
 	query, args := deleteSQL(ptype, fieldIndex, fieldValues...)
-	if _, err = tx.Exec(a.db.Rebind(query), args...); err != nil {
-		return errors.WithStack(err)
+	if _, err := db.Exec(db.Rebind(query), args...); err != nil {
+		return errors.Wrap(err, "delete filtered rule")
 	}
 
-	if err = tx.Commit(); err != nil {
-		if rollErr := tx.Rollback(); rollErr != nil {
-			return errors.Wrap(err, rollErr.Error())
-		}
-		return errors.WithStack(err)
-	}
-
-	return err
+	return nil
 }
 
-func (a *ruleAdapter) dropAllData(tx *sqlx.Tx) error {
-	_, err := tx.Exec(a.db.Rebind("DELETE FROM rule"))
-	return errors.WithStack(err)
+func (a *ruleAdapter) dropAllData(db XODB) error {
+	_, err := db.Exec(db.Rebind("DELETE FROM rule"))
+	return errors.Wrap(err, "delete all rule")
 }
 
 // Restore saves rule from model to database.
-func (a *ruleAdapter) Restore(md model) error {
-	tx, err := a.db.Beginx()
+func (a *ruleAdapter) Restore(db *sqlx.DB, md model) error {
+	tx, err := db.Beginx()
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.Wrap(err, "begin transaction")
 	}
 
 	if err = a.dropAllData(tx); err != nil {
+		if rollErr := tx.Rollback(); rollErr != nil {
+			return errors.Wrap(err, "rollback")
+		}
+
 		return errors.WithStack(err)
 	}
 
@@ -237,10 +115,10 @@ func (a *ruleAdapter) Restore(md model) error {
 
 	for ptype, ast := range md["g"] {
 		for _, rule := range ast.Rule {
-			err = a.create(tx, ptype, rule)
+			err = a.Insert(tx, ptype, rule)
 			if err != nil {
-				if err = tx.Rollback(); err != nil {
-					return errors.WithStack(err)
+				if rollErr := tx.Rollback(); rollErr != nil {
+					return errors.Wrap(err, "rollback")
 				}
 				return errors.WithStack(err)
 			}
@@ -258,14 +136,14 @@ func (a *ruleAdapter) Restore(md model) error {
 }
 
 // Load loads rule from database to model.
-func (a *ruleAdapter) Load(md model) error {
+func (a *ruleAdapter) Load(db XODB, md model) error {
 	var (
 		limit  int64 = 1000
 		offset int64
 	)
 
 	for {
-		lines, err := a.GetAll(limit, offset)
+		lines, err := a.GetAll(db, limit, offset)
 		if err != nil {
 			return err
 		}
@@ -309,50 +187,35 @@ func (a *ruleAdapter) loadRuleLine(line *Rule, md model) {
 }
 
 // Has determines whether a model has the specified rule.
-func (a *ruleAdapter) Has(ptype string, rule []string) (bool, error) {
-	query, args := hasSQL(ptype, 0, rule...)
-	rows, err := a.db.Query(query, args...)
-	if err != nil {
-		return false, errors.WithStack(err)
-	}
-	defer rows.Close()
-
+func (a *ruleAdapter) Has(db XODB, ptype string, rule []string) (bool, error) {
 	var count int64
-	if rows.Next() {
-		if err := rows.Scan(&count); err != nil {
-			return false, errors.WithStack(err)
-		}
+
+	query, args := hasSQL(ptype, 0, rule...)
+	err := db.QueryRow(query, args...).Scan(&count)
+	if err != nil {
+		return false, errors.Wrap(err, "query rule")
 	}
 
 	return count > 0, nil
 }
 
 // Get gets a rule from the storage.
-func (a *ruleAdapter) Get(id int64) (*Rule, error) {
-	query := a.db.Rebind("SELECT p_type, v0, v1, v2, v3, v4, v5 FROM rule WHERE id = ?")
+func (a *ruleAdapter) Get(db XODB, id int64) (*Rule, error) {
+	var p, v0, v1, v2, v3, v4, v5 sql.NullString
 
-	rows, err := a.db.Query(query, id)
+	query := db.Rebind("SELECT p_type, v0, v1, v2, v3, v4, v5 FROM rule WHERE id = ?")
+	err := db.QueryRow(query, id).Scan(&p, &v0, &v1, &v2, &v3, &v4, &v5)
 	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	defer rows.Close()
-
-	if rows.Next() {
-		var p, v0, v1, v2, v3, v4, v5 sql.NullString
-		if err := rows.Scan(&p, &v0, &v1, &v2, &v3, &v4, &v5); err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		return newRule(id, p, v0, v1, v2, v3, v4, v5), nil
+		return nil, errors.Wrap(err, "get rule")
 	}
 
-	return nil, sql.ErrNoRows
+	return newRule(id, p, v0, v1, v2, v3, v4, v5), nil
 }
 
 // GetFiltered gets rules based on field filters from the database.
-func (a *ruleAdapter) GetFiltered(ptype string, fieldIndex int, fieldValues ...string) ([]*Rule, error) {
+func (a *ruleAdapter) GetFiltered(db XODB, ptype string, fieldIndex int, fieldValues ...string) ([]*Rule, error) {
 	query, args := querySQL(ptype, fieldIndex, fieldValues...)
-	rows, err := a.db.Query(query, args...)
+	rows, err := db.Query(query, args...)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {
@@ -376,9 +239,9 @@ func (a *ruleAdapter) GetFiltered(ptype string, fieldIndex int, fieldValues ...s
 }
 
 // GetAll gets rule from the storage.
-func (a *ruleAdapter) GetAll(limit, offset int64) ([]*Rule, error) {
-	query := a.db.Rebind("SELECT id, p_type, v0, v1, v2, v3, v4, v5 FROM rule LIMIT ? OFFSET ?")
-	rows, err := a.db.Query(query, limit, offset)
+func (a *ruleAdapter) GetAll(db XODB, limit, offset int64) ([]*Rule, error) {
+	query := db.Rebind("SELECT id, p_type, v0, v1, v2, v3, v4, v5 FROM rule LIMIT ? OFFSET ?")
+	rows, err := db.Query(query, limit, offset)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {
@@ -402,19 +265,13 @@ func (a *ruleAdapter) GetAll(limit, offset int64) ([]*Rule, error) {
 }
 
 // Count gets total number of rule from the storage.
-func (a *ruleAdapter) Count() (int64, error) {
-	query := a.db.Rebind("SELECT COUNT(id) as count FROM rule")
-	rows, err := a.db.Query(query)
+func (a *ruleAdapter) Count(db XODB) (int64, error) {
+	var count int64
+
+	query := db.Rebind("SELECT COUNT(id) as count FROM rule")
+	err := db.QueryRow(query).Scan(&count)
 	if err != nil {
 		return 0, errors.WithStack(err)
-	}
-	defer rows.Close()
-
-	var count int64
-	if rows.Next() {
-		if err := rows.Scan(&count); err != nil {
-			return 0, errors.WithStack(err)
-		}
 	}
 
 	return count, nil

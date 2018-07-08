@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestRuleMode(t *testing.T) {
+func TestRuleModel(t *testing.T) {
 	model, err := newModel()
 	if err != nil {
 		t.Fatalf("rule mode: %s", err)
