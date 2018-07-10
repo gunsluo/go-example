@@ -81,6 +81,16 @@ func createRealDB(t *testing.T) *sqlx.DB {
 	return db
 }
 
+func containRoles(roles []*Role, params ...string) bool {
+	var names []string
+
+	for _, role := range roles {
+		names = append(names, role.Name)
+	}
+
+	return containArray(names, params...)
+}
+
 func isAllInArray(array []string, params ...string) bool {
 	return ArrayEquals(array, params)
 }

@@ -135,8 +135,8 @@ func (a *ruleAdapter) Restore(db *sqlx.DB, md model) error {
 	return nil
 }
 
-// Load loads rule from database to model.
-func (a *ruleAdapter) Load(db XODB, md model) error {
+// loads rule from database to model.
+func (a *ruleAdapter) load(db XODB, md model) error {
 	var (
 		limit  int64 = 1000
 		offset int64

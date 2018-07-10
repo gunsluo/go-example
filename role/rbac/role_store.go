@@ -146,3 +146,42 @@ func (s *roleStore) Count(db XODB, conditions ...string) (int64, error) {
 
 	return count, nil
 }
+
+// loads the role from database to rule.
+func (s *roleStore) load(db XODB, md model) error {
+	var (
+		limit  int64 = 1000
+		offset int64
+	)
+
+	for {
+		roles, err := s.GetAll(db, limit, offset)
+		if err != nil {
+			return err
+		}
+
+		for _, role := range roles {
+			s.loadRuleLine(role, md)
+		}
+
+		if len(roles) < int(limit) {
+			break
+		}
+
+		offset += limit
+	}
+
+	return nil
+}
+
+func (s *roleStore) loadRuleLine(role *Role, md model) {
+	lineText := "g"
+	if role.Description != "" {
+		lineText += ", " + role.Description
+	}
+	if role.Name != "" {
+		lineText += ", " + role.Name
+	}
+
+	loadRuleLine(lineText, md)
+}
