@@ -1,25 +1,27 @@
 package main
 
 import (
+	"log"
+	"net"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	router := gin.New()
-	router.Use(gin.Logger(), gin.Recovery())
+	engine := gin.New()
+	engine.Use(gin.Logger(), gin.Recovery())
 
-	router.Static("/views", "./views")
-	router.LoadHTMLGlob("templates/*")
+	engine.Static("/views", "./views")
+	engine.LoadHTMLGlob("templates/*")
 
-	router.GET("/index.html", func(c *gin.Context) {
+	engine.GET("/index.html", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.html", gin.H{
 			"title": "Main website",
 		})
 	})
 
-	api := router.Group("/api")
+	api := engine.Group("/api")
 	{
 		api.GET("/ping", func(c *gin.Context) {
 			c.JSON(200, gin.H{
@@ -28,5 +30,18 @@ func main() {
 		})
 	}
 
-	router.Run(":8080") // listen and serve on 0.0.0.0:8080
+	//engine.Run(":8080") // listen and serve on 0.0.0.0:8080
+	address := ":8080"
+	listener, err := net.Listen("tcp", address)
+	if err != nil {
+		log.Fatalf("unable to address: %s", address)
+	}
+
+	// overwrite
+	run(listener, engine)
+}
+
+func run(listener net.Listener, engine *gin.Engine) (err error) {
+	err = http.Serve(listener, engine)
+	return
 }
