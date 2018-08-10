@@ -32,8 +32,14 @@ func main() {
 	// test
 
 	testCreateRole(ctx, client)
+	testCreateRole2(ctx, client)
+	testCreateRole3(ctx, client)
 	testListRoles(ctx, client)
 	testBindRole(ctx, client)
+
+	testBindRoles(ctx, client)
+	testBindRoles2(ctx, client)
+	testBindRoleGroup(ctx, client)
 	testListSubjects(ctx, client)
 	testRegisterResource(ctx, client)
 	testRegisterResources(ctx, client)
@@ -55,6 +61,10 @@ func main() {
 	testRemovePolicy(ctx, client)
 	testRemoveRole(ctx, client)
 
+	testUnbindRoles(ctx, client)
+	testUnbindRoles2(ctx, client)
+	testUnbindRoleGroup(ctx, client)
+
 	conn.Close()
 }
 
@@ -62,6 +72,36 @@ func testCreateRole(ctx context.Context, client pb.AccessControlClient) {
 	_, err := client.CreateRole(ctx,
 		&pb.CreateRoleRequest{
 			Role: &pb.Role{Name: "target:reach:visitor", Description: "test"},
+		})
+
+	errStatus := status.Convert(err)
+	if errStatus.Code() != codes.OK && errStatus.Code() != codes.AlreadyExists {
+		log.Println("create role to access control grpc:", errStatus.Err())
+		return
+	}
+
+	log.Println("create role to access control grpc success.")
+}
+
+func testCreateRole2(ctx context.Context, client pb.AccessControlClient) {
+	_, err := client.CreateRole(ctx,
+		&pb.CreateRoleRequest{
+			Role: &pb.Role{Name: "demo:test:role1", Description: "test"},
+		})
+
+	errStatus := status.Convert(err)
+	if errStatus.Code() != codes.OK && errStatus.Code() != codes.AlreadyExists {
+		log.Println("create role to access control grpc:", errStatus.Err())
+		return
+	}
+
+	log.Println("create role to access control grpc success.")
+}
+
+func testCreateRole3(ctx context.Context, client pb.AccessControlClient) {
+	_, err := client.CreateRole(ctx,
+		&pb.CreateRoleRequest{
+			Role: &pb.Role{Name: "demo:test:role2", Description: "test"},
 		})
 
 	errStatus := status.Convert(err)
@@ -156,9 +196,9 @@ func testRegisterActions(ctx context.Context, client pb.AccessControlClient) {
 func testListResources(ctx context.Context, client pb.AccessControlClient) {
 	reply, err := client.ListResources(ctx,
 		&pb.ListResourcesRequest{
-			Prefix: "target:reach",
-			Limit:  10,
-			Offset: 0,
+			LikeResource: "target:reach",
+			Limit:        10,
+			Offset:       0,
 		})
 	errStatus := status.Convert(err)
 	if errStatus.Code() != codes.OK {
@@ -172,9 +212,9 @@ func testListResources(ctx context.Context, client pb.AccessControlClient) {
 func testListActions(ctx context.Context, client pb.AccessControlClient) {
 	reply, err := client.ListActions(ctx,
 		&pb.ListActionsRequest{
-			Prefix: "reach",
-			Limit:  10,
-			Offset: 0,
+			LikeAction: "reach",
+			Limit:      10,
+			Offset:     0,
 		})
 	errStatus := status.Convert(err)
 	if errStatus.Code() != codes.OK {
@@ -200,8 +240,7 @@ func testListRoles(ctx context.Context, client pb.AccessControlClient) {
 func testBindRole(ctx context.Context, client pb.AccessControlClient) {
 	_, err := client.BindRole(ctx,
 		&pb.BindRoleRequest{
-			Kind: pb.SUBJECT,
-			Name: "tom",
+			User: &pb.User{Type: pb.SUBJECT, Name: "tom"},
 			Role: "target:reach:visitor",
 		})
 	errStatus := status.Convert(err)
@@ -213,10 +252,55 @@ func testBindRole(ctx context.Context, client pb.AccessControlClient) {
 	log.Println("role binding to access control grpc success.")
 }
 
+func testBindRoles(ctx context.Context, client pb.AccessControlClient) {
+	_, err := client.BindRoles(ctx,
+		&pb.BindRolesRequest{
+			User:  &pb.User{Type: pb.SUBJECT, Name: "luoji"},
+			Roles: []string{"demo:test:role1", "demo:test:role2"},
+		})
+	errStatus := status.Convert(err)
+	if errStatus.Code() != codes.OK {
+		log.Println("roles binding to access control grpc:", errStatus.Err())
+		return
+	}
+
+	log.Println("roles binding to access control grpc success.")
+}
+
+func testBindRoles2(ctx context.Context, client pb.AccessControlClient) {
+	_, err := client.BindRoles(ctx,
+		&pb.BindRolesRequest{
+			User:  &pb.User{Type: pb.ROLE, Name: "target:reach:visitor"},
+			Roles: []string{"demo:test:role1", "demo:test:role2"},
+		})
+	errStatus := status.Convert(err)
+	if errStatus.Code() != codes.OK {
+		log.Println("roles binding to access control grpc:", errStatus.Err())
+		return
+	}
+
+	log.Println("roles binding to access control grpc success.")
+}
+
+func testBindRoleGroup(ctx context.Context, client pb.AccessControlClient) {
+	_, err := client.BindRoleGroup(ctx,
+		&pb.BindRoleGroupRequest{
+			RoleGroup: "target:reach:visitor",
+			Roles:     []string{"demo:test:role1", "demo:test:role2"},
+		})
+	errStatus := status.Convert(err)
+	if errStatus.Code() != codes.OK {
+		log.Println("roles binding to access control grpc:", errStatus.Err())
+		return
+	}
+
+	log.Println("roles binding to access control grpc success.")
+}
+
 func testListSubjects(ctx context.Context, client pb.AccessControlClient) {
-	reply, err := client.ListSubjects(ctx,
-		&pb.ListSubjectsRequest{
-			Prefix: "target:reach:visitor",
+	reply, err := client.ListUsersByRole(ctx,
+		&pb.ListUsersByRoleRequest{
+			LikeRole: "target:reach:visitor",
 		})
 	errStatus := status.Convert(err)
 	if errStatus.Code() != codes.OK {
@@ -224,7 +308,7 @@ func testListSubjects(ctx context.Context, client pb.AccessControlClient) {
 		return
 	}
 
-	log.Println("get subjects to access control grpc success.", len(reply.Subjects))
+	log.Println("get subjects to access control grpc success.", len(reply.Users))
 }
 
 func testCreatePolicy(ctx context.Context, client pb.AccessControlClient) {
@@ -467,4 +551,49 @@ func testRemoveRole(ctx context.Context, client pb.AccessControlClient) {
 	}
 
 	log.Println("remove role to access control grpc success.")
+}
+
+func testUnbindRoles(ctx context.Context, client pb.AccessControlClient) {
+	_, err := client.UnbindRoles(ctx,
+		&pb.UnbindRolesRequest{
+			User:  &pb.User{Type: pb.SUBJECT, Name: "luoji"},
+			Roles: []string{"demo:test:role1", "demo:test:role2"},
+		})
+	errStatus := status.Convert(err)
+	if errStatus.Code() != codes.OK {
+		log.Println("remove role to access control grpc:", errStatus.Err())
+		return
+	}
+
+	log.Println("remove role to access control grpc success.")
+}
+
+func testUnbindRoles2(ctx context.Context, client pb.AccessControlClient) {
+	_, err := client.UnbindRoles(ctx,
+		&pb.UnbindRolesRequest{
+			User:  &pb.User{Type: pb.ROLE, Name: "target:reach:visitor"},
+			Roles: []string{"demo:test:role1", "demo:test:role2"},
+		})
+	errStatus := status.Convert(err)
+	if errStatus.Code() != codes.OK {
+		log.Println("remove role to access control grpc:", errStatus.Err())
+		return
+	}
+
+	log.Println("remove role to access control grpc success.")
+}
+
+func testUnbindRoleGroup(ctx context.Context, client pb.AccessControlClient) {
+	_, err := client.UnbindRoleGroup(ctx,
+		&pb.UnbindRoleGroupRequest{
+			RoleGroup: "target:reach:visitor",
+			Roles:     []string{"demo:test:role1", "demo:test:role2"},
+		})
+	errStatus := status.Convert(err)
+	if errStatus.Code() != codes.OK {
+		log.Println("roles unbinding to access control grpc:", errStatus.Err())
+		return
+	}
+
+	log.Println("roles unbinding to access control grpc success.")
 }
