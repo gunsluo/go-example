@@ -12,8 +12,8 @@ func main() {
 	engine := gin.New()
 	engine.Use(gin.Logger(), gin.Recovery())
 
-	engine.Static("/views", "./views")
-	engine.LoadHTMLGlob("templates/*")
+	//engine.Static("/views", "./views")
+	engine.LoadHTMLGlob("templates/*.html")
 
 	engine.GET("/index.html", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.html", gin.H{
