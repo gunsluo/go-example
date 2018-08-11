@@ -59,8 +59,8 @@ func main() {
 	testRemoveAction(ctx, client)
 	testRemoveResource(ctx, client)
 	testRemovePolicy(ctx, client)
-	testRemoveRole(ctx, client)
 
+	testRemoveRole(ctx, client)
 	testUnbindRoles(ctx, client)
 	testUnbindRoles2(ctx, client)
 	testUnbindRoleGroup(ctx, client)
