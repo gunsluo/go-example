@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"text/template"
+	"html/template"
 	"time"
 )
 
@@ -17,8 +17,15 @@ type EmailPlaceholder struct {
 	InterviewLocation string
 }
 
+var emailTmpl *template.Template
+
+func init() {
+	emailTmpl = template.New("email")
+}
+
 func main() {
 	str := "we are {{.CompanyName}} {{.CompanyLocation}} {{.JobSeekerName}} {{.JobTitle}} {{.JobDescription}} {{.InterviewDate}} {{.InterviewLocation}}"
+	str2 := "you are {{.CompanyName}} {{.CompanyLocation}} {{.JobSeekerName}} {{.JobTitle}} {{.JobDescription}} {{.InterviewDate}} {{.InterviewLocation}}"
 	p := EmailPlaceholder{
 		CompanyName:       "demo",
 		CompanyLocation:   "chengdu",
@@ -29,9 +36,16 @@ func main() {
 		InterviewLocation: "chengdu",
 	}
 
-	t := template.Must(template.New("test").Parse(str))
+	tmpl, err := emailTmpl.Parse(str)
+	if err != nil {
+		panic(err)
+	}
+	tmpl, err = emailTmpl.Parse(str2)
+	if err != nil {
+		panic(err)
+	}
 	var buf bytes.Buffer
-	err := t.Execute(&buf, p)
+	err = tmpl.Execute(&buf, p)
 	if err != nil {
 		panic(err)
 	}
