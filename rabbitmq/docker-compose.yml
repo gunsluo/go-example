@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+  rabbitstomp:
+    image: itzg/rabbitmq-stomp
+    container_name: rabbitstomp
+    ports:
+      - 5672:5672
+      - 15672:15672
+      - 61613:61613
+
