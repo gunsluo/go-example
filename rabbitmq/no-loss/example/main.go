@@ -27,4 +27,15 @@ func main() {
 	} else {
 		fmt.Println("reply:", reply.Id, reply.Status)
 	}
+
+	reply2, err := client.Status(context.Background(),
+		&pb.StatusRequest{
+			Id: "3edcc83a-c764-4878-9fda-2013233dfb29",
+		})
+	if err != nil {
+		fmt.Println("unable to query status ", err)
+	} else {
+		fmt.Println("reply:", reply2.Status, reply2.Reason)
+	}
+
 }
