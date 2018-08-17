@@ -17,10 +17,10 @@ func main() {
 
 	reply, err := client.Send(context.Background(),
 		&pb.SendRequest{
-			From:    "luoji@gmail.com",
-			To:      []string{"to@email.com"},
-			Subject: "sub",
-			Content: "<html>this is a test</html>",
+			From:    "gunsluo@gmail.com",
+			To:      []string{"gunsluo@gmail.com"},
+			Subject: "Amazon SES Test (AWS SDK for Go)",
+			Html:    "<html>this is a test</html>",
 		})
 	if err != nil {
 		fmt.Println("unable to send ", err)
