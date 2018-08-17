@@ -18,6 +18,7 @@ type EmailRelationDocument struct {
 	ID  objectid.ObjectID `bson:"_id,omitempty"`
 	EID string            `bson:"eid,omitempty"`
 	To  string            `bson:"to,omitempty"`
+	Tp  string            `bson:"tp,omitempty"`
 }
 
 // Insert insert a email relation to db
@@ -43,6 +44,7 @@ func (doc *EmailRelationDocument) Insert(ctx context.Context, db *mongo.Database
 		bson.NewDocument(
 			bson.EC.String("eid", doc.EID),
 			bson.EC.String("to", doc.To),
+			bson.EC.String("tp", doc.Tp),
 		))
 	if err != nil {
 		return errors.Wrapf(err, "failed to insert document by %s", doc.EID)

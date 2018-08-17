@@ -78,6 +78,7 @@ func main() {
 	doc2 := &db.EmailRelationDocument{
 		To:  "gunsluo@gmail.com",
 		EID: "000000001",
+		Tp:  "to",
 	}
 
 	err = doc2.Insert(ctx, d)
@@ -88,6 +89,7 @@ func main() {
 	}
 
 	doc2.EID = "000000002"
+	doc2.Tp = "cc"
 	err = doc2.Insert(ctx, d)
 	if err != nil {
 		fmt.Println("err:", err)
