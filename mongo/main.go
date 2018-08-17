@@ -26,7 +26,7 @@ func main() {
 	doc := &db.EmailDocument{
 		EID:      "000000001",
 		ReID:     "000000001",
-		SendTime: time.Now(),
+		SendDate: time.Now(),
 		Status:   "SendOK",
 		Content: db.EmailContentSubDocument{
 			From:    "gunsluo@gmail.com",
@@ -68,6 +68,38 @@ func main() {
 		fmt.Println("err:", err)
 	} else {
 		fmt.Println("docs:", len(docs))
+	}
+
+	err = db.EmailRelationDocumentCreateIndexes(ctx, d)
+	if err != nil {
+		fmt.Println("err:", err)
+	}
+
+	doc2 := &db.EmailRelationDocument{
+		To:  "gunsluo@gmail.com",
+		EID: "000000001",
+	}
+
+	err = doc2.Insert(ctx, d)
+	if err != nil {
+		fmt.Println("err:", err)
+	} else {
+		fmt.Println("insert:", doc2.ID)
+	}
+
+	doc2.EID = "000000002"
+	err = doc2.Insert(ctx, d)
+	if err != nil {
+		fmt.Println("err:", err)
+	} else {
+		fmt.Println("insert:", doc2.ID)
+	}
+
+	docs2, err := db.EmailRelationDocumentByTo(ctx, d, "gunsluo@gmail.com")
+	if err != nil {
+		fmt.Println("err:", err)
+	} else {
+		fmt.Println("total:", len(docs2))
 	}
 
 	client.Disconnect(ctx)
