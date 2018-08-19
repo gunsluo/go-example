@@ -12,8 +12,14 @@ import (
 )
 
 const (
+	// DefaultDBName default db name
+	DefaultDBName = "ses"
+
+	// EmailDocumentCollection the collection name of email
 	EmailDocumentCollection = "email"
-	DefaultLimit            = 50
+
+	// DefaultLimit default limit
+	DefaultLimit = 50
 )
 
 // EmailDocument storing documents for email
