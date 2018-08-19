@@ -73,8 +73,8 @@ type EmailRelationDocumentWhere struct {
 	LastID *objectid.ObjectID
 }
 
-// EmailRelationDocumentByTo gets email relation document by to from the db
-func EmailRelationDocumentByTo(ctx context.Context, db *mongo.Database,
+// EmailRelationDocumentByWhere gets email relation document by condition from the db
+func EmailRelationDocumentByWhere(ctx context.Context, db *mongo.Database,
 	where EmailRelationDocumentWhere) ([]*EmailRelationDocument, error) {
 	coll := db.Collection(EmailRelationDocumentCollection)
 
@@ -115,6 +115,27 @@ func EmailRelationDocumentByTo(ctx context.Context, db *mongo.Database,
 	}
 
 	return docs, nil
+}
+
+// CountEmailRelationDocumentByWhere gets email relation document by condition from the db
+func CountEmailRelationDocumentByWhere(ctx context.Context, db *mongo.Database,
+	where EmailRelationDocumentWhere) (int64, error) {
+	coll := db.Collection(EmailRelationDocumentCollection)
+
+	condition := bson.NewDocument()
+	if where.From != "" {
+		condition.Append(bson.EC.String("from", where.From))
+	}
+	if where.To != "" {
+		condition.Append(bson.EC.String("to", where.To))
+	}
+
+	result, err := coll.Distinct(ctx, "eid", condition)
+	if err != nil {
+		return 0, err
+	}
+
+	return int64(len(result)), nil
 }
 
 // EmailRelationDocumentCreateIndexes create indexes to optimize the query.

@@ -101,7 +101,7 @@ func main() {
 		fmt.Println("insert:", doc2.ID)
 	}
 
-	docs2, err := db.EmailRelationDocumentByTo(ctx, d,
+	docs2, err := db.EmailRelationDocumentByWhere(ctx, d,
 		db.EmailRelationDocumentWhere{
 			To:    "gunsluo@gmail.com",
 			Limit: 1,
@@ -116,7 +116,7 @@ func main() {
 	if len(docs2) > 0 {
 		lastID = &docs2[0].ID
 	}
-	docs2, err = db.EmailRelationDocumentByTo(ctx, d,
+	docs2, err = db.EmailRelationDocumentByWhere(ctx, d,
 		db.EmailRelationDocumentWhere{
 			To:     "gunsluo@gmail.com",
 			LastID: lastID,
@@ -126,6 +126,16 @@ func main() {
 		fmt.Println("err:", err)
 	} else {
 		fmt.Println("total:", len(docs2))
+	}
+
+	total, err = db.CountEmailRelationDocumentByWhere(ctx, d,
+		db.EmailRelationDocumentWhere{
+			To: "gunsluo@gmail.com",
+		})
+	if err != nil {
+		fmt.Println("err:", err)
+	} else {
+		fmt.Println("total:", total)
 	}
 
 	client.Disconnect(ctx)
