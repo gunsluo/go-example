@@ -53,7 +53,8 @@ func (doc *EmailDocument) Insert(ctx context.Context, db *mongo.Database) error 
 		return errors.Wrapf(err, "failed to query document by %s", doc.EID)
 	}
 	if total > 0 {
-		return errors.Errorf("document %s is exist", doc.EID)
+		return &errDuplicateKey{
+			error: errors.Errorf("document %s is exist", doc.EID)}
 	}
 
 	to := bson.NewArray()
@@ -109,6 +110,11 @@ func EmailDocumentByEID(ctx context.Context, db *mongo.Database, eid string) (*E
 			bson.EC.String("eid", eid),
 		))
 	if err := docResult.Decode(doc); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, &errNoDocuments{
+				error: err,
+			}
+		}
 		return nil, err
 	}
 
@@ -117,9 +123,6 @@ func EmailDocumentByEID(ctx context.Context, db *mongo.Database, eid string) (*E
 
 // EmailDocumentWhere query condition
 type EmailDocumentWhere struct {
-	//From []string
-	//To   []string
-
 	StartTime time.Time
 	EndTime   time.Time
 

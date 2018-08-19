@@ -6,6 +6,7 @@ import (
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/objectid"
 	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/mongodb/mongo-go-driver/mongo/findopt"
 	"github.com/pkg/errors"
 )
 
@@ -15,10 +16,11 @@ const (
 
 // EmailRelationDocument storing to addr relation document for email
 type EmailRelationDocument struct {
-	ID  objectid.ObjectID `bson:"_id,omitempty"`
-	EID string            `bson:"eid,omitempty"`
-	To  string            `bson:"to,omitempty"`
-	Tp  string            `bson:"tp,omitempty"`
+	ID   objectid.ObjectID `bson:"_id,omitempty"`
+	EID  string            `bson:"eid,omitempty"`
+	From string            `bson:"from,omitempty"`
+	To   string            `bson:"to,omitempty"`
+	Tp   string            `bson:"tp,omitempty"`
 }
 
 // Insert insert a email relation to db
@@ -43,6 +45,7 @@ func (doc *EmailRelationDocument) Insert(ctx context.Context, db *mongo.Database
 	result, err := coll.InsertOne(ctx,
 		bson.NewDocument(
 			bson.EC.String("eid", doc.EID),
+			bson.EC.String("from", doc.From),
 			bson.EC.String("to", doc.To),
 			bson.EC.String("tp", doc.Tp),
 		))
@@ -59,14 +62,42 @@ func (doc *EmailRelationDocument) Insert(ctx context.Context, db *mongo.Database
 	return nil
 }
 
+// EmailRelationDocumentWhere query condition
+type EmailRelationDocumentWhere struct {
+	From string
+	To   string
+
+	// pagination info
+	Limit  int64
+	LastID *objectid.ObjectID
+}
+
 // EmailRelationDocumentByTo gets email relation document by to from the db
-func EmailRelationDocumentByTo(ctx context.Context, db *mongo.Database, to string) ([]*EmailRelationDocument, error) {
+func EmailRelationDocumentByTo(ctx context.Context, db *mongo.Database,
+	where EmailRelationDocumentWhere) ([]*EmailRelationDocument, error) {
 	coll := db.Collection(EmailRelationDocumentCollection)
 
-	cursor, err := coll.Find(ctx,
-		bson.NewDocument(
-			bson.EC.String("to", to),
-		))
+	condition := bson.NewDocument()
+	if where.From != "" {
+		condition.Append(bson.EC.String("from", where.From))
+	}
+	if where.To != "" {
+		condition.Append(bson.EC.String("to", where.To))
+	}
+
+	if where.LastID != nil {
+		condition.Append(
+			bson.EC.SubDocumentFromElements("_id",
+				bson.EC.ObjectID("$gt", *where.LastID),
+			))
+	}
+
+	if where.Limit == 0 {
+		where.Limit = DefaultLimit
+	}
+
+	cursor, err := coll.Find(ctx, condition,
+		findopt.Limit(where.Limit))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to query email relation documents")
 	}

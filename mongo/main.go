@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gunsluo/go-example/mongo/db"
+	"github.com/mongodb/mongo-go-driver/bson/objectid"
 	"github.com/mongodb/mongo-go-driver/mongo"
 )
 
@@ -76,9 +77,10 @@ func main() {
 	}
 
 	doc2 := &db.EmailRelationDocument{
-		To:  "gunsluo@gmail.com",
-		EID: "000000001",
-		Tp:  "to",
+		From: "luoji@gmail.com",
+		To:   "gunsluo@gmail.com",
+		EID:  "000000001",
+		Tp:   "to",
 	}
 
 	err = doc2.Insert(ctx, d)
@@ -97,7 +99,27 @@ func main() {
 		fmt.Println("insert:", doc2.ID)
 	}
 
-	docs2, err := db.EmailRelationDocumentByTo(ctx, d, "gunsluo@gmail.com")
+	docs2, err := db.EmailRelationDocumentByTo(ctx, d,
+		db.EmailRelationDocumentWhere{
+			To:    "gunsluo@gmail.com",
+			Limit: 1,
+		})
+	if err != nil {
+		fmt.Println("err:", err)
+	} else {
+		fmt.Println("total:", len(docs2))
+	}
+
+	var lastID *objectid.ObjectID
+	if len(docs2) > 0 {
+		lastID = &docs2[0].ID
+	}
+	docs2, err = db.EmailRelationDocumentByTo(ctx, d,
+		db.EmailRelationDocumentWhere{
+			To:     "gunsluo@gmail.com",
+			LastID: lastID,
+			Limit:  2,
+		})
 	if err != nil {
 		fmt.Println("err:", err)
 	} else {
