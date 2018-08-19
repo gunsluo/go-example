@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	// EmailRelationDocumentCollection the collection name of email relation
 	EmailRelationDocumentCollection = "email_relation"
 )
 

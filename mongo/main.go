@@ -64,7 +64,9 @@ func main() {
 		fmt.Println("total:", total)
 	}
 
-	docs, err := db.EmailDocumentByWhere(ctx, d, db.EmailDocumentWhere{})
+	docs, err := db.EmailDocumentByWhere(ctx, d, db.EmailDocumentWhere{
+		EIDs: []string{"000000001", "00000001", "00000002"},
+	})
 	if err != nil {
 		fmt.Println("err:", err)
 	} else {

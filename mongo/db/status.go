@@ -131,6 +131,7 @@ func EmailDocumentByEID(ctx context.Context, db *mongo.Database, eid string) (*E
 type EmailDocumentWhere struct {
 	StartTime time.Time
 	EndTime   time.Time
+	EIDs      []string
 
 	// pagination info
 	Limit  int64
@@ -153,6 +154,17 @@ func EmailDocumentByWhere(ctx context.Context, db *mongo.Database, where EmailDo
 		condition.Append(
 			bson.EC.SubDocument("sendDate", whereDoc),
 		)
+	}
+	if len(where.EIDs) > 0 {
+		array := bson.NewArray()
+		for _, eid := range where.EIDs {
+			array.Append(bson.VC.String(eid))
+		}
+
+		condition.Append(
+			bson.EC.SubDocument("eid",
+				bson.NewDocument(bson.EC.Array("$in", array)),
+			))
 	}
 
 	if where.LastID != nil {

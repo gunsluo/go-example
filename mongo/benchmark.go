@@ -23,7 +23,7 @@ func main() {
 		fmt.Println("err:", err)
 	}
 
-	num := 0
+	num := 50000
 	s := time.Now()
 	err = inserts(ctx, d, num)
 	if err != nil {
@@ -33,7 +33,7 @@ func main() {
 	fmt.Printf("insert %d spend: %v\n", num, e.Sub(s))
 
 	s = time.Now()
-	err = findOne(ctx, d, "eid00000010")
+	err = findOne(ctx, d, "00000010")
 	if err != nil {
 		fmt.Println("err:", err)
 	}
@@ -65,8 +65,8 @@ func main() {
 
 func inserts(ctx context.Context, d *mongo.Database, total int) error {
 	for i := 0; i < total; i++ {
-		eid := fmt.Sprintf("eid%08d", i)
-		reid := fmt.Sprintf("reid%08d", i)
+		eid := fmt.Sprintf("%08d", i)
+		reid := fmt.Sprintf("%08d", i)
 
 		doc := &db.EmailDocument{
 			EID:      eid,
