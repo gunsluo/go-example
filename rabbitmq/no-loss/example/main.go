@@ -17,20 +17,22 @@ func main() {
 
 	reply, err := client.Send(context.Background(),
 		&pb.SendRequest{
-			From:    "gunsluo@gmail.com",
-			To:      []string{"gunsluo@gmail.com"},
-			Subject: "Amazon SES Test (AWS SDK for Go)",
-			Html:    "<html>this is a test</html>",
+			Email: &pb.Email{
+				From:    "gunsluo@gmail.com",
+				To:      []string{"gunsluo@gmail.com"},
+				Subject: "Amazon SES Test (AWS SDK for Go)",
+				Html:    "<html>this is a test</html>",
+			},
 		})
 	if err != nil {
 		fmt.Println("unable to send ", err)
 	} else {
-		fmt.Println("reply:", reply.Id, reply.Status)
+		fmt.Println("reply:", reply.EID, reply.Status)
 	}
 
 	reply2, err := client.Status(context.Background(),
 		&pb.StatusRequest{
-			Id: "3edcc83a-c764-4878-9fda-2013233dfb29",
+			EID: reply.EID,
 		})
 	if err != nil {
 		fmt.Println("unable to query status ", err)
