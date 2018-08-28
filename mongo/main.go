@@ -30,9 +30,9 @@ func main() {
 		SendDate: time.Now(),
 		Status:   "SendOK",
 		Content: db.EmailContentSubDocument{
-			From:    "gunsluo@gmail.com",
-			To:      []string{"gunsluo@gmail.com", "gunsluo@gmail.com"},
-			Cc:      []string{},
+			From:    "no-reply@gmail.com",
+			To:      []string{"gunsluo@gmail.com", "gunsluo2@gmail.com"},
+			Cc:      []string{"jerrylou@gmail.com"},
 			Bcc:     []string{},
 			Subject: "test for SDK go",
 			HTML:    "<html>this is a test</html>",
@@ -47,11 +47,44 @@ func main() {
 		fmt.Println("insert:", doc.ID)
 	}
 
+	doc2 := &db.EmailDocument{
+		EID:      "000000002",
+		ReID:     "000000002",
+		SendDate: time.Now(),
+		Status:   "SendOK",
+		Content: db.EmailContentSubDocument{
+			From:    "no-reply@gmail.com",
+			To:      []string{"gunsluo@gmail.com", "gunsluo3@gmail.com"},
+			Cc:      []string{"luoji@gmail.com"},
+			Bcc:     []string{},
+			Subject: "test for SDK go",
+			HTML:    "<html>this is a test</html>",
+			Text:    "this is a test",
+		},
+	}
+
+	err = doc2.Insert(ctx, d)
+	if err != nil {
+		fmt.Println("err:", err)
+	} else {
+		fmt.Println("insert:", doc2.ID)
+	}
+
 	ndoc, err := db.EmailDocumentByEID(ctx, d, doc.EID)
 	if err != nil {
 		fmt.Println("err:", err)
 	} else {
 		fmt.Println("doc:", ndoc)
+
+		//buf, _ := json.Marshal(ndoc)
+		//fmt.Println("json:", string(buf))
+	}
+
+	ndoc2, err := db.EmailDocumentByEID(ctx, d, doc2.EID)
+	if err != nil {
+		fmt.Println("err:", err)
+	} else {
+		fmt.Println("doc:", ndoc2)
 
 		//buf, _ := json.Marshal(ndoc)
 		//fmt.Println("json:", string(buf))
@@ -64,8 +97,100 @@ func main() {
 		fmt.Println("total:", total)
 	}
 
-	docs, err := db.EmailDocumentByWhere(ctx, d, db.EmailDocumentWhere{
-		EIDs: []string{"000000001", "00000001", "00000002"},
+	docs, err := db.EmailDocumentByIDs(ctx, d, []objectid.ObjectID{ndoc.ID, ndoc2.ID})
+	if err != nil {
+		fmt.Println("err:", err)
+	} else {
+		fmt.Println("docs:", len(docs))
+	}
+
+	docs, err = db.EmailDocumentByWhere(ctx, d, db.EmailDocumentWhere{
+		StartTime: time.Unix(1535298650, 0),
+		EndTime:   time.Now().Add(3 * time.Second),
+		Limit:     1,
+	})
+	if err != nil {
+		fmt.Println("err:", err)
+	} else {
+		fmt.Println("docs:", len(docs))
+	}
+
+	var lastID *objectid.ObjectID
+	if len(docs) > 0 {
+		lastID = &docs[len(docs)-1].ID
+	}
+
+	docs, err = db.EmailDocumentByWhere(ctx, d, db.EmailDocumentWhere{
+		StartTime: time.Unix(1535298650, 0),
+		EndTime:   time.Now().Add(3 * time.Second),
+		Limit:     1,
+		LastID:    lastID,
+	})
+	if err != nil {
+		fmt.Println("err:", err)
+	} else {
+		fmt.Println("docs:", len(docs))
+	}
+
+	docs, err = db.EmailDocumentByWhere(ctx, d, db.EmailDocumentWhere{
+		StartTime: time.Unix(1535298650, 0),
+		EndTime:   time.Now().Add(3 * time.Second),
+		From:      "no-reply@gmail.com",
+	})
+	if err != nil {
+		fmt.Println("err:", err)
+	} else {
+		fmt.Println("docs:", len(docs))
+	}
+
+	docs, err = db.EmailDocumentByWhere(ctx, d, db.EmailDocumentWhere{
+		StartTime: time.Unix(1535298650, 0),
+		EndTime:   time.Now().Add(3 * time.Second),
+		From:      "no-reply@gmail.com",
+		To:        "gunsluo@gmail.com",
+		Limit:     1,
+	})
+	if err != nil {
+		fmt.Println("err:", err)
+	} else {
+		fmt.Println("docs:", len(docs))
+	}
+
+	if len(docs) > 0 {
+		lastID = &docs[len(docs)-1].ID
+	}
+	docs, err = db.EmailDocumentByWhere(ctx, d, db.EmailDocumentWhere{
+		StartTime: time.Unix(1535298650, 0),
+		EndTime:   time.Now().Add(3 * time.Second),
+		From:      "no-reply@gmail.com",
+		To:        "gunsluo@gmail.com",
+		LastID:    lastID,
+	})
+	if err != nil {
+		fmt.Println("err:", err)
+	} else {
+		fmt.Println("docs:", len(docs))
+	}
+
+	docs, err = db.EmailDocumentByWhere(ctx, d, db.EmailDocumentWhere{
+		StartTime: time.Unix(1535298650, 0),
+		EndTime:   time.Now().Add(3 * time.Second),
+		From:      "no-reply@gmail.com",
+		To:        "gunsluo@gmail.com",
+		Offset:    1,
+	})
+	if err != nil {
+		fmt.Println("err:", err)
+	} else {
+		fmt.Println("docs:", len(docs))
+	}
+
+	docs, err = db.EmailDocumentByWhere(ctx, d, db.EmailDocumentWhere{
+		StartTime: time.Unix(1535298650, 0),
+		EndTime:   time.Now().Add(3 * time.Second),
+		From:      "no-reply@gmail.com",
+		To:        "gunsluo@gmail.com",
+		Cc:        "luoji@gmail.com",
 	})
 	if err != nil {
 		fmt.Println("err:", err)
@@ -78,59 +203,147 @@ func main() {
 		fmt.Println("err:", err)
 	}
 
-	doc2 := &db.EmailRelationDocument{
-		From: "luoji@gmail.com",
+	rdoc := &db.EmailRelationDocument{
+		From: "no-reply@gmail.com",
 		To:   "gunsluo@gmail.com",
 		EID:  "000000001",
+		OID:  ndoc.ID,
 		Tp:   "to",
 	}
 
-	err = doc2.Insert(ctx, d)
+	err = rdoc.Insert(ctx, d)
 	if err != nil {
 		fmt.Println("err:", err)
 	} else {
-		fmt.Println("insert:", doc2.ID)
+		fmt.Println("insert:", rdoc.ID)
 	}
 
-	doc2.EID = "000000002"
-	doc2.Tp = "cc"
-	err = doc2.Insert(ctx, d)
+	rdoc = &db.EmailRelationDocument{
+		From: "no-reply@gmail.com",
+		To:   "gunsluo2@gmail.com",
+		EID:  "000000001",
+		OID:  ndoc.ID,
+		Tp:   "to",
+	}
+
+	err = rdoc.Insert(ctx, d)
 	if err != nil {
 		fmt.Println("err:", err)
 	} else {
-		fmt.Println("insert:", doc2.ID)
+		fmt.Println("insert:", rdoc.ID)
 	}
 
-	docs2, err := db.EmailRelationDocumentByWhere(ctx, d,
+	rdoc = &db.EmailRelationDocument{
+		From: "no-reply@gmail.com",
+		To:   "jerrylou@gmail.com",
+		EID:  "000000001",
+		OID:  ndoc.ID,
+		Tp:   "cc",
+	}
+
+	err = rdoc.Insert(ctx, d)
+	if err != nil {
+		fmt.Println("err:", err)
+	} else {
+		fmt.Println("insert:", rdoc.ID)
+	}
+
+	rdoc = &db.EmailRelationDocument{
+		From: "no-reply@gmail.com",
+		To:   "gunsluo@gmail.com",
+		EID:  "000000002",
+		OID:  ndoc2.ID,
+		Tp:   "to",
+	}
+
+	err = rdoc.Insert(ctx, d)
+	if err != nil {
+		fmt.Println("err:", err)
+	} else {
+		fmt.Println("insert:", rdoc.ID)
+	}
+
+	rdoc = &db.EmailRelationDocument{
+		From: "no-reply@gmail.com",
+		To:   "gunsluo3@gmail.com",
+		EID:  "000000002",
+		OID:  ndoc2.ID,
+		Tp:   "to",
+	}
+
+	err = rdoc.Insert(ctx, d)
+	if err != nil {
+		fmt.Println("err:", err)
+	} else {
+		fmt.Println("insert:", rdoc.ID)
+	}
+
+	rdoc = &db.EmailRelationDocument{
+		From: "no-reply@gmail.com",
+		To:   "luoji@gmail.com",
+		EID:  "000000002",
+		OID:  ndoc2.ID,
+		Tp:   "cc",
+	}
+
+	err = rdoc.Insert(ctx, d)
+	if err != nil {
+		fmt.Println("err:", err)
+	} else {
+		fmt.Println("insert:", rdoc.ID)
+	}
+
+	rdocs2, err := db.EmailRelationDocumentByWhere(ctx, d,
 		db.EmailRelationDocumentWhere{
-			To:    "gunsluo@gmail.com",
-			Limit: 1,
+			From: "no-reply@gmail.com",
 		})
 	if err != nil {
 		fmt.Println("err:", err)
 	} else {
-		fmt.Println("total:", len(docs2))
+		fmt.Println("total:", len(rdocs2))
 	}
 
-	var lastID *objectid.ObjectID
-	if len(docs2) > 0 {
-		lastID = &docs2[0].ID
-	}
-	docs2, err = db.EmailRelationDocumentByWhere(ctx, d,
+	rdocs2, err = db.EmailRelationDocumentByWhere(ctx, d,
 		db.EmailRelationDocumentWhere{
-			To:     "gunsluo@gmail.com",
+			From: "no-reply@gmail.com",
+			To:   "gunsluo@gmail.com",
+			Tp:   "to",
+		})
+	if err != nil {
+		fmt.Println("err:", err)
+	} else {
+		fmt.Println("total:", len(rdocs2))
+	}
+
+	rdocs2, err = db.EmailRelationDocumentByWhere(ctx, d,
+		db.EmailRelationDocumentWhere{
+			Tp:    "to",
+			Limit: 2,
+		})
+	if err != nil {
+		fmt.Println("err:", err)
+	} else {
+		fmt.Println("total:", len(rdocs2))
+	}
+
+	if len(rdocs2) > 0 {
+		lastID = &rdocs2[len(rdocs2)-1].OID
+	}
+
+	rdocs2, err = db.EmailRelationDocumentByWhere(ctx, d,
+		db.EmailRelationDocumentWhere{
+			Tp:     "to",
 			LastID: lastID,
-			Limit:  2,
 		})
 	if err != nil {
 		fmt.Println("err:", err)
 	} else {
-		fmt.Println("total:", len(docs2))
+		fmt.Println("total:", len(rdocs2))
 	}
 
 	total, err = db.CountEmailRelationDocumentByWhere(ctx, d,
 		db.EmailRelationDocumentWhere{
-			To: "gunsluo@gmail.com",
+			From: "no-reply@gmail.com",
 		})
 	if err != nil {
 		fmt.Println("err:", err)

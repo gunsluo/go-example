@@ -18,6 +18,7 @@ const (
 // EmailRelationDocument storing to addr relation document for email
 type EmailRelationDocument struct {
 	ID   objectid.ObjectID `bson:"_id,omitempty"`
+	OID  objectid.ObjectID `bson:"oid,omitempty"`
 	EID  string            `bson:"eid,omitempty"`
 	From string            `bson:"from,omitempty"`
 	To   string            `bson:"to,omitempty"`
@@ -45,6 +46,7 @@ func (doc *EmailRelationDocument) Insert(ctx context.Context, db *mongo.Database
 
 	result, err := coll.InsertOne(ctx,
 		bson.NewDocument(
+			bson.EC.ObjectID("oid", doc.OID),
 			bson.EC.String("eid", doc.EID),
 			bson.EC.String("from", doc.From),
 			bson.EC.String("to", doc.To),
@@ -67,6 +69,7 @@ func (doc *EmailRelationDocument) Insert(ctx context.Context, db *mongo.Database
 type EmailRelationDocumentWhere struct {
 	From string
 	To   string
+	Tp   string
 
 	// pagination info
 	Limit  int64
@@ -85,11 +88,14 @@ func EmailRelationDocumentByWhere(ctx context.Context, db *mongo.Database,
 	if where.To != "" {
 		condition.Append(bson.EC.String("to", where.To))
 	}
+	if where.Tp != "" {
+		condition.Append(bson.EC.String("tp", where.Tp))
+	}
 
 	if where.LastID != nil {
 		condition.Append(
-			bson.EC.SubDocumentFromElements("_id",
-				bson.EC.ObjectID("$gt", *where.LastID),
+			bson.EC.SubDocumentFromElements("oid",
+				bson.EC.ObjectID("$lt", *where.LastID),
 			))
 	}
 
@@ -98,7 +104,10 @@ func EmailRelationDocumentByWhere(ctx context.Context, db *mongo.Database,
 	}
 
 	cursor, err := coll.Find(ctx, condition,
-		findopt.Limit(where.Limit))
+		findopt.Limit(where.Limit),
+		findopt.Sort(map[string]int32{
+			"oid": -1,
+		}))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to query email relation documents")
 	}
@@ -128,6 +137,9 @@ func CountEmailRelationDocumentByWhere(ctx context.Context, db *mongo.Database,
 	}
 	if where.To != "" {
 		condition.Append(bson.EC.String("to", where.To))
+	}
+	if where.Tp != "" {
+		condition.Append(bson.EC.String("tp", where.Tp))
 	}
 
 	result, err := coll.Distinct(ctx, "eid", condition)

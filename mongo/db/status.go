@@ -68,11 +68,11 @@ func (doc *EmailDocument) Insert(ctx context.Context, db *mongo.Database) error 
 		to.Append(bson.VC.String(addr))
 	}
 	cc := bson.NewArray()
-	for _, addr := range doc.Content.To {
+	for _, addr := range doc.Content.Cc {
 		cc.Append(bson.VC.String(addr))
 	}
 	bcc := bson.NewArray()
-	for _, addr := range doc.Content.To {
+	for _, addr := range doc.Content.Bcc {
 		bcc.Append(bson.VC.String(addr))
 	}
 
@@ -131,10 +131,14 @@ func EmailDocumentByEID(ctx context.Context, db *mongo.Database, eid string) (*E
 type EmailDocumentWhere struct {
 	StartTime time.Time
 	EndTime   time.Time
-	EIDs      []string
+	From      string
+	To        string
+	Cc        string
+	Bcc       string
 
 	// pagination info
 	Limit  int64
+	Offset int64
 	LastID *objectid.ObjectID
 }
 
@@ -155,34 +159,50 @@ func EmailDocumentByWhere(ctx context.Context, db *mongo.Database, where EmailDo
 			bson.EC.SubDocument("sendDate", whereDoc),
 		)
 	}
-	if len(where.EIDs) > 0 {
-		array := bson.NewArray()
-		for _, eid := range where.EIDs {
-			array.Append(bson.VC.String(eid))
-		}
 
+	if where.From != "" {
 		condition.Append(
-			bson.EC.SubDocument("eid",
-				bson.NewDocument(bson.EC.Array("$in", array)),
-			))
+			bson.EC.String("content.from", where.From),
+		)
+	}
+	if where.To != "" {
+		condition.Append(
+			bson.EC.String("content.to", where.To),
+		)
+	}
+	if where.Cc != "" {
+		condition.Append(
+			bson.EC.String("content.cc", where.Cc),
+		)
+	}
+	if where.Bcc != "" {
+		condition.Append(
+			bson.EC.String("content.bcc", where.Bcc),
+		)
 	}
 
-	if where.LastID != nil {
-		condition.Append(
-			bson.EC.SubDocumentFromElements("_id",
-				bson.EC.ObjectID("$gt", *where.LastID),
-			))
-	}
-
+	var opts []findopt.Find
 	if where.Limit == 0 {
 		where.Limit = DefaultLimit
 	}
+	opts = append(opts, findopt.Limit(where.Limit))
 
-	cursor, err := coll.Find(ctx, condition,
-		findopt.Limit(where.Limit),
-		findopt.Sort(map[string]int32{
-			"sendDate": -1,
-		}))
+	// two ways to pagination, lastID is the first choice
+	if where.LastID != nil {
+		condition.Append(
+			bson.EC.SubDocumentFromElements("_id",
+				bson.EC.ObjectID("$lt", *where.LastID),
+			))
+	} else if where.Offset != 0 {
+		opts = append(opts, findopt.Skip(where.Offset))
+	}
+
+	// _id is sorted by insert time
+	opts = append(opts, findopt.Sort(map[string]int32{
+		"_id": -1,
+	}))
+
+	cursor, err := coll.Find(ctx, condition, opts...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to query email documents")
 	}
@@ -195,6 +215,7 @@ func EmailDocumentByWhere(ctx context.Context, db *mongo.Database, where EmailDo
 		if err != nil {
 			return nil, err
 		}
+
 		docs = append(docs, doc)
 	}
 
@@ -225,6 +246,48 @@ func CountEmailDocumentByWhere(ctx context.Context, db *mongo.Database, where Em
 	}
 
 	return total, nil
+}
+
+// EmailDocumentByIDs gets list of email document by ids from the db
+func EmailDocumentByIDs(ctx context.Context, db *mongo.Database, ids []objectid.ObjectID) ([]*EmailDocument, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	coll := db.Collection(EmailDocumentCollection)
+	condition := bson.NewDocument()
+
+	array := bson.NewArray()
+	for _, id := range ids {
+		array.Append(bson.VC.ObjectID(id))
+	}
+
+	condition.Append(
+		bson.EC.SubDocument("_id",
+			bson.NewDocument(bson.EC.Array("$in", array)),
+		))
+	// _id is sorted by insert time
+	cursor, err := coll.Find(ctx, condition,
+		findopt.Sort(map[string]int32{
+			"_id": -1,
+		}))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to query email documents")
+	}
+	defer cursor.Close(ctx)
+
+	var docs []*EmailDocument
+	for cursor.Next(ctx) {
+		doc := &EmailDocument{}
+		err := cursor.Decode(doc)
+		if err != nil {
+			return nil, err
+		}
+
+		docs = append(docs, doc)
+	}
+
+	return docs, nil
 }
 
 // EmailDocumentCreateIndexes create indexes to optimize the query.
