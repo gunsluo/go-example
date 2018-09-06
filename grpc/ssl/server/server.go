@@ -8,7 +8,9 @@ import (
 	"github.com/gunsluo/go-example/grpc/ssl/pb"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/metadata"
 )
 
 const (
@@ -21,7 +23,17 @@ type Service struct {
 }
 
 func (s *Service) SayHello(ctx context.Context, req *pb.HelloRequest) (*pb.HelloReply, error) {
-	fmt.Println("requst:", req.Name)
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, grpc.Errorf(codes.Unauthenticated, "no metadata")
+	}
+
+	token := md.Get("token")
+	if len(token) == 0 {
+		return nil, grpc.Errorf(codes.Unauthenticated, "no token")
+	}
+
+	fmt.Println("requst:", token[0], req.Name)
 	return &pb.HelloReply{
 		Message: "hello, " + req.Name,
 	}, nil

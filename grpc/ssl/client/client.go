@@ -15,8 +15,25 @@ const (
 	crtFile  = "../cert/server.crt"
 )
 
+// customCredential 自定义认证
+type customCredential struct {
+	token    string
+	security bool
+}
+
+func (c customCredential) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
+	return map[string]string{
+		"token": c.token,
+	}, nil
+}
+
+func (c customCredential) RequireTransportSecurity() bool {
+	return c.security
+}
+
 func main() {
 	var opts []grpc.DialOption
+	customCred := &customCredential{token: "custom-token"}
 	if crtFile != "" {
 		fmt.Println("enable credentials in the grpc")
 		// target is common name(host name) in the cert file
@@ -26,9 +43,13 @@ func main() {
 		}
 
 		opts = append(opts, grpc.WithTransportCredentials(creds))
+		customCred.security = true
 	} else {
 		opts = append(opts, grpc.WithInsecure())
 	}
+
+	// custom credentials
+	opts = append(opts, grpc.WithPerRPCCredentials(customCred))
 
 	conn, err := grpc.Dial("127.0.0.1:3264", opts...)
 	if err != nil {
