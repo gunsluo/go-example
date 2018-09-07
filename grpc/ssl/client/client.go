@@ -11,8 +11,11 @@ import (
 )
 
 const (
-	sAddress = "0.0.0.0:3264"
-	crtFile  = "../cert/server.crt"
+	sAddress = "grpc.demo:443"
+	//sAddress   = "127.0.0.1:3264"
+	crtFile    = "../ses.crt"
+	serverName = "grpc.demo"
+	//crtFile    = ""
 )
 
 // customCredential 自定义认证
@@ -37,7 +40,7 @@ func main() {
 	if crtFile != "" {
 		fmt.Println("enable credentials in the grpc")
 		// target is common name(host name) in the cert file
-		creds, err := credentials.NewClientTLSFromFile(crtFile, "target")
+		creds, err := credentials.NewClientTLSFromFile(crtFile, serverName)
 		if err != nil {
 			panic(err)
 		}
@@ -51,7 +54,7 @@ func main() {
 	// custom credentials
 	opts = append(opts, grpc.WithPerRPCCredentials(customCred))
 
-	conn, err := grpc.Dial("127.0.0.1:3264", opts...)
+	conn, err := grpc.Dial(sAddress, opts...)
 	if err != nil {
 		panic(err)
 	}
