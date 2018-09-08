@@ -82,4 +82,5 @@ subjectAltName = @alt_names
 [ alt_names ]
 DNS.1 = grpc.demo
 DNS.2 = *.digitalenergycloud.com
+IP.1 = 127.0.0.1
 

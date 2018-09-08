@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 
@@ -19,6 +22,7 @@ var (
 	argAddress string
 	argCrtFile string
 	argKeyFile string
+	argCAFile  string
 )
 
 var verbose bool
@@ -35,6 +39,7 @@ func init() {
 	rootCmd.Flags().StringVarP(&argAddress, "address", "a", ":3264", "address to listen on")
 	rootCmd.Flags().StringVar(&argCrtFile, "cert-file", "", "certificate file for gRPC TLS authentication")
 	rootCmd.Flags().StringVar(&argKeyFile, "key-file", "", "key file for gRPC TLS authentication")
+	rootCmd.Flags().StringVar(&argCAFile, "ca-file", "", "ca file for gRPC client")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
 }
 
@@ -75,12 +80,43 @@ func run(cmd *cobra.Command, _ []string) {
 	var opts []grpc.ServerOption
 	if argCrtFile != "" && argKeyFile != "" {
 		fmt.Println("enable credentials in the grpc")
-		creds, err := credentials.NewServerTLSFromFile(argCrtFile, argKeyFile)
-		if err != nil {
-			panic(err)
-		}
 
-		opts = append(opts, grpc.Creds(creds))
+		if argCAFile == "" {
+			creds, err := credentials.NewServerTLSFromFile(argCrtFile, argKeyFile)
+			if err != nil {
+				panic(err)
+			}
+
+			opts = append(opts, grpc.Creds(creds))
+		} else {
+			// Parse certificates from certificate file and key file for server.
+			cert, err := tls.LoadX509KeyPair(argCrtFile, argKeyFile)
+			if err != nil {
+				panic(err)
+				//return fmt.Errorf("invalid config: error parsing gRPC certificate file: %v", err)
+			}
+
+			// Parse certificates from client CA file to a new CertPool.
+			cPool := x509.NewCertPool()
+			clientCert, err := ioutil.ReadFile(argCAFile)
+			if err != nil {
+				panic(err)
+				//return fmt.Errorf("invalid config: reading from client CA file: %v", err)
+			}
+			if cPool.AppendCertsFromPEM(clientCert) != true {
+				panic(err)
+				//return errors.New("invalid config: failed to parse client CA")
+			}
+
+			tlsConfig := tls.Config{
+				Certificates: []tls.Certificate{cert},
+				ClientAuth:   tls.RequireAndVerifyClientCert,
+				ClientCAs:    cPool,
+			}
+			opts = append(opts,
+				grpc.Creds(credentials.NewTLS(&tlsConfig)),
+			)
+		}
 	}
 
 	server := grpc.NewServer(opts...)

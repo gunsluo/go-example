@@ -1,12 +1,8 @@
-
-
+#!/bin/sh
 
 mkdir -p {certs,crl,newcerts}
 touch index.txt
 echo 1000 > serial
-
-#mkdir -p newcerts
-#touch index.txt
 
 
 # CA private key (unencrypted)
@@ -28,6 +24,6 @@ openssl req -config openssl.cnf -new -sha256 -key client.key -out client.csr -su
 # Certificate Authority signs CSR to grant a certificate
 openssl ca -batch -config openssl.cnf -extensions usr_cert -days 365 -notext -md sha256 -in client.csr -out client.crt -cert ca.crt -keyfile ca.key
 
+#openssl x509 -text -noout -in ca.crt
 
-openssl x509 -text -noout -in ca.crt
-
+rm *.csr
