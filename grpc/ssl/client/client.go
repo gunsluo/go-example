@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	sAddress = "grpc.demo:443"
-	//sAddress   = "127.0.0.1:3264"
-	crtFile    = "../ses.crt"
+	//sAddress = "grpc.demo:443"
+	sAddress = "127.0.0.1:3264"
+	//sAddress   = "grpc.demo:3264"
+	crtFile    = "../cert-ca/ca.crt"
 	serverName = "grpc.demo"
 	//crtFile    = ""
 )
