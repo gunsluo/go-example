@@ -80,7 +80,6 @@ subjectAltName = @alt_names
 # subjectAltName = IP.1:127.0.0.1,IP.2:172.18.0.2
 
 [ alt_names ]
-DNS.1 = grpc.demo
-DNS.2 = *.digitalenergycloud.com
-IP.1 = 127.0.0.1
+DNS.1 = *.digitalenergycloud.com
+DNS.2 = srv.grpc.com
 
