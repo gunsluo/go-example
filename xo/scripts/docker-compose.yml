@@ -1,0 +1,18 @@
+version: "3"
+services:
+
+  postgres:
+    image: postgres:10.3-alpine
+    restart: on-failure
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      PGDATA: /var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    volumes:
+      - db-data-1:/var/lib/postgresql/data/
+      - .:/data/dump
+
+volumes:
+  db-data-1:

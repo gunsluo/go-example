@@ -1,0 +1,10 @@
+# Control special rules for XO code generation
+
+# Enumerate the special column of table that need to expose to graphql filter
+# By default, We only expose indexed column of table to the graphql filter.
+ExtraFilters:
+
+
+# Enumerate the special column need special access control on it.
+# By default, we only consider a table as a minimal resource of access control verify.
+ExtraACRules:
