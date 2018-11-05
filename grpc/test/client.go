@@ -55,6 +55,7 @@ func main() {
 	testListPolicies(ctx, client)
 	testListPolicies2(ctx, client)
 	testVerify(ctx, client)
+	testVerifyList(ctx, client)
 
 	testRemoveAction(ctx, client)
 	testRemoveResource(ctx, client)
@@ -373,7 +374,7 @@ func testUpdatePolicy(ctx context.Context, client pb.AccessControlClient) {
 					"target:reach:/<.+>",
 				},
 				Actions:    []string{"reach:create"},
-				Conditions: []byte(`{"clientIP":{"type":"CIDRCondition","options":{"cidr":"127.0.0.1/32"}}}`),
+				Conditions: []byte(`{"clientIP":{"type":"CIDRCondition","options":{"cidr":"127.0.0.1/24"}}}`),
 			},
 		})
 	errStatus := status.Convert(err)
@@ -445,6 +446,34 @@ func testVerify(ctx context.Context, client pb.AccessControlClient) {
 	}
 
 	log.Println("verify subject permissions to access control grpc result:", reply.Allowed)
+}
+
+func testVerifyList(ctx context.Context, client pb.AccessControlClient) {
+	reply, err := client.VerifyList(ctx,
+		&pb.VerifyListRequest{
+			List: []*pb.VerifyRequest{
+				&pb.VerifyRequest{
+					Subject:  "tom",
+					Resource: "target:reach:/r1",
+					Action:   "reach:get",
+				},
+				&pb.VerifyRequest{
+					Subject:  "target:reach:admin",
+					Resource: "target:reach:/r2",
+					Action:   "reach:create",
+					Context:  []byte(`{"clientIP": "127.0.0.5"}`),
+				},
+			},
+		})
+	errStatus := status.Convert(err)
+	if errStatus.Code() != codes.OK {
+		log.Println("verify list subject permissions to access control grpc:", errStatus.Err())
+		return
+	}
+
+	for _, res := range reply.Results {
+		log.Println("verify list subject permissions to access control grpc result:", res.Allowed)
+	}
 }
 
 func testRemoveAction(ctx context.Context, client pb.AccessControlClient) {
