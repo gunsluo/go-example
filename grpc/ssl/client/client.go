@@ -92,7 +92,7 @@ func run(cmd *cobra.Command, _ []string) {
 				RootCAs:      cPool,
 				Certificates: []tls.Certificate{clientCert},
 			}
-			creds := credentials.NewTLS(clientTLSConfig)
+			cred := credentials.NewTLS(clientTLSConfig)
 
 			opts = append(opts, grpc.WithTransportCredentials(creds))
 		} else {
