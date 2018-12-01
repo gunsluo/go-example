@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gunsluo/go-example/mongo/db"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
+	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
 )
 
@@ -18,7 +18,6 @@ func main() {
 	}
 
 	d := client.Database("ses")
-
 	err = db.EmailDocumentCreateIndexes(ctx, d)
 	if err != nil {
 		fmt.Println("err:", err)
@@ -30,13 +29,14 @@ func main() {
 		SendDate: time.Now(),
 		Status:   "SendOK",
 		Content: db.EmailContentSubDocument{
-			From:    "no-reply@gmail.com",
-			To:      []string{"gunsluo@gmail.com", "gunsluo2@gmail.com"},
-			Cc:      []string{"jerrylou@gmail.com"},
-			Bcc:     []string{},
-			Subject: "test for SDK go",
-			HTML:    "<html>this is a test</html>",
-			Text:    "this is a test",
+			From:        "no-reply@gmail.com",
+			To:          []string{"gunsluo@gmail.com", "gunsluo2@gmail.com"},
+			Cc:          []string{"jerrylou@gmail.com"},
+			Bcc:         []string{},
+			Subject:     "test for SDK go",
+			HTML:        "<html>this is a test</html>",
+			Text:        "this is a test",
+			Attachments: []db.EmailAttachment{{Name: "a", URL: "b"}},
 		},
 	}
 
@@ -97,7 +97,7 @@ func main() {
 		fmt.Println("total:", total)
 	}
 
-	docs, err := db.EmailDocumentByIDs(ctx, d, []objectid.ObjectID{ndoc.ID, ndoc2.ID})
+	docs, err := db.EmailDocumentByIDs(ctx, d, []primitive.ObjectID{ndoc.ID, ndoc2.ID})
 	if err != nil {
 		fmt.Println("err:", err)
 	} else {
@@ -115,7 +115,7 @@ func main() {
 		fmt.Println("docs:", len(docs))
 	}
 
-	var lastID *objectid.ObjectID
+	var lastID *primitive.ObjectID
 	if len(docs) > 0 {
 		lastID = &docs[len(docs)-1].ID
 	}
@@ -197,6 +197,7 @@ func main() {
 	} else {
 		fmt.Println("docs:", len(docs))
 	}
+	fmt.Println("==>", docs[0])
 
 	err = db.EmailRelationDocumentCreateIndexes(ctx, d)
 	if err != nil {

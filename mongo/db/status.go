@@ -5,15 +5,16 @@ import (
 	"time"
 
 	"github.com/mongodb/mongo-go-driver/bson"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
+	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"github.com/mongodb/mongo-go-driver/mongo/options"
+	"github.com/mongodb/mongo-go-driver/x/bsonx"
 	"github.com/pkg/errors"
 )
 
 const (
-	// DefaultDBName default db name
-	DefaultDBName = "ses"
+	// DefaultSESDBName default db name of ses
+	DefaultSESDBName = "ses"
 
 	// EmailDocumentCollection the collection name of email
 	EmailDocumentCollection = "email"
@@ -24,7 +25,7 @@ const (
 
 // EmailDocument storing documents for email
 type EmailDocument struct {
-	ID       objectid.ObjectID       `bson:"_id,omitempty"`
+	ID       primitive.ObjectID      `bson:"_id,omitempty"`
 	EID      string                  `bson:"eid,omitempty"`
 	ReID     string                  `bson:"reid,omitempty"`
 	SendDate time.Time               `bson:"sendDate,omitempty"`
@@ -35,13 +36,20 @@ type EmailDocument struct {
 
 // EmailContentSubDocument storing sub documents for email
 type EmailContentSubDocument struct {
-	From    string   `bson:"from,omitempty"`
-	To      []string `bson:"to,omitempty"`
-	Cc      []string `bson:"cc,omitempty"`
-	Bcc     []string `bson:"bcc,omitempty"`
-	Subject string   `bson:"subject,omitempty"`
-	HTML    string   `bson:"html,omitempty"`
-	Text    string   `bson:"text,omitempty"`
+	From        string            `bson:"from,omitempty"`
+	To          []string          `bson:"to,omitempty"`
+	Cc          []string          `bson:"cc,omitempty"`
+	Bcc         []string          `bson:"bcc,omitempty"`
+	Subject     string            `bson:"subject,omitempty"`
+	HTML        string            `bson:"html,omitempty"`
+	Text        string            `bson:"text,omitempty"`
+	Attachments []EmailAttachment `bson:"attachments,omitempty"`
+}
+
+// EmailAttachment attachment in mail
+type EmailAttachment struct {
+	Name string `bson:"name,omitempty"`
+	URL  string `bson:"url,omitempty"`
 }
 
 // Insert insert a email to db
@@ -52,9 +60,8 @@ func (doc *EmailDocument) Insert(ctx context.Context, db *mongo.Database) error 
 	coll := db.Collection(doc.Collection())
 
 	total, err := coll.Count(ctx,
-		bson.NewDocument(
-			bson.EC.String("eid", doc.EID),
-		))
+		bson.D{{"eid", doc.EID}},
+	)
 	if err != nil {
 		return errors.Wrapf(err, "failed to query document by %s", doc.EID)
 	}
@@ -63,42 +70,48 @@ func (doc *EmailDocument) Insert(ctx context.Context, db *mongo.Database) error 
 			error: errors.Errorf("document %s is exist", doc.EID)}
 	}
 
-	to := bson.NewArray()
+	to := bson.A{}
 	for _, addr := range doc.Content.To {
-		to.Append(bson.VC.String(addr))
+		to = append(to, addr)
 	}
-	cc := bson.NewArray()
+	cc := bson.A{}
 	for _, addr := range doc.Content.Cc {
-		cc.Append(bson.VC.String(addr))
+		cc = append(cc, addr)
 	}
-	bcc := bson.NewArray()
+	bcc := bson.A{}
 	for _, addr := range doc.Content.Bcc {
-		bcc.Append(bson.VC.String(addr))
+		bcc = append(bcc, addr)
+	}
+	attachments := bson.A{}
+	for _, attachment := range doc.Content.Attachments {
+		attachments = append(attachments, bson.D{{"name", attachment.Name}, {"url", attachment.URL}})
 	}
 
 	result, err := coll.InsertOne(ctx,
-		bson.NewDocument(
-			bson.EC.String("eid", doc.EID),
-			bson.EC.String("reid", doc.ReID),
-			bson.EC.Time("sendDate", doc.SendDate),
-			bson.EC.String("status", doc.Status),
-			bson.EC.String("reason", doc.Reason),
-			bson.EC.SubDocumentFromElements("content",
-				bson.EC.String("from", doc.Content.From),
-				bson.EC.Array("to", to),
-				bson.EC.Array("cc", cc),
-				bson.EC.Array("bcc", bcc),
-				bson.EC.String("subject", doc.Content.Subject),
-				bson.EC.String("html", doc.Content.HTML),
-				bson.EC.String("test", doc.Content.Text),
-			),
-		))
+		bson.D{
+			{"eid", doc.EID},
+			{"reid", doc.ReID},
+			{"sendDate", doc.SendDate},
+			{"status", doc.Status},
+			{"reason", doc.Reason},
+			{"content", bson.D{
+				{"from", doc.Content.From},
+				{"to", to},
+				{"cc", cc},
+				{"bcc", bcc},
+				{"subject", doc.Content.Subject},
+				{"html", doc.Content.HTML},
+				{"test", doc.Content.Text},
+				{"attachments", attachments},
+			}}},
+	)
+
 	if err != nil {
 		return errors.Wrapf(err, "failed to insert document by %s", doc.EID)
 	}
 
 	if result != nil {
-		if oid, ok := result.InsertedID.(objectid.ObjectID); ok {
+		if oid, ok := result.InsertedID.(primitive.ObjectID); ok {
 			copy(doc.ID[:], oid[:])
 		}
 	}
@@ -112,9 +125,8 @@ func EmailDocumentByEID(ctx context.Context, db *mongo.Database, eid string) (*E
 
 	doc := &EmailDocument{}
 	docResult := coll.FindOne(ctx,
-		bson.NewDocument(
-			bson.EC.String("eid", eid),
-		))
+		bson.D{{"eid", eid}},
+	)
 	if err := docResult.Decode(doc); err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, &errNoDocuments{
@@ -139,70 +151,57 @@ type EmailDocumentWhere struct {
 	// pagination info
 	Limit  int64
 	Offset int64
-	LastID *objectid.ObjectID
+	LastID *primitive.ObjectID
 }
 
 // EmailDocumentByWhere gets pagination list of email document by condition from the db
 func EmailDocumentByWhere(ctx context.Context, db *mongo.Database, where EmailDocumentWhere) ([]*EmailDocument, error) {
 	coll := db.Collection(EmailDocumentCollection)
-	condition := bson.NewDocument()
+	condition := bson.D{}
 
-	whereDoc := bson.NewDocument()
+	whereDoc := bson.D{}
 	if !where.StartTime.IsZero() {
-		whereDoc.Append(bson.EC.Time("$gte", where.StartTime))
+		whereDoc = append(whereDoc, bson.E{"$gte", where.StartTime})
 	}
 	if !where.EndTime.IsZero() {
-		whereDoc.Append(bson.EC.Time("$lt", where.EndTime))
+		whereDoc = append(whereDoc, bson.E{"$lt", where.EndTime})
 	}
 	if !where.StartTime.IsZero() || !where.EndTime.IsZero() {
-		condition.Append(
-			bson.EC.SubDocument("sendDate", whereDoc),
-		)
+		condition = append(condition, bson.E{"sendDate", whereDoc})
 	}
 
 	if where.From != "" {
-		condition.Append(
-			bson.EC.String("content.from", where.From),
-		)
+		condition = append(condition, bson.E{"content.from", where.From})
 	}
 	if where.To != "" {
-		condition.Append(
-			bson.EC.String("content.to", where.To),
-		)
+		condition = append(condition, bson.E{"content.to", where.To})
 	}
 	if where.Cc != "" {
-		condition.Append(
-			bson.EC.String("content.cc", where.Cc),
-		)
+		condition = append(condition, bson.E{"content.cc", where.Cc})
 	}
 	if where.Bcc != "" {
-		condition.Append(
-			bson.EC.String("content.bcc", where.Bcc),
-		)
+		condition = append(condition, bson.E{"content.bcc", where.Bcc})
 	}
 
-	var opts []findopt.Find
+	opt := options.Find()
 	if where.Limit == 0 {
 		where.Limit = DefaultLimit
 	}
-	opts = append(opts, findopt.Limit(where.Limit))
+	opt.SetLimit(where.Limit)
 
 	// two ways to pagination, lastID is the first choice
 	if where.LastID != nil {
-		condition.Append(
-			bson.EC.SubDocumentFromElements("_id",
-				bson.EC.ObjectID("$lt", *where.LastID),
-			))
+		condition = append(condition, bson.E{"_id", bson.D{{"$lt", *where.LastID}}})
 	} else if where.Offset != 0 {
-		opts = append(opts, findopt.Skip(where.Offset))
+		opt.SetSkip(where.Offset)
 	}
 
 	// _id is sorted by insert time
-	opts = append(opts, findopt.Sort(map[string]int32{
+	opt.SetSort(map[string]int32{
 		"_id": -1,
-	}))
+	})
 
-	cursor, err := coll.Find(ctx, condition, opts...)
+	cursor, err := coll.Find(ctx, condition, opt)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to query email documents")
 	}
@@ -225,19 +224,17 @@ func EmailDocumentByWhere(ctx context.Context, db *mongo.Database, where EmailDo
 // CountEmailDocumentByWhere count email documents by condition from the db
 func CountEmailDocumentByWhere(ctx context.Context, db *mongo.Database, where EmailDocumentWhere) (int64, error) {
 	coll := db.Collection(EmailDocumentCollection)
-	condition := bson.NewDocument()
+	condition := bson.D{}
 
-	whereDoc := bson.NewDocument()
+	whereDoc := bson.D{}
 	if !where.StartTime.IsZero() {
-		whereDoc.Append(bson.EC.Time("$gte", where.StartTime))
+		whereDoc = append(whereDoc, bson.E{"$gte", where.StartTime})
 	}
 	if !where.EndTime.IsZero() {
-		whereDoc.Append(bson.EC.Time("$lt", where.EndTime))
+		whereDoc = append(whereDoc, bson.E{"$lt", where.EndTime})
 	}
 	if !where.StartTime.IsZero() || !where.EndTime.IsZero() {
-		condition.Append(
-			bson.EC.SubDocument("sendDate", whereDoc),
-		)
+		condition = append(condition, bson.E{"sendDate", whereDoc})
 	}
 
 	total, err := coll.Count(ctx, condition)
@@ -249,26 +246,22 @@ func CountEmailDocumentByWhere(ctx context.Context, db *mongo.Database, where Em
 }
 
 // EmailDocumentByIDs gets list of email document by ids from the db
-func EmailDocumentByIDs(ctx context.Context, db *mongo.Database, ids []objectid.ObjectID) ([]*EmailDocument, error) {
+func EmailDocumentByIDs(ctx context.Context, db *mongo.Database, ids []primitive.ObjectID) ([]*EmailDocument, error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
 
 	coll := db.Collection(EmailDocumentCollection)
-	condition := bson.NewDocument()
 
-	array := bson.NewArray()
+	array := bson.A{}
 	for _, id := range ids {
-		array.Append(bson.VC.ObjectID(id))
+		array = append(array, id)
 	}
+	condition := bson.D{{"_id", bson.D{{"$in", array}}}}
 
-	condition.Append(
-		bson.EC.SubDocument("_id",
-			bson.NewDocument(bson.EC.Array("$in", array)),
-		))
 	// _id is sorted by insert time
 	cursor, err := coll.Find(ctx, condition,
-		findopt.Sort(map[string]int32{
+		options.Find().SetSort(map[string]int32{
 			"_id": -1,
 		}))
 	if err != nil {
@@ -296,9 +289,8 @@ func EmailDocumentCreateIndexes(ctx context.Context, db *mongo.Database) error {
 
 	_, err := coll.Indexes().CreateOne(ctx,
 		mongo.IndexModel{
-			Keys: bson.NewDocument(
-				bson.EC.Int32("sendDate", -1),
-			),
+			//Keys: bsonx.Doc{bsonx.Elem{Key: "SendDate", Value: bsonx.Int32(-1)}},
+			Keys: bsonx.Doc{{"SendDate", bsonx.Int32(-1)}},
 		},
 	)
 	if err != nil {

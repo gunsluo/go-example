@@ -4,9 +4,10 @@ import (
 	"context"
 
 	"github.com/mongodb/mongo-go-driver/bson"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
+	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"github.com/mongodb/mongo-go-driver/mongo/options"
+	"github.com/mongodb/mongo-go-driver/x/bsonx"
 	"github.com/pkg/errors"
 )
 
@@ -17,12 +18,12 @@ const (
 
 // EmailRelationDocument storing to addr relation document for email
 type EmailRelationDocument struct {
-	ID   objectid.ObjectID `bson:"_id,omitempty"`
-	OID  objectid.ObjectID `bson:"oid,omitempty"`
-	EID  string            `bson:"eid,omitempty"`
-	From string            `bson:"from,omitempty"`
-	To   string            `bson:"to,omitempty"`
-	Tp   string            `bson:"tp,omitempty"`
+	ID   primitive.ObjectID `bson:"_id,omitempty"`
+	OID  primitive.ObjectID `bson:"oid,omitempty"`
+	EID  string             `bson:"eid,omitempty"`
+	From string             `bson:"from,omitempty"`
+	To   string             `bson:"to,omitempty"`
+	Tp   string             `bson:"tp,omitempty"`
 }
 
 // Insert insert a email relation to db
@@ -33,10 +34,8 @@ func (doc *EmailRelationDocument) Insert(ctx context.Context, db *mongo.Database
 	coll := db.Collection(doc.Collection())
 
 	total, err := coll.Count(ctx,
-		bson.NewDocument(
-			bson.EC.String("eid", doc.EID),
-			bson.EC.String("to", doc.To),
-		))
+		bson.D{{"eid", doc.EID}, {"to", doc.To}},
+	)
 	if err != nil {
 		return errors.Wrapf(err, "failed to query document by %s %s", doc.To, doc.EID)
 	}
@@ -45,19 +44,19 @@ func (doc *EmailRelationDocument) Insert(ctx context.Context, db *mongo.Database
 	}
 
 	result, err := coll.InsertOne(ctx,
-		bson.NewDocument(
-			bson.EC.ObjectID("oid", doc.OID),
-			bson.EC.String("eid", doc.EID),
-			bson.EC.String("from", doc.From),
-			bson.EC.String("to", doc.To),
-			bson.EC.String("tp", doc.Tp),
-		))
+		bson.D{
+			{"oid", doc.OID},
+			{"eid", doc.EID},
+			{"from", doc.From},
+			{"to", doc.To},
+			{"tp", doc.Tp},
+		})
 	if err != nil {
 		return errors.Wrapf(err, "failed to insert document by %s", doc.EID)
 	}
 
 	if result != nil {
-		if oid, ok := result.InsertedID.(objectid.ObjectID); ok {
+		if oid, ok := result.InsertedID.(primitive.ObjectID); ok {
 			copy(doc.ID[:], oid[:])
 		}
 	}
@@ -73,7 +72,7 @@ type EmailRelationDocumentWhere struct {
 
 	// pagination info
 	Limit  int64
-	LastID *objectid.ObjectID
+	LastID *primitive.ObjectID
 }
 
 // EmailRelationDocumentByWhere gets email relation document by condition from the db
@@ -81,22 +80,19 @@ func EmailRelationDocumentByWhere(ctx context.Context, db *mongo.Database,
 	where EmailRelationDocumentWhere) ([]*EmailRelationDocument, error) {
 	coll := db.Collection(EmailRelationDocumentCollection)
 
-	condition := bson.NewDocument()
+	condition := bson.D{}
 	if where.From != "" {
-		condition.Append(bson.EC.String("from", where.From))
+		condition = append(condition, bson.E{"from", where.From})
 	}
 	if where.To != "" {
-		condition.Append(bson.EC.String("to", where.To))
+		condition = append(condition, bson.E{"to", where.To})
 	}
 	if where.Tp != "" {
-		condition.Append(bson.EC.String("tp", where.Tp))
+		condition = append(condition, bson.E{"tp", where.Tp})
 	}
 
 	if where.LastID != nil {
-		condition.Append(
-			bson.EC.SubDocumentFromElements("oid",
-				bson.EC.ObjectID("$lt", *where.LastID),
-			))
+		condition = append(condition, bson.E{"oid", bson.D{{"$lt", *where.LastID}}})
 	}
 
 	if where.Limit == 0 {
@@ -104,10 +100,10 @@ func EmailRelationDocumentByWhere(ctx context.Context, db *mongo.Database,
 	}
 
 	cursor, err := coll.Find(ctx, condition,
-		findopt.Limit(where.Limit),
-		findopt.Sort(map[string]int32{
-			"oid": -1,
-		}))
+		options.Find().SetLimit(where.Limit).
+			SetSort(map[string]int32{
+				"oid": -1,
+			}))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to query email relation documents")
 	}
@@ -131,15 +127,15 @@ func CountEmailRelationDocumentByWhere(ctx context.Context, db *mongo.Database,
 	where EmailRelationDocumentWhere) (int64, error) {
 	coll := db.Collection(EmailRelationDocumentCollection)
 
-	condition := bson.NewDocument()
+	condition := bson.D{}
 	if where.From != "" {
-		condition.Append(bson.EC.String("from", where.From))
+		condition = append(condition, bson.E{"from", where.From})
 	}
 	if where.To != "" {
-		condition.Append(bson.EC.String("to", where.To))
+		condition = append(condition, bson.E{"to", where.To})
 	}
 	if where.Tp != "" {
-		condition.Append(bson.EC.String("tp", where.Tp))
+		condition = append(condition, bson.E{"tp", where.Tp})
 	}
 
 	result, err := coll.Distinct(ctx, "eid", condition)
@@ -156,9 +152,7 @@ func EmailRelationDocumentCreateIndexes(ctx context.Context, db *mongo.Database)
 
 	_, err := coll.Indexes().CreateOne(ctx,
 		mongo.IndexModel{
-			Keys: bson.NewDocument(
-				bson.EC.Int32("to", 1),
-			),
+			Keys: bsonx.Doc{{"to", bsonx.Int32(1)}},
 		},
 	)
 	if err != nil {
