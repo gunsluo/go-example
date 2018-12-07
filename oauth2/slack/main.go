@@ -18,7 +18,7 @@ var (
 		RedirectURL:  "http://localhost:3000/oauth2Callback",
 		ClientID:     "495996213110.494794973285",
 		ClientSecret: "8bd2a8764b6772546d8ed31008b6b503",
-		Scopes:       []string{"identity.basic"},
+		Scopes:       []string{"identity.basic", "identity.email"},
 		Endpoint:     slack.Endpoint,
 	}
 	// Some random string, random for each request
