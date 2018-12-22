@@ -7,6 +7,7 @@ import (
 	"github.com/gunsluo/go-example/sqlboiler/models"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/queries"
 	"github.com/volatiletech/sqlboiler/queries/qm"
 )
@@ -48,12 +49,7 @@ func main() {
 		fmt.Println("pilot:", id, name)
 	}
 
-	type NameAndLanguage struct {
-		Name     string
-		Language string
-	}
-
-	var nl NameAndLanguage
+	var nl models.NameAndLanguage
 	err = queries.Raw("SELECT p.name,l.language FROM pilots as p LEFT JOIN pilot_languages as pl ON p.id=pl.pilot_id LEFT JOIN languages as l ON pl.language_id=l.id WHERE p.name=$1", "luoji").
 		Bind(ctx, db, &nl)
 	if err != nil {
@@ -61,7 +57,7 @@ func main() {
 	}
 	fmt.Println("name and language:", nl)
 
-	var nls []NameAndLanguage
+	var nls []models.NameAndLanguage
 	err = queries.Raw("SELECT p.name,l.language FROM pilots as p LEFT JOIN pilot_languages as pl ON p.id=pl.pilot_id LEFT JOIN languages as l ON pl.language_id=l.id").
 		Bind(ctx, db, &nls)
 	if err != nil {
@@ -69,5 +65,11 @@ func main() {
 	}
 	for _, nl := range nls {
 		fmt.Println("name and language:", nl)
+	}
+
+	l := models.Language{Language: "chinese"}
+	err = l.Insert(ctx, db, boil.Infer())
+	if err != nil {
+		panic(err)
 	}
 }
