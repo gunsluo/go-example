@@ -1,11 +1,14 @@
 package main
 
 import (
+	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
 
 	"github.com/globalsign/mgo/bson"
 	"github.com/golang/mock/gomock"
+	"github.com/percona/pmgo"
 	"github.com/percona/pmgo/pmgomock"
 )
 
@@ -42,4 +45,50 @@ func TestGetUser(t *testing.T) {
 	if !reflect.DeepEqual(*readUser, user) {
 		t.Errorf("Users don't match. Got %+v, want %+v\n", readUser, user)
 	}
+}
+
+var Server pmgo.DBTestServer
+
+func TestIntegration(t *testing.T) {
+	setup()
+
+	readUser, err := getUser(Server.Session(), 1)
+	if err != nil {
+		t.Errorf("getUser returned an error: %s\n", err.Error())
+	}
+
+	if !reflect.DeepEqual(*readUser, mockUser()) {
+		t.Errorf("Users don't match. Got %+v, want %+v\n", readUser, mockUser())
+	}
+
+	tearDown()
+}
+
+func setup() {
+	os.Setenv("CHECK_SESSIONS", "0")
+	tempDir, err := ioutil.TempDir("", "testing")
+	if err != nil {
+		panic(err)
+	}
+
+	Server = pmgo.NewDBServer()
+	Server.SetPath(tempDir)
+
+	session := Server.Session()
+	// load some fake data into the db
+	session.DB("test").C("testc").Insert(mockUser())
+}
+
+func mockUser() User {
+	return User{
+		ID:   1,
+		Name: "Zapp Brannigan",
+	}
+
+}
+
+func tearDown() {
+	Server.Session().Close()
+	Server.Session().DB("samples").DropDatabase()
+	Server.Stop()
 }
