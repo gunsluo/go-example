@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/globalsign/mgo/bson"
-	"github.com/percona/pmgo"
+	"github.com/gunsluo/pmgo"
 )
 
 // User is  a user information

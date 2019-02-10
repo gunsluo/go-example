@@ -8,8 +8,8 @@ import (
 
 	"github.com/globalsign/mgo/bson"
 	"github.com/golang/mock/gomock"
-	"github.com/percona/pmgo"
-	"github.com/percona/pmgo/pmgomock"
+	"github.com/gunsluo/pmgo"
+	"github.com/gunsluo/pmgo/pmgomock"
 )
 
 func TestGetUser(t *testing.T) {
