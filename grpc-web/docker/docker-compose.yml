@@ -23,4 +23,12 @@ services:
     ports:
       - 9001:9000
 
+  # Listens on :8080
+  grpc-web:
+    image: trinitronx/python-simplehttpserver
+    restart: on-failure
+    ports:
+      - 8080:8080
+    volumes:
+      - $GOPATH/src/github.com/gunsluo/go-example/grpc-web/web:/var/www:ro
 

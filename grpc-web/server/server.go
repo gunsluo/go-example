@@ -15,12 +15,14 @@ const (
 )
 
 type Service struct {
+	requestNum int
 }
 
 func (s *Service) SayHello(ctx context.Context, req *pb.HelloRequest) (*pb.HelloReply, error) {
 	fmt.Println("reveive:", req.Name)
+	s.requestNum++
 	return &pb.HelloReply{
-		Message: "hello, " + req.Name,
+		Message: fmt.Sprintf("+%d hello, %s", s.requestNum, req.Name),
 	}, nil
 }
 
