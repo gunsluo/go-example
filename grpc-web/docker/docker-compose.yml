@@ -1,0 +1,26 @@
+version: "3"
+
+services:
+
+  envoy:
+    image: envoyproxy/envoy:latest
+    restart: on-failure
+    command: ['/usr/local/bin/envoy', '-c', '/etc/envoy/envoy.yaml']
+    ports:
+      - 9901:9901
+      - 9000:9000
+    volumes:
+      - ./envoy.yaml:/etc/envoy/envoy.yaml
+
+
+  # Listens on :9000
+  grpc-srv:
+    image: golang:1.11.4
+    command: "go run server/server.go"
+    volumes:
+      - $GOPATH/src/github.com/gunsluo/go-example/grpc-web:/go/src/github.com/gunsluo/go-example/grpc-web
+    working_dir: /go/src/github.com/gunsluo/go-example/grpc-web
+    ports:
+      - 9001:9000
+
+

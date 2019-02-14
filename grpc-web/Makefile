@@ -1,4 +1,7 @@
 
+build-grpc:
+	@cd pb && protoc -I=. --go_out=plugins=grpc:. helloworld.proto
+
 build-grpc-web:
 	@cd web && npm install && npx webpack lib/client.js
 
@@ -7,4 +10,4 @@ gen-grpc-web:
 
 clean:
 
-.PHONY: gen-grpc-web clean
+.PHONY: build-grpc build-grpc-web gen-grpc-web clean
