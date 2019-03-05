@@ -8,10 +8,18 @@ import (
 )
 
 func main() {
+	address := "localhost:9092"
+	conn, err := kafka.DialContext(context.Background(), "tcp", address)
+	if err != nil {
+		panic(err)
+	}
+	conn.Close()
+	fmt.Printf("success to connect %s\n", address)
+
 	topic := "ifaas-face"
 	// make a new reader that consumes from topic-A
 	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:  []string{"localhost:9092"},
+		Brokers:  []string{address},
 		GroupID:  "monitor",
 		Topic:    topic,
 		MinBytes: 10e3, // 10KB

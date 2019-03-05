@@ -12,7 +12,10 @@ func main() {
 	topic := "ifaas-face"
 	partition := 0
 
-	conn, _ := kafka.DialLeader(context.Background(), "tcp", "localhost:9092", topic, partition)
+	conn, err := kafka.DialLeader(context.Background(), "tcp", "localhost:9092", topic, partition)
+	if err != nil {
+		panic(err)
+	}
 
 	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 	conn.WriteMessages(
