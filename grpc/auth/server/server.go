@@ -38,8 +38,9 @@ func grpcAuth(ctx context.Context) (context.Context, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	// TODO: check token
-	_ = token
+	fmt.Println("--->", token)
 
 	return ctx, nil
 }
