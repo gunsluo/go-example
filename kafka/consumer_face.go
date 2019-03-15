@@ -47,7 +47,7 @@ func main() {
 	}
 	conn.Close()
 
-	topic := "engine-alarm"
+	topic := "engine-face"
 	fmt.Printf("success to connect %s topic %s\n", address, topic)
 	// make a new reader that consumes from topic-A
 	r := kafka.NewReader(kafka.ReaderConfig{
