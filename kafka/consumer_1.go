@@ -8,18 +8,37 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-type MonitorResponse struct {
-	RespCode    int       `json:"respCode"`
-	RespMessage string    `json:"respMessage"`
-	RespRemark  string    `json:"respRemark"`
-	Data        []Monitor `json:"data"`
-	Type        string    `json:"type"`
-	Time        string    `json:"time"`
-	Operator    string    `json:"operator"`
-	Operation   string    `json:"operation"`
+type AlarmResponse struct {
+	Data      []Alarm `json:"datas"`
+	Type      string  `json:"type"`
+	RetKeys   string  `json:"retKeys"`
+	Time      string  `json:"time"`
+	Operator  string  `json:"operator"`
+	Operation string  `json:"operation"`
 }
 
-type Monitor struct {
+type Alarm struct {
+	Accessories    int    `json:"accessories"`
+	Age            int    `json:"age"`
+	FaceFeature    []byte `json:"face_feature"`
+	From_image_id  string `json:"from_image_id"`
+	From_person_id string `json:"from_person_id"`
+	Gender         int    `json:"gender"`
+	ImageData      string `json:"image_data"`
+	Indexed        int    `json:"indexed"`
+	Json           string `json:"json"`
+	Pose           string `json:"pose"`
+	Quality        int    `json:"quality"`
+	Race           int    `json:"race"`
+	SourceId       string `json:"source_id"`
+	SourceType     string `json:"source_type"`
+	Tid            string `json:"tid"`
+	Time           string `json:"time"`
+	Version        int    `json:"version"`
+}
+
+/*
+type Alarm struct {
 	faceURL       string `json:"faceUrl"`
 	imageURL      string `json:"imageUrl"`
 	sourceId      string `json:"sourceId"`
@@ -32,6 +51,7 @@ type Monitor struct {
 	blackDetailId string `json:"blackDetailId"`
 	confidence    string `json:"confidence"`
 }
+*/
 
 /*
 {
@@ -77,21 +97,27 @@ func main() {
 		MaxBytes: 10e6, // 10MB
 	})
 
+	var count int
 	ctx := context.Background()
 	for {
 		m, err := r.FetchMessage(ctx)
 		if err != nil {
 			break
 		}
-		fmt.Printf("message at topic/partition/offset %v/%v/%v: %s = %s\n", m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
+		//fmt.Printf("message at topic/partition/offset %v/%v/%v: %s = %s\n", m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
+		count++
 
-		var resp MonitorResponse
+		var resp AlarmResponse
 		if err := json.Unmarshal(m.Value, &resp); err != nil {
 			panic(err)
 		}
-		fmt.Println("==>", resp)
+		fmt.Println(count, "==>", resp)
 
 		r.CommitMessages(ctx, m)
+
+		if count > 1000 {
+			break
+		}
 	}
 
 	r.Close()
