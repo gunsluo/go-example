@@ -27,6 +27,8 @@ func main() {
 
 	go func() {
 		task(&wg, ch, tch)
+
+		close(tch)
 		wg.Done()
 	}()
 
