@@ -1,0 +1,30 @@
+version: "3"
+services:
+
+  postgres:
+    image: postgres:11.1-alpine
+    restart: on-failure
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      PGDATA: /var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    volumes:
+      - db-data-1:/var/lib/postgresql/data/
+      - .:/data/dump
+
+  # Listens on :9202
+  tz:
+    image: golang:1.12.3
+    command: go run main.go
+    volumes:
+      - .:/tz
+    working_dir: /tz
+    environment:
+      GO111MODULE: "on"
+    depends_on:
+      - postgres
+
+volumes:
+  db-data-1:
