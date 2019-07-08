@@ -1,4 +1,4 @@
-package main
+package attr
 
 import (
 	"encoding/json"

@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package target.grpc.ac;
+
+option go_package = "acpb";
+option java_generic_services = true;
+option java_multiple_files = true;
+option java_outer_classname = "AcProto";
+option java_package = "com.target.grpc.ac";
+
+import "google/protobuf/any.proto";
+
+service AccessControl {
+  rpc UpsertPredefinedPolicies(UpsertPredefinedPoliciesRequest) returns (UpsertPredefinedPoliciesReply);
+}
+
+message StringEqualConditionAttributeValue {
+  string value = 1;
+}
+
+message IntEqualConditionAttributeValue {
+  int64 value = 1;
+}
+
+message AttributeValue {
+  string condition = 1;
+  google.protobuf.Any attribute = 2;
+}
+
+message Attribute {
+  string name = 1;
+  bool required = 2;
+  AttributeValue value = 3;
+}
+
+message PredefinedPolicy {
+  string name = 1;
+  string description = 2;
+  repeated string resources = 3;
+  repeated string actions = 4;
+  repeated Attribute attributes = 5;
+}
+
+message UpsertPredefinedPoliciesRequest {
+  repeated PredefinedPolicy policies = 1;
+}
+
+message UpsertPredefinedPoliciesReply {}

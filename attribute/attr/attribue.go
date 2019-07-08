@@ -1,5 +1,6 @@
-package main
+package attr
 
+/*
 import "github.com/pkg/errors"
 
 type Key struct {
@@ -9,13 +10,6 @@ type Key struct {
 }
 
 type Value interface{}
-
-/*
-type Value struct {
-	Condition string `json:"condition"`
-	Value     interface{}
-}
-*/
 
 type Attributes map[Key]Value
 
@@ -35,8 +29,8 @@ func (as Attributes) ConvertConditions() (Conditions, error) {
 
 	return cs, nil
 }
+*/
 
-/*
 import "github.com/pkg/errors"
 
 type Attribute struct {
@@ -72,4 +66,3 @@ func (as Attributes) ConvertConditions() (Conditions, error) {
 
 	return cs, nil
 }
-*/
