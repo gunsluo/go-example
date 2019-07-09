@@ -38,7 +38,7 @@ message Attribute {
   string name = 1;
   AttributeType type = 2;
   bool required = 3;
-  google.protobuf.Any default = 4;
+  google.protobuf.Any value = 4;
 }
 
 message ConditionOption {
@@ -74,7 +74,10 @@ message PolicyDTO {
   repeated string subjects = 5;
   bytes conditions = 6;
   bytes meta = 7;
-  map<string, google.protobuf.Any> attribute_values = 8;
+  message Attributes {
+    repeated Attribute attributes = 1;
+  }
+  map<string, Attributes> attribute_values = 8;
 }
 
 message UpsertPoliciesUsingDTORequest {

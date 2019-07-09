@@ -7,7 +7,7 @@ import (
 	"net"
 
 	"github.com/gunsluo/go-example/attribute/acpb"
-	"github.com/gunsluo/go-example/attribute/attr"
+	"github.com/gunsluo/go-example/attribute/group"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -25,39 +25,80 @@ func (s *Service) UpsertPredefinedPolicies(ctx context.Context, req *acpb.Upsert
 		return nil, errors.New("Missing Policies")
 	}
 
-	var pps []*attr.PredefinedPolicy
+	var pps []*group.PredefinedPolicy
 	for _, pp := range req.Policies {
 		fmt.Printf("pp: %s %s %v %v", pp.Name, pp.Description, pp.Resources, pp.Actions)
 
-		conditions, err := attr.ConvertConditions(pp.Conditions)
+		conditions, err := group.ConvertConditions(pp.Conditions)
 		if err != nil {
 			return nil, err
 		}
 
-		pps = append(pps, &attr.PredefinedPolicy{
+		npp := &group.PredefinedPolicy{
 			Name:        pp.Name,
 			Description: pp.Description,
 			Resources:   pp.Resources,
 			Actions:     pp.Actions,
 			Conditions:  conditions,
-		})
+		}
 
-		buffer, err := json.Marshal(pp)
-		fmt.Printf("\npp json string: %s\n", string(buffer))
+		pps = append(pps, npp)
 
-		buffer, err = conditions.MarshalJSON()
+		buffer, err := json.Marshal(npp)
 		if err != nil {
 			return nil, err
 		}
-
-		fmt.Printf("\npp attribute to conditions string: %s\n", string(buffer))
+		fmt.Printf("\npp json string: %s\n", string(buffer))
 	}
 
 	return &acpb.UpsertPredefinedPoliciesReply{}, nil
 }
 
 func (s *Service) UpsertPoliciesUsingDTO(ctx context.Context, req *acpb.UpsertPoliciesUsingDTORequest) (*acpb.UpsertPoliciesUsingDTOReply, error) {
-	return nil, nil
+	if len(req.Dtos) == 0 {
+		return nil, errors.New("Missing Dtos")
+	}
+
+	for _, dto := range req.Dtos {
+		// get pp by name
+		pp, err := mockGetPPByName(dto.PpName)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(pp.Conditions) > 0 {
+			all, err := group.ConvertAttributes(dto.AttributeValues)
+			if err != nil {
+				return nil, err
+			}
+
+			conditions, err := pp.Conditions.ConvertConditions(all)
+			if err != nil {
+				return nil, err
+			}
+
+			buffer, err := conditions.MarshalJSON()
+			if err != nil {
+				return nil, err
+			}
+
+			fmt.Printf("\npp conditions json string: %s\n", string(buffer))
+		}
+	}
+
+	return &acpb.UpsertPoliciesUsingDTOReply{}, nil
+}
+
+func mockGetPPByName(name string) (*group.PredefinedPolicy, error) {
+	jsonstr := `{"name":"test pp","description":"this is a test pp","resources":["r1","r2"],"actions":["a1","a2"],"conditions":[{"name":"region","type":"StringEqualCondition","options":{"attributes":[{"name":"equals","type":"string","required":true,"default":"chengdu"}]}}]}`
+	pp := &group.PredefinedPolicy{}
+	err := json.Unmarshal([]byte(jsonstr), pp)
+	if err != nil {
+		return nil, err
+	}
+
+	pp.Name = name
+	return pp, err
 }
 
 // protoc -I=. --gogoslick_out=plugins=grpc,Mgoogle/protobuf/any.proto=github.com/gogo/protobuf/types:. ac.proto
