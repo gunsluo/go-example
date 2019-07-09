@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/golang/protobuf/ptypes"
+	"github.com/gogo/protobuf/types"
 	"github.com/gunsluo/go-example/attribute/acpb"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -16,8 +16,8 @@ func main() {
 	}
 	acClient := acpb.NewAccessControlClient(conn)
 
-	value := &acpb.StringEqualConditionAttributeValue{Value: "chengdu"}
-	any, err := ptypes.MarshalAny(value)
+	value := &acpb.StringAttributeValue{Value: "chengdu"}
+	any, err := types.MarshalAny(value)
 	if err != nil {
 		panic(err)
 	}
@@ -26,18 +26,23 @@ func main() {
 		&acpb.UpsertPredefinedPoliciesRequest{
 			Policies: []*acpb.PredefinedPolicy{
 				&acpb.PredefinedPolicy{
-
 					Name:        "test pp",
 					Description: "this is a test pp",
 					Resources:   []string{"r1", "r2"},
 					Actions:     []string{"a1", "a2"},
-					Attributes: []*acpb.Attribute{
-						&acpb.Attribute{
-							Name:     "region",
-							Required: true,
-							Value: &acpb.AttributeValue{
-								Condition: "StringEqualCondition",
-								Attribute: any,
+					Conditions: []*acpb.Condition{
+						&acpb.Condition{
+							Name: "region",
+							Type: "StringEqualCondition",
+							Options: &acpb.ConditionOption{
+								Attributes: []*acpb.Attribute{
+									&acpb.Attribute{
+										Name:     "equals",
+										Type:     acpb.ATTRIBUTE_TYPE_STRING,
+										Required: true,
+										Default:  any,
+									},
+								},
 							},
 						},
 					},

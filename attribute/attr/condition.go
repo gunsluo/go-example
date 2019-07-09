@@ -32,7 +32,7 @@ type Condition interface {
 	Fulfills(interface{}, *Request) bool
 
 	// Value set value to the condition.
-	Value(interface{}) bool
+	Values(string, map[string]interface{}) bool
 }
 
 // Conditions is a collection of conditions.
@@ -128,8 +128,8 @@ func (c *StringEqualCondition) Fulfills(value interface{}, _ *Request) bool {
 }
 
 // Value set value to the condition's Equals.
-func (c *StringEqualCondition) Value(value interface{}) bool {
-	s, ok := value.(string)
+func (c *StringEqualCondition) Values(expression string, values map[string]interface{}) bool {
+	s, ok := values["equals"].(string)
 	if ok {
 		c.Equals = s
 	}
