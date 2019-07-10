@@ -7,14 +7,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-type PredefinedPolicy struct {
-	Name        string     `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Description string     `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	Resources   []string   `protobuf:"bytes,3,rep,name=resources,proto3" json:"resources,omitempty"`
-	Actions     []string   `protobuf:"bytes,4,rep,name=actions,proto3" json:"actions,omitempty"`
-	Conditions  Conditions `protobuf:"bytes,5,opt,name=conditions,proto3" json:"conditions,omitempty"`
-}
-
 type Attribute struct {
 	Name     string      `json:"name,omitempty"`
 	Type     string      `json:"type,omitempty"`
@@ -34,6 +26,14 @@ type Condition struct {
 }
 
 type Conditions []*Condition
+
+type PredefinedPolicy struct {
+	Name        string     `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Description string     `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	Resources   []string   `protobuf:"bytes,3,rep,name=resources,proto3" json:"resources,omitempty"`
+	Actions     []string   `protobuf:"bytes,4,rep,name=actions,proto3" json:"actions,omitempty"`
+	Conditions  Conditions `protobuf:"bytes,5,opt,name=conditions,proto3" json:"conditions,omitempty"`
+}
 
 func ConvertCondition(c *acpb.Condition) (*Condition, error) {
 	nc := &Condition{
@@ -67,6 +67,49 @@ func ConvertConditions(cs []*acpb.Condition) (Conditions, error) {
 	}
 
 	return ncs, nil
+}
+
+func ConvertPrettyCondition(c *Condition) (*acpb.Condition, error) {
+	condition := &acpb.Condition{
+		Name: c.Name,
+		Type: c.Type,
+	}
+
+	if c.Options != nil {
+		var attributes []*acpb.Attribute
+		for _, a := range c.Options.Attributes {
+			av, err := convertInterfaceValue(a.Value)
+			if err != nil {
+				return nil, err
+			}
+
+			attributes = append(attributes, &acpb.Attribute{
+				Name:     a.Name,
+				Required: a.Required,
+				Value:    av,
+			})
+		}
+
+		condition.Options = &acpb.ConditionOption{
+			Expression: c.Options.Expression,
+			Attributes: attributes,
+		}
+	}
+
+	return condition, nil
+}
+
+func ConvertPrettyConditions(cs Conditions) ([]*acpb.Condition, error) {
+	var conditions []*acpb.Condition
+	for _, c := range cs {
+		nc, err := ConvertPrettyCondition(c)
+		if err != nil {
+			return nil, err
+		}
+		conditions = append(conditions, nc)
+	}
+
+	return conditions, nil
 }
 
 func (c *Condition) ConvertCondition(values map[string]interface{}) (attr.Condition, error) {
@@ -195,9 +238,61 @@ func convertAttributeValue(v *acpb.AttributeValue) (interface{}, string, error) 
 			value = val.Value
 		}
 		typ = "boolean"
+	default:
+		return value, typ, errors.New("not supported type")
 	}
 
 	return value, typ, nil
+}
+
+func convertInterfaceValue(v interface{}) (*acpb.AttributeValue, error) {
+	value := &acpb.AttributeValue{}
+	switch val := v.(type) {
+	case string:
+		any, err := types.MarshalAny(&acpb.StringAttributeValue{Value: val})
+		if err != nil {
+			return nil, err
+		}
+
+		value.Type = acpb.ATTRIBUTE_TYPE_STRING
+		value.Value = any
+	case int:
+		any, err := types.MarshalAny(&acpb.NumberAttributeValue{Value: int64(val)})
+		if err != nil {
+			return nil, err
+		}
+
+		value.Type = acpb.ATTRIBUTE_TYPE_NUMBER
+		value.Value = any
+	case int32:
+		any, err := types.MarshalAny(&acpb.NumberAttributeValue{Value: int64(val)})
+		if err != nil {
+			return nil, err
+		}
+
+		value.Type = acpb.ATTRIBUTE_TYPE_NUMBER
+		value.Value = any
+	case int64:
+		any, err := types.MarshalAny(&acpb.NumberAttributeValue{Value: val})
+		if err != nil {
+			return nil, err
+		}
+
+		value.Type = acpb.ATTRIBUTE_TYPE_NUMBER
+		value.Value = any
+	case bool:
+		any, err := types.MarshalAny(&acpb.BooleanAttributeValue{Value: val})
+		if err != nil {
+			return nil, err
+		}
+
+		value.Type = acpb.ATTRIBUTE_TYPE_BOOLEAN
+		value.Value = any
+	default:
+		return value, errors.Errorf("%v not supported type", v)
+	}
+
+	return value, nil
 }
 
 //AttributeValues map[string]*PolicyDTO_Attributes `protobuf:"bytes,8,rep,name=attribute_values,json=attributeValues,proto3" json:"attribute_values,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`

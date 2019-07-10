@@ -5,6 +5,7 @@ import (
 
 	"github.com/gogo/protobuf/types"
 	"github.com/gunsluo/go-example/attribute/acpb"
+	"github.com/gunsluo/go-example/attribute/group"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
@@ -17,8 +18,32 @@ func main() {
 	acClient := acpb.NewAccessControlClient(conn)
 
 	{
-		value := &acpb.StringAttributeValue{Value: "chengdu"}
-		any, err := types.MarshalAny(value)
+		/*
+			value := &acpb.StringAttributeValue{Value: "chengdu"}
+			any, err := types.MarshalAny(value)
+			if err != nil {
+				panic(err)
+			}
+		*/
+
+		cs := group.Conditions{
+			&group.Condition{
+				Name: "region",
+				Type: "StringEqualCondition",
+				Options: &group.ConditionOption{
+					Attributes: []*group.Attribute{
+						&group.Attribute{
+							Name:     "equals",
+							Required: true,
+							Type:     "string",
+							Value:    "chengdu",
+						},
+					},
+				},
+			},
+		}
+
+		conditions, err := group.ConvertPrettyConditions(cs)
 		if err != nil {
 			panic(err)
 		}
@@ -31,24 +56,27 @@ func main() {
 						Description: "this is a test pp",
 						Resources:   []string{"r1", "r2"},
 						Actions:     []string{"a1", "a2"},
-						Conditions: []*acpb.Condition{
-							&acpb.Condition{
-								Name: "region",
-								Type: "StringEqualCondition",
-								Options: &acpb.ConditionOption{
-									Attributes: []*acpb.Attribute{
-										&acpb.Attribute{
-											Name:     "equals",
-											Required: true,
-											Value: &acpb.AttributeValue{
-												Type:  acpb.ATTRIBUTE_TYPE_STRING,
-												Value: any,
+						Conditions:  conditions,
+						/*
+							Conditions: []*acpb.Condition{
+								&acpb.Condition{
+									Name: "region",
+									Type: "StringEqualCondition",
+									Options: &acpb.ConditionOption{
+										Attributes: []*acpb.Attribute{
+											&acpb.Attribute{
+												Name:     "equals",
+												Required: true,
+												Value: &acpb.AttributeValue{
+													Type:  acpb.ATTRIBUTE_TYPE_STRING,
+													Value: any,
+												},
 											},
 										},
 									},
 								},
 							},
-						},
+						*/
 					},
 				},
 			})
