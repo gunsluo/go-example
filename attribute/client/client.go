@@ -39,9 +39,11 @@ func main() {
 									Attributes: []*acpb.Attribute{
 										&acpb.Attribute{
 											Name:     "equals",
-											Type:     acpb.ATTRIBUTE_TYPE_STRING,
 											Required: true,
-											Value:    any,
+											Value: &acpb.AttributeValue{
+												Type:  acpb.ATTRIBUTE_TYPE_STRING,
+												Value: any,
+											},
 										},
 									},
 								},
@@ -75,9 +77,8 @@ func main() {
 						Subjects:    []string{"ji"},
 						AttributeValues: map[string]*acpb.PolicyDTO_Attributes{
 							"region": &acpb.PolicyDTO_Attributes{
-								Attributes: []*acpb.Attribute{
-									&acpb.Attribute{
-										Name:  "equals",
+								Values: map[string]*acpb.AttributeValue{
+									"equals": &acpb.AttributeValue{
 										Type:  acpb.ATTRIBUTE_TYPE_STRING,
 										Value: any,
 									},

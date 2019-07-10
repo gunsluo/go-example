@@ -34,11 +34,15 @@ enum AttributeType {
   ATTRIBUTE_TYPE_BOOLEAN = 3;
 }
 
+message AttributeValue {
+  AttributeType type = 1;
+  google.protobuf.Any value = 2;
+}
+
 message Attribute {
   string name = 1;
-  AttributeType type = 2;
-  bool required = 3;
-  google.protobuf.Any value = 4;
+  bool required = 2;
+  AttributeValue value = 3;
 }
 
 message ConditionOption {
@@ -75,7 +79,7 @@ message PolicyDTO {
   bytes conditions = 6;
   bytes meta = 7;
   message Attributes {
-    repeated Attribute attributes = 1;
+    map<string, AttributeValue> values = 1;
   }
   map<string, Attributes> attribute_values = 8;
 }

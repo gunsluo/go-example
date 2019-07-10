@@ -51,51 +51,6 @@ func ConvertCondition(c *acpb.Condition) (*Condition, error) {
 			return nil, err
 		}
 		nc.Options.Attributes = attributes
-		/*
-			for _, a := range c.Options.Attributes {
-				na := &Attribute{
-					Name:     a.Name,
-					Required: a.Required,
-				}
-
-				switch a.Type {
-				case acpb.ATTRIBUTE_TYPE_STRING:
-					if a.Value != nil {
-						v := &acpb.StringAttributeValue{}
-						err := types.UnmarshalAny(a.Value, v)
-						if err != nil {
-							return nil, err
-						}
-						na.Value = v.Value
-					}
-					na.Type = "string"
-					nc.Options.Attributes = append(nc.Options.Attributes, na)
-				case acpb.ATTRIBUTE_TYPE_NUMBER:
-					if a.Value != nil {
-						v := &acpb.NumberAttributeValue{}
-						err := types.UnmarshalAny(a.Value, v)
-						if err != nil {
-							return nil, err
-						}
-						na.Value = v.Value
-					}
-					na.Type = "number"
-					nc.Options.Attributes = append(nc.Options.Attributes, na)
-				case acpb.ATTRIBUTE_TYPE_BOOLEAN:
-					if a.Value != nil {
-						v := &acpb.BooleanAttributeValue{}
-						err := types.UnmarshalAny(a.Value, v)
-						if err != nil {
-							return nil, err
-						}
-						na.Value = v.Value
-					}
-					na.Type = "boolean"
-					nc.Options.Attributes = append(nc.Options.Attributes, na)
-				}
-			}
-		*/
-
 	}
 
 	return nc, nil
@@ -165,15 +120,15 @@ func (cs Conditions) ConvertConditions(all map[string]map[string]interface{}) (a
 func ConvertAttributes(attributesTable map[string]*acpb.PolicyDTO_Attributes) (map[string]map[string]interface{}, error) {
 	all := make(map[string]map[string]interface{})
 	for k, v := range attributesTable {
-		attributes, err := convertAttributes(v.Attributes)
-		if err != nil {
-			return nil, err
+		values := make(map[string]interface{})
+		for name, av := range v.Values {
+			val, _, err := convertAttributeValue(av)
+			if err != nil {
+				return nil, err
+			}
+			values[name] = val
 		}
 
-		values := make(map[string]interface{})
-		for _, a := range attributes {
-			values[a.Name] = a.Value
-		}
 		all[k] = values
 	}
 
@@ -188,44 +143,61 @@ func convertAttributes(attributes []*acpb.Attribute) ([]*Attribute, error) {
 			Required: a.Required,
 		}
 
-		switch a.Type {
-		case acpb.ATTRIBUTE_TYPE_STRING:
-			if a.Value != nil {
-				v := &acpb.StringAttributeValue{}
-				err := types.UnmarshalAny(a.Value, v)
-				if err != nil {
-					return nil, err
-				}
-				na.Value = v.Value
-			}
-			na.Type = "string"
-			attrs = append(attrs, na)
-		case acpb.ATTRIBUTE_TYPE_NUMBER:
-			if a.Value != nil {
-				v := &acpb.NumberAttributeValue{}
-				err := types.UnmarshalAny(a.Value, v)
-				if err != nil {
-					return nil, err
-				}
-				na.Value = v.Value
-			}
-			na.Type = "number"
-			attrs = append(attrs, na)
-		case acpb.ATTRIBUTE_TYPE_BOOLEAN:
-			if a.Value != nil {
-				v := &acpb.BooleanAttributeValue{}
-				err := types.UnmarshalAny(a.Value, v)
-				if err != nil {
-					return nil, err
-				}
-				na.Value = v.Value
-			}
-			na.Type = "boolean"
-			attrs = append(attrs, na)
+		if a.Value == nil {
+			continue
 		}
+
+		value, typ, err := convertAttributeValue(a.Value)
+		if err != nil {
+			return nil, err
+		}
+
+		na.Value = value
+		na.Type = typ
+		attrs = append(attrs, na)
 	}
 
 	return attrs, nil
+}
+
+func convertAttributeValue(v *acpb.AttributeValue) (interface{}, string, error) {
+	var value interface{}
+	var typ string
+
+	switch v.Type {
+	case acpb.ATTRIBUTE_TYPE_STRING:
+		if v.Value != nil {
+			val := &acpb.StringAttributeValue{}
+			err := types.UnmarshalAny(v.Value, val)
+			if err != nil {
+				return value, typ, err
+			}
+			value = val.Value
+		}
+		typ = "string"
+	case acpb.ATTRIBUTE_TYPE_NUMBER:
+		if v.Value != nil {
+			val := &acpb.NumberAttributeValue{}
+			err := types.UnmarshalAny(v.Value, val)
+			if err != nil {
+				return value, typ, err
+			}
+			value = val.Value
+		}
+		typ = "number"
+	case acpb.ATTRIBUTE_TYPE_BOOLEAN:
+		if v.Value != nil {
+			val := &acpb.BooleanAttributeValue{}
+			err := types.UnmarshalAny(v.Value, val)
+			if err != nil {
+				return value, typ, err
+			}
+			value = val.Value
+		}
+		typ = "boolean"
+	}
+
+	return value, typ, nil
 }
 
 //AttributeValues map[string]*PolicyDTO_Attributes `protobuf:"bytes,8,rep,name=attribute_values,json=attributeValues,proto3" json:"attribute_values,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
