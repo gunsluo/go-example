@@ -1,3 +1,3 @@
-module github.com/gunsluo/go-example/v2
+module github.com/gunsluo/go-example
 
 go 1.12
