@@ -1,7 +1,9 @@
 package main
 
 import (
-	"github.com/gunsluo/go-example/mxo/storage/sqlserver"
+	"time"
+
+	"github.com/gunsluo/go-example/mxo/storage/mssql"
 	"github.com/jmoiron/sqlx"
 
 	_ "github.com/denisenkom/go-mssqldb"
@@ -11,8 +13,8 @@ const (
 	//driver = "postgres"
 	//dsn    = "postgres://postgres:password@localhost:5432/xo?sslmode=disable"
 
-	driver = "sqlserver"
-	dsn    = "sqlserver://SA:Tes9ting@localhost:1433/instance?database=xo"
+	driver = "mssql"
+	dsn    = "sqlserver://SA:Tes9ting@localhost:1433/instance?database=xo&encrypt=disable"
 )
 
 func main() {
@@ -27,8 +29,11 @@ func main() {
 }
 
 func test(db *sqlx.DB) {
-	user := &sqlserver.User{
-		Subject: "luoji",
+	user := &mssql.User{
+		Subject:     "luoji",
+		CreatedDate: time.Now(),
+		ChangedDate: time.Now(),
+		DeletedDate: time.Now(),
 	}
 
 	err := user.Insert(db)
