@@ -21,8 +21,8 @@ const (
 )
 
 func main() {
-	//testStoage(driverPostgres, dsnPostgres)
-	testStoage(driverMssql, dsnMssql)
+	testStoage(driverPostgres, dsnPostgres)
+	//testStoage(driverMssql, dsnMssql)
 }
 
 func testStoage(driver, dsn string) {
@@ -44,9 +44,9 @@ func testStoage(driver, dsn string) {
 func testStoageAndDB(s storage.Storage, db *sqlx.DB) {
 	user := &storage.User{
 		Subject:     "luoji",
-		CreatedDate: time.Now(),
-		ChangedDate: time.Now(),
-		DeletedDate: time.Now(),
+		CreatedDate: storage.NullTime{Time: time.Now(), Valid: true},
+		ChangedDate: storage.NullTime{Time: time.Now(), Valid: true},
+		//DeletedDate: time.Now(),
 	}
 
 	err := s.InsertUser(db, user)

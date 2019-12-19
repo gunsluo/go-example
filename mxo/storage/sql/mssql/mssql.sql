@@ -3,5 +3,7 @@ CREATE TABLE [user] (
     subject VARCHAR (256) NOT NULL,
     created_date DATETIME DEFAULT GETDATE(),
     changed_date DATETIME DEFAULT GETDATE(),
-    deleted_date DATETIME
+    deleted_date DATETIME,
+    CONSTRAINT user_subject_ak UNIQUE(subject)
 );
+
