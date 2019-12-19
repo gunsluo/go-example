@@ -132,7 +132,7 @@ func (u *User) Delete(db XODB) error {
 
 // UserByID retrieves a row from 'dbo.user' as a User.
 //
-// Generated from index 'PK__user__3213E83F79A696F8'.
+// Generated from index 'PK__user__3213E83FE98E2BD5'.
 func UserByID(db XODB, id int) (*User, error) {
 	var err error
 
@@ -149,6 +149,32 @@ func UserByID(db XODB, id int) (*User, error) {
 	}
 
 	err = db.QueryRow(sqlstr, id).Scan(&u.ID, &u.Subject, &u.CreatedDate, &u.ChangedDate, &u.DeletedDate)
+	if err != nil {
+		return nil, err
+	}
+
+	return &u, nil
+}
+
+// UserBySubject retrieves a row from 'dbo.user' as a User.
+//
+// Generated from index 'user_subject_ak'.
+func UserBySubject(db XODB, subject string) (*User, error) {
+	var err error
+
+	// sql query
+	const sqlstr = `SELECT ` +
+		`id, subject, created_date, changed_date, deleted_date ` +
+		`FROM dbo.user ` +
+		`WHERE subject = $1`
+
+	// run query
+	XOLog(sqlstr, subject)
+	u := User{
+		_exists: true,
+	}
+
+	err = db.QueryRow(sqlstr, subject).Scan(&u.ID, &u.Subject, &u.CreatedDate, &u.ChangedDate, &u.DeletedDate)
 	if err != nil {
 		return nil, err
 	}
