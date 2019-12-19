@@ -1,6 +1,8 @@
 package storage
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 type XODB interface {
 	Exec(string, ...interface{}) (sql.Result, error)

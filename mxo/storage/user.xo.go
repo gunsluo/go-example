@@ -10,5 +10,5 @@ type User struct {
 	DeletedDate time.Time `json:"deleted_date"` // deleted_date
 
 	// xo fields
-	Exists, Deleted bool
+	_exists, _deleted bool
 }

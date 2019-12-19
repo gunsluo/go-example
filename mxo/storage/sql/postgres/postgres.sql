@@ -1,7 +1,6 @@
--- user
 CREATE TABLE IF NOT EXISTS "user"
 (
-    id                 serial                   	        NOT NULL,
+    id                 serial                                  NOT NULL,
     subject            varchar(256)                        NOT NULL,
 
     -- timestamps
@@ -12,4 +11,3 @@ CREATE TABLE IF NOT EXISTS "user"
     CONSTRAINT user_pk PRIMARY KEY ("id")
 );
 CREATE UNIQUE INDEX IF NOT EXISTS user_subject_unique_index ON "user"("subject");
-
