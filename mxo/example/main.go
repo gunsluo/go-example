@@ -21,8 +21,8 @@ const (
 )
 
 func main() {
-	testStoage(driverPostgres, dsnPostgres)
-	//testStoage(driverMssql, dsnMssql)
+	//testStoage(driverPostgres, dsnPostgres)
+	testStoage(driverMssql, dsnMssql)
 }
 
 func testStoage(driver, dsn string) {
@@ -42,22 +42,74 @@ func testStoage(driver, dsn string) {
 }
 
 func testStoageAndDB(s storage.Storage, db *sqlx.DB) {
-	user := &storage.User{
+	account := &storage.Account{
 		Subject:     "luoji",
 		CreatedDate: storage.NullTime{Time: time.Now(), Valid: true},
 		ChangedDate: storage.NullTime{Time: time.Now(), Valid: true},
 		//DeletedDate: time.Now(),
 	}
 
-	err := s.InsertUser(db, user)
+	err := s.InsertAccount(db, account)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("insert account: id=%d, err=%v\n", account.ID, err)
+
+	account.Email = "luoji@gmail.com"
+	err = s.UpdateAccount(db, account)
 	if err != nil {
 		panic(err)
 	}
 
-	u, err := s.UserByID(db, user.ID)
+	account.Subject = "luoji1"
+	err = s.UpsertAccount(db, account)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Printf("query user: %v\n", u)
+	user := &storage.User{
+		Subject:     account.Subject,
+		CreatedDate: storage.NullTime{Time: time.Now(), Valid: true},
+		ChangedDate: storage.NullTime{Time: time.Now(), Valid: true},
+	}
+
+	err = s.InsertUser(db, user)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("insert user: id=%d, err=%v\n", user.ID, err)
+
+	user.Name = "luoji"
+	err = s.UpdateUser(db, user)
+	if err != nil {
+		panic(err)
+	}
+
+	user.Name = "luoji2"
+	err = s.UpsertUser(db, user)
+	if err != nil {
+		panic(err)
+	}
+
+	err = s.DeleteUser(db, user)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("delete user: %v\n", err)
+
+	err = s.DeleteAccount(db, account)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("delete account: %v\n", err)
+
+	/*
+		u, err := s.AccountByID(db, account.ID)
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Printf("query account: %v\n", u)
+	*/
+
 }
