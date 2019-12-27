@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -21,8 +22,8 @@ const (
 )
 
 func main() {
-	//testStoage(driverPostgres, dsnPostgres)
-	testStoage(driverMssql, dsnMssql)
+	testStoage(driverPostgres, dsnPostgres)
+	//testStoage(driverMssql, dsnMssql)
 }
 
 func testStoage(driver, dsn string) {
@@ -79,13 +80,13 @@ func testStoageAndDB(s storage.Storage, db *sqlx.DB) {
 	}
 	fmt.Printf("insert user: id=%d, err=%v\n", user.ID, err)
 
-	user.Name = "luoji"
+	user.Name = sql.NullString{Valid: true, String: "luoji"}
 	err = s.UpdateUser(db, user)
 	if err != nil {
 		panic(err)
 	}
 
-	user.Name = "luoji2"
+	user.Name = sql.NullString{Valid: true, String: "luoji2"}
 	err = s.UpsertUser(db, user)
 	if err != nil {
 		panic(err)

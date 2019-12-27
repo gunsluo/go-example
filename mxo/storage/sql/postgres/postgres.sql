@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS "user"
 (
     id                 serial                              NOT NULL,
     subject            varchar(256)                        NOT NULL,
-    name               varchar(256)                        NOT NULL,
+    name               varchar(256)                        NULL,
 
     -- timestamps
     created_date            timestamp                      DEFAULT now(),
