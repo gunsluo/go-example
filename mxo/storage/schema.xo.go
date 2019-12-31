@@ -5,7 +5,8 @@ package storage
 
 import (
 	"database/sql"
-	"errors"
+
+	"github.com/pkg/errors"
 )
 
 // Storage is interface structure for database operation that can be called
@@ -20,6 +21,17 @@ type Storage interface {
 	SaveAccount(db XODB, a *Account) error
 	// Upsert performs an upsert for Account.
 	UpsertAccount(db XODB, a *Account) error
+	// GetMostRecentAccount returns n most recent rows from 'account',
+	// ordered by "created_date" in descending order.
+	GetMostRecentAccount(db XODB, n int) ([]*Account, error)
+	// GetMostRecentChangedAccount returns n most recent rows from 'account',
+	// ordered by "changed_date" in descending order.
+	GetMostRecentChangedAccount(db XODB, n int) ([]*Account, error)
+	// GetAllAccount returns all rows from 'account', based on the AccountQueryArguments.
+	// If the AccountQueryArguments is nil, it will use the default AccountQueryArguments instead.
+	GetAllAccount(db XODB, queryArgs *AccountQueryArguments) ([]*Account, error)
+	// CountAllAccount returns a count of all rows from 'account'
+	CountAllAccount(db XODB, queryArgs *AccountQueryArguments) (int, error)
 	// Insert inserts the User to the database.
 	InsertUser(db XODB, u *User) error
 	// Delete deletes the User from the database.
@@ -30,9 +42,35 @@ type Storage interface {
 	SaveUser(db XODB, u *User) error
 	// Upsert performs an upsert for User.
 	UpsertUser(db XODB, u *User) error
-	// AccountByUserSubject returns the Account associated with the User's Subject (subject).
+	// GetMostRecentUser returns n most recent rows from 'user',
+	// ordered by "created_date" in descending order.
+	GetMostRecentUser(db XODB, n int) ([]*User, error)
+	// GetMostRecentChangedUser returns n most recent rows from 'user',
+	// ordered by "changed_date" in descending order.
+	GetMostRecentChangedUser(db XODB, n int) ([]*User, error)
+	// GetAllUser returns all rows from 'user', based on the UserQueryArguments.
+	// If the UserQueryArguments is nil, it will use the default UserQueryArguments instead.
+	GetAllUser(db XODB, queryArgs *UserQueryArguments) ([]*User, error)
+	// CountAllUser returns a count of all rows from 'user'
+	CountAllUser(db XODB, queryArgs *UserQueryArguments) (int, error)
+	// UsersBySubjectFK retrieves rows from user by foreign key Subject.
+	// Generated from foreign key Account.
+	UsersBySubjectFK(db XODB, subject string, queryArgs *UserQueryArguments) ([]*User, error)
+	// CountUsersBySubjectFK count rows from user by foreign key Subject.
+	// Generated from foreign key Account.
+	CountUsersBySubjectFK(db XODB, subject string, queryArgs *UserQueryArguments) (int, error)
+	// AccountInUser returns the Account associated with the User's Subject (subject).
 	// Generated from foreign key 'user_account_subject_fk'.
-	AccountByUserSubject(db XODB, u *User) (*Account, error)
+	AccountInUser(db XODB, u *User) (*Account, error)
+	// AccountByID retrieves a row from '"public"."account"' as a Account.
+	// Generated from index 'account_pk'.
+	AccountByID(db XODB, id int) (*Account, error)
+	// AccountBySubject retrieves a row from '"public"."account"' as a Account.
+	// Generated from index 'account_subject_unique_index'.
+	AccountBySubject(db XODB, subject string) (*Account, error)
+	// UserByID retrieves a row from '"public"."user"' as a User.
+	// Generated from index 'user_pk'.
+	UserByID(db XODB, id int) (*User, error)
 }
 
 // PostgresStorage is Postgres for the database.

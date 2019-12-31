@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/gunsluo/go-example/mxo/storage"
@@ -22,8 +23,22 @@ const (
 )
 
 func main() {
-	testStoage(driverPostgres, dsnPostgres)
-	//testStoage(driverMssql, dsnMssql)
+	var mod string
+	if len(os.Args) <= 1 {
+		mod = "postgres"
+	} else {
+		mod = os.Args[1]
+	}
+
+	fmt.Println("run mod:", mod)
+	switch mod {
+	case "postgres":
+		testStoage(driverPostgres, dsnPostgres)
+	case "mssql":
+		testStoage(driverMssql, dsnMssql)
+	default:
+		fmt.Println("invalid parameter, it should be 'postgres' & 'mssql'")
+	}
 }
 
 func testStoage(driver, dsn string) {
@@ -92,6 +107,67 @@ func testStoageAndDB(s storage.Storage, db *sqlx.DB) {
 		panic(err)
 	}
 
+	// query
+	a, err := s.AccountByID(db, account.ID)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("query account: %v\n", a)
+
+	a, err = s.AccountBySubject(db, account.Subject)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("query account by subject: %v\n", a)
+
+	a, err = s.AccountInUser(db, user)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("query account in user: %v\n", a)
+
+	as, err := s.GetMostRecentAccount(db, 10)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("query account in user: %d %v\n", len(as), as)
+
+	as, err = s.GetMostRecentChangedAccount(db, 10)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("query account in user: %d %v\n", len(as), as)
+
+	as, err = s.GetAllAccount(db, nil)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("query all account in user: %d %v\n", len(as), as)
+
+	count, err := s.CountAllAccount(db, nil)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("count all account in user: %d\n", count)
+
+	u, err := s.UserByID(db, user.ID)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("query user: %v\n", u)
+
+	us, err := s.UsersBySubjectFK(db, account.Subject, nil)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("query user by subject fk: %s %v\n", account.Subject, len(us))
+
+	total, err := s.CountUsersBySubjectFK(db, account.Subject, nil)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("total user by subject fk: %s %v\n", account.Subject, total)
+
 	err = s.DeleteUser(db, user)
 	if err != nil {
 		panic(err)
@@ -103,14 +179,4 @@ func testStoageAndDB(s storage.Storage, db *sqlx.DB) {
 		panic(err)
 	}
 	fmt.Printf("delete account: %v\n", err)
-
-	/*
-		u, err := s.AccountByID(db, account.ID)
-		if err != nil {
-			panic(err)
-		}
-
-		fmt.Printf("query account: %v\n", u)
-	*/
-
 }
