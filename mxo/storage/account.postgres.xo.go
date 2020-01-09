@@ -5,6 +5,7 @@ package storage
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -29,6 +30,71 @@ func (s *PostgresStorage) InsertAccount(db XODB, a *Account) error {
 	// run query
 	XOLog(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
 	err = db.QueryRow(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate).Scan(&a.ID)
+	if err != nil {
+		return err
+	}
+
+	// set existence
+	a._exists = true
+
+	return nil
+}
+
+// InsertAccountByFields inserts the Account to the database.
+func (s *PostgresStorage) InsertAccountByFields(db XODB, a *Account) error {
+	var err error
+
+	params := make([]interface{}, 0, 5)
+	fields := make([]string, 0, 5)
+	retCols := `"id"`
+	retVars := make([]interface{}, 0, 5)
+	retVars = append(retVars, &a.ID)
+	fields = append(fields, `"subject"`)
+	params = append(params, a.Subject)
+
+	fields = append(fields, `"email"`)
+	params = append(params, a.Email)
+	if a.CreatedDate.Valid {
+		fields = append(fields, `"created_date"`)
+		params = append(params, a.CreatedDate)
+	} else {
+		retCols += `, "created_date"`
+		retVars = append(retVars, &a.CreatedDate)
+	}
+	if a.ChangedDate.Valid {
+		fields = append(fields, `"changed_date"`)
+		params = append(params, a.ChangedDate)
+	} else {
+		retCols += `, "changed_date"`
+		retVars = append(retVars, &a.ChangedDate)
+	}
+	if a.DeletedDate.Valid {
+		fields = append(fields, `"deleted_date"`)
+		params = append(params, a.DeletedDate)
+	} else {
+		retCols += `, "deleted_date"`
+		retVars = append(retVars, &a.DeletedDate)
+	}
+	if len(params) == 0 {
+		// FIXME(jackie): maybe we should allow this?
+		return errors.New("all fields are empty, unable to insert")
+	}
+
+	var placeHolders string
+	for i := range params {
+		placeHolders += "$" + strconv.Itoa(i+1)
+		if i < len(params)-1 {
+			placeHolders += ", "
+		}
+	}
+
+	sqlstr := `INSERT INTO "public"."account" (` +
+		strings.Join(fields, ",") +
+		`) VALUES (` + placeHolders +
+		`) RETURNING ` + retCols
+
+	XOLog(sqlstr, params...)
+	err = db.QueryRow(sqlstr, params...).Scan(retVars...)
 	if err != nil {
 		return err
 	}
@@ -65,6 +131,39 @@ func (s *PostgresStorage) UpdateAccount(db XODB, a *Account) error {
 	XOLog(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
 	_, err = db.Exec(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
 	return err
+}
+
+// UpdateAccountByFields updates the Account in the database.
+func (s *PostgresStorage) UpdateAccountByFields(db XODB, a *Account, fields, retCols []string, params, retVars []interface{}) error {
+	var placeHolders string
+	for i := range params {
+		placeHolders += "$" + strconv.Itoa(i+1)
+		if i < len(params)-1 {
+			placeHolders += ", "
+		}
+	}
+	params = append(params, a.ID)
+
+	var sqlstr string
+	if len(fields) == 1 {
+		sqlstr = `UPDATE "public"."account" SET ` +
+			strings.Join(fields, ",") +
+			` = ` + placeHolders +
+			` WHERE id = $` + strconv.Itoa(len(params)) +
+			` RETURNING ` + strings.Join(retCols, ", ")
+	} else {
+		sqlstr = `UPDATE "public"."account" SET (` +
+			strings.Join(fields, ",") +
+			`) = (` + placeHolders +
+			`) WHERE id = $` + strconv.Itoa(len(params)) +
+			` RETURNING ` + strings.Join(retCols, ", ")
+	}
+	XOLog(sqlstr, params...)
+	if err := db.QueryRow(sqlstr, params...).Scan(retVars...); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // SaveAccount saves the Account to the database.
@@ -130,6 +229,42 @@ func (s *PostgresStorage) DeleteAccount(db XODB, a *Account) error {
 
 	// set deleted
 	a._deleted = true
+
+	return nil
+}
+
+// DeleteAccounts deletes the Account from the database.
+func (s *PostgresStorage) DeleteAccounts(db XODB, as []*Account) error {
+	var err error
+
+	if len(as) == 0 {
+		return nil
+	}
+
+	var args []interface{}
+	var placeholder string
+	for i, a := range as {
+		args = append(args, a.ID)
+		if i != 0 {
+			placeholder = placeholder + ", "
+		}
+		placeholder += fmt.Sprintf("$%d", i+1)
+	}
+
+	// sql query
+	var sqlstr = `DELETE FROM "public"."account" WHERE "id" in (` + placeholder + `)`
+
+	// run query
+	XOLog(sqlstr, args...)
+	_, err = db.Exec(sqlstr, args...)
+	if err != nil {
+		return err
+	}
+
+	// set deleted
+	for _, a := range as {
+		a._deleted = true
+	}
 
 	return nil
 }

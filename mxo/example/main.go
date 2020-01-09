@@ -1,13 +1,22 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
+	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
+	"github.com/graph-gophers/graphql-go"
+	"github.com/gunsluo/go-example/mxo/example/graphiql"
 	"github.com/gunsluo/go-example/mxo/storage"
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	_ "github.com/denisenkom/go-mssqldb"
@@ -23,25 +32,50 @@ const (
 )
 
 func main() {
-	var mod string
+	var driver string
 	if len(os.Args) <= 1 {
-		mod = "postgres"
+		driver = "postgres"
 	} else {
-		mod = os.Args[1]
+		driver = os.Args[1]
 	}
 
-	fmt.Println("run mod:", mod)
-	switch mod {
+	fmt.Println("run driver:", driver)
+	switch driver {
 	case "postgres":
-		testStoage(driverPostgres, dsnPostgres)
+		testStoage(driver)
 	case "mssql":
-		testStoage(driverMssql, dsnMssql)
+		testStoage(driver)
+	case "server":
+		if len(os.Args) > 2 {
+			driver = os.Args[2]
+		} else {
+			driver = "postgres"
+		}
+
+		if driver != "postgres" && driver != "mssql" {
+			fmt.Println("invalid parameter, it should be 'postgres' & 'mssql'")
+			return
+		}
+
+		server(driver)
 	default:
-		fmt.Println("invalid parameter, it should be 'postgres' & 'mssql'")
+		fmt.Println("invalid parameter, it should be 'postgres' & 'mssql' & 'server'")
 	}
 }
 
-func testStoage(driver, dsn string) {
+func getDsn(driver string) string {
+	switch driver {
+	case "postgres":
+		return dsnPostgres
+	case "mssql":
+		return dsnMssql
+	}
+
+	return dsnPostgres
+}
+
+func testStoage(driver string) {
+	dsn := getDsn(driver)
 	db, err := sqlx.Open(driver, dsn)
 	if err != nil {
 		panic(err)
@@ -179,4 +213,136 @@ func testStoageAndDB(s storage.Storage, db *sqlx.DB) {
 		panic(err)
 	}
 	fmt.Printf("delete account: %v\n", err)
+}
+
+// Server is a graphql server.
+type gqlServer struct {
+	address string
+	engine  *gin.Engine
+
+	logger logrus.FieldLogger
+	db     storage.XODB
+	s      storage.Storage
+}
+
+// NNewGQLServer is graphql server
+func NewGQLServer(address string, logger logrus.FieldLogger, db storage.XODB, s storage.Storage) (*gqlServer, error) {
+
+	// graphql API
+	rootResolver := storage.NewRootResolver(&storage.ResolverConfig{Logger: logger, DB: db, S: s})
+	schemaString := rootResolver.BuildSchemaString("", "", "")
+	fmt.Println("--->", schemaString)
+
+	schema, err := graphql.ParseSchema(schemaString,
+		rootResolver,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't parse schema")
+	}
+
+	engine := gin.Default()
+	graphqlRoute := engine.Group("/graphql")
+	graphQLHandler := Handler{
+		Schema: schema,
+	}
+	graphqlRoute.Any("", graphQLHandler.Serve)
+
+	// debug
+	debug := engine.Group("/")
+	{
+		debugPage := bytes.Replace(graphiql.GraphiQLPage, []byte("fetch('/'"), []byte("fetch('/graphql'"), -1)
+		debug.GET("/debug.html", func(c *gin.Context) {
+			c.Data(http.StatusOK, "text/html; charset=utf-8", debugPage)
+		})
+	}
+
+	return &gqlServer{
+		address: address,
+		engine:  engine,
+		logger:  logger,
+		db:      db,
+		s:       s,
+	}, nil
+}
+
+func (s *gqlServer) Run() error {
+	httpServer := http.Server{
+		Addr:    s.address,
+		Handler: s.engine,
+	}
+
+	// listening http server
+	s.logger.Infoln("Starting http server listening on:", s.address)
+	if err := httpServer.ListenAndServe(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func server(driver string) {
+	dsn := getDsn(driver)
+	logger := logrus.New()
+
+	db, err := sqlx.Open(driver, dsn)
+	if err != nil {
+		panic(err)
+	}
+
+	s, err := storage.New(driver, storage.Config{Logger: logger})
+	if err != nil {
+		panic(err)
+	}
+
+	server, err := NewGQLServer(":8080", logger, db, s)
+	if err != nil {
+		panic(err)
+	}
+
+	server.Run()
+}
+
+// Handler a graphql Handle responds to an HTTP request.
+type Handler struct {
+	Schema *graphql.Schema
+}
+
+// Serve implementation function of graphql handler
+func (h *Handler) Serve(c *gin.Context) {
+	r := c.Request
+	w := c.Writer
+
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	schema := string(body)
+	res, err := h.Query(c, schema)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(res)
+}
+
+func (h *Handler) Query(c *gin.Context, schema string) ([]byte, error) {
+	var params struct {
+		Query         string                 `json:"query"`
+		OperationName string                 `json:"operationName"`
+		Variables     map[string]interface{} `json:"variables"`
+	}
+	if err := json.NewDecoder(strings.NewReader(schema)).Decode(&params); err != nil {
+		return nil, err
+	}
+
+	response := h.Schema.Exec(c.Request.Context(), params.Query, params.OperationName, params.Variables)
+	responseJSON, err := json.Marshal(response)
+	if err != nil {
+		return nil, err
+	}
+	return responseJSON, nil
 }

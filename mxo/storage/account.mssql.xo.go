@@ -40,6 +40,71 @@ func (s *MssqlStorage) InsertAccount(db XODB, a *Account) error {
 	return nil
 }
 
+// InsertAccountByFields inserts the Account to the database.
+func (s *MssqlStorage) InsertAccountByFields(db XODB, a *Account) error {
+	var err error
+
+	params := make([]interface{}, 0, 5)
+	fields := make([]string, 0, 5)
+	retCols := `INSERTED."id"`
+	retVars := make([]interface{}, 0, 5)
+	retVars = append(retVars, &a.ID)
+	fields = append(fields, `"subject"`)
+	params = append(params, a.Subject)
+
+	fields = append(fields, `"email"`)
+	params = append(params, a.Email)
+	if a.CreatedDate.Valid {
+		fields = append(fields, `"created_date"`)
+		params = append(params, a.CreatedDate)
+	} else {
+		retCols += `, INSERTED."created_date"`
+		retVars = append(retVars, &a.CreatedDate)
+	}
+	if a.ChangedDate.Valid {
+		fields = append(fields, `"changed_date"`)
+		params = append(params, a.ChangedDate)
+	} else {
+		retCols += `, INSERTED."changed_date"`
+		retVars = append(retVars, &a.ChangedDate)
+	}
+	if a.DeletedDate.Valid {
+		fields = append(fields, `"deleted_date"`)
+		params = append(params, a.DeletedDate)
+	} else {
+		retCols += `, INSERTED."deleted_date"`
+		retVars = append(retVars, &a.DeletedDate)
+	}
+	if len(params) == 0 {
+		// FIXME(jackie): maybe we should allow this?
+		return errors.New("all fields are empty, unable to insert")
+	}
+
+	var placeHolders string
+	for i := range params {
+		placeHolders += "$" + strconv.Itoa(i+1)
+		if i < len(params)-1 {
+			placeHolders += ", "
+		}
+	}
+
+	sqlstr := `INSERT INTO "dbo"."account" (` +
+		strings.Join(fields, ",") +
+		`) OUTPUT ` + retCols +
+		` VALUES (` + placeHolders + `)`
+
+	XOLog(sqlstr, params...)
+	err = db.QueryRow(sqlstr, params...).Scan(retVars...)
+	if err != nil {
+		return err
+	}
+
+	// set existence
+	a._exists = true
+
+	return nil
+}
+
 // UpdateAccount updates the Account in the database.
 func (s *MssqlStorage) UpdateAccount(db XODB, a *Account) error {
 	var err error
@@ -63,6 +128,36 @@ func (s *MssqlStorage) UpdateAccount(db XODB, a *Account) error {
 	XOLog(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
 	_, err = db.Exec(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
 	return err
+}
+
+// UpdateAccountByFields updates the Account in the database.
+func (s *MssqlStorage) UpdateAccountByFields(db XODB, a *Account, fields, retCols []string, params, retVars []interface{}) error {
+	var setstr string
+	for i, field := range fields {
+		if i != 0 {
+			setstr += ", "
+		}
+		setstr += field + ` = $` + strconv.Itoa(i+1)
+	}
+
+	var retstr string
+	for i, retCol := range retCols {
+		if i != 0 {
+			retstr += ", "
+		}
+		retstr += "INSERTED." + retCol
+	}
+
+	params = append(params, a.ID)
+	var sqlstr = `UPDATE "dbo"."account" SET ` +
+		setstr + ` OUTPUT ` + retstr +
+		` WHERE id = $` + strconv.Itoa(len(params))
+	XOLog(sqlstr, params...)
+	if err := db.QueryRow(sqlstr, params...).Scan(retVars...); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // SaveAccount saves the Account to the database.
@@ -125,6 +220,42 @@ func (s *MssqlStorage) DeleteAccount(db XODB, a *Account) error {
 
 	// set deleted
 	a._deleted = true
+
+	return nil
+}
+
+// DeleteAccounts deletes the Account from the database.
+func (s *MssqlStorage) DeleteAccounts(db XODB, as []*Account) error {
+	var err error
+
+	if len(as) == 0 {
+		return nil
+	}
+
+	var args []interface{}
+	var placeholder string
+	for i, a := range as {
+		args = append(args, a.ID)
+		if i != 0 {
+			placeholder = placeholder + ", "
+		}
+		placeholder += fmt.Sprintf("$%d", i+1)
+	}
+
+	// sql query
+	var sqlstr = `DELETE FROM "dbo"."account" WHERE "id" in (` + placeholder + `)`
+
+	// run query
+	XOLog(sqlstr, args...)
+	_, err = db.Exec(sqlstr, args...)
+	if err != nil {
+		return err
+	}
+
+	// set deleted
+	for _, a := range as {
+		a._deleted = true
+	}
 
 	return nil
 }

@@ -170,3 +170,23 @@ type filterArguments struct {
 	conjunction string
 	conjCnt     int
 }
+
+// updateArguments additional parameters when updating method
+type updateArguments struct {
+	Deletions *[]string
+}
+
+// isDeletionFields return a bool value whether the field is set to null
+func isDeletionFields(deletionFields *[]string, field string) bool {
+	if deletionFields == nil {
+		return false
+	}
+
+	for _, deletionField := range *deletionFields {
+		if field == deletionField {
+			return true
+		}
+	}
+
+	return false
+}

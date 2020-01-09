@@ -5,6 +5,8 @@ package storage
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -28,6 +30,75 @@ func (s *PostgresStorage) InsertUser(db XODB, u *User) error {
 	// run query
 	XOLog(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate)
 	err = db.QueryRow(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate).Scan(&u.ID)
+	if err != nil {
+		return err
+	}
+
+	// set existence
+	u._exists = true
+
+	return nil
+}
+
+// InsertUserByFields inserts the User to the database.
+func (s *PostgresStorage) InsertUserByFields(db XODB, u *User) error {
+	var err error
+
+	params := make([]interface{}, 0, 5)
+	fields := make([]string, 0, 5)
+	retCols := `"id"`
+	retVars := make([]interface{}, 0, 5)
+	retVars = append(retVars, &u.ID)
+	fields = append(fields, `"subject"`)
+	params = append(params, u.Subject)
+	if u.Name.Valid {
+		fields = append(fields, `"name"`)
+		params = append(params, u.Name)
+	} else {
+		retCols += `, "name"`
+		retVars = append(retVars, &u.Name)
+	}
+	if u.CreatedDate.Valid {
+		fields = append(fields, `"created_date"`)
+		params = append(params, u.CreatedDate)
+	} else {
+		retCols += `, "created_date"`
+		retVars = append(retVars, &u.CreatedDate)
+	}
+	if u.ChangedDate.Valid {
+		fields = append(fields, `"changed_date"`)
+		params = append(params, u.ChangedDate)
+	} else {
+		retCols += `, "changed_date"`
+		retVars = append(retVars, &u.ChangedDate)
+	}
+	if u.DeletedDate.Valid {
+		fields = append(fields, `"deleted_date"`)
+		params = append(params, u.DeletedDate)
+	} else {
+		retCols += `, "deleted_date"`
+		retVars = append(retVars, &u.DeletedDate)
+	}
+	if len(params) == 0 {
+		// FIXME(jackie): maybe we should allow this?
+		return errors.New("all fields are empty, unable to insert")
+	}
+
+	var placeHolders string
+	for i := range params {
+		placeHolders += "$" + strconv.Itoa(i+1)
+		if i < len(params)-1 {
+			placeHolders += ", "
+		}
+	}
+
+	sqlstr := `INSERT INTO "public"."user" (` +
+		strings.Join(fields, ",") +
+		`) VALUES (` + placeHolders +
+		`) RETURNING ` + retCols
+
+	XOLog(sqlstr, params...)
+	err = db.QueryRow(sqlstr, params...).Scan(retVars...)
 	if err != nil {
 		return err
 	}
@@ -64,6 +135,39 @@ func (s *PostgresStorage) UpdateUser(db XODB, u *User) error {
 	XOLog(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate, u.ID)
 	_, err = db.Exec(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate, u.ID)
 	return err
+}
+
+// UpdateUserByFields updates the User in the database.
+func (s *PostgresStorage) UpdateUserByFields(db XODB, u *User, fields, retCols []string, params, retVars []interface{}) error {
+	var placeHolders string
+	for i := range params {
+		placeHolders += "$" + strconv.Itoa(i+1)
+		if i < len(params)-1 {
+			placeHolders += ", "
+		}
+	}
+	params = append(params, u.ID)
+
+	var sqlstr string
+	if len(fields) == 1 {
+		sqlstr = `UPDATE "public"."user" SET ` +
+			strings.Join(fields, ",") +
+			` = ` + placeHolders +
+			` WHERE id = $` + strconv.Itoa(len(params)) +
+			` RETURNING ` + strings.Join(retCols, ", ")
+	} else {
+		sqlstr = `UPDATE "public"."user" SET (` +
+			strings.Join(fields, ",") +
+			`) = (` + placeHolders +
+			`) WHERE id = $` + strconv.Itoa(len(params)) +
+			` RETURNING ` + strings.Join(retCols, ", ")
+	}
+	XOLog(sqlstr, params...)
+	if err := db.QueryRow(sqlstr, params...).Scan(retVars...); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // SaveUser saves the User to the database.
@@ -129,6 +233,42 @@ func (s *PostgresStorage) DeleteUser(db XODB, u *User) error {
 
 	// set deleted
 	u._deleted = true
+
+	return nil
+}
+
+// DeleteUsers deletes the User from the database.
+func (s *PostgresStorage) DeleteUsers(db XODB, us []*User) error {
+	var err error
+
+	if len(us) == 0 {
+		return nil
+	}
+
+	var args []interface{}
+	var placeholder string
+	for i, u := range us {
+		args = append(args, u.ID)
+		if i != 0 {
+			placeholder = placeholder + ", "
+		}
+		placeholder += fmt.Sprintf("$%d", i+1)
+	}
+
+	// sql query
+	var sqlstr = `DELETE FROM "public"."user" WHERE "id" in (` + placeholder + `)`
+
+	// run query
+	XOLog(sqlstr, args...)
+	_, err = db.Exec(sqlstr, args...)
+	if err != nil {
+		return err
+	}
+
+	// set deleted
+	for _, u := range us {
+		u._deleted = true
+	}
 
 	return nil
 }
