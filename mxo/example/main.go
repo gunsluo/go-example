@@ -220,13 +220,12 @@ type gqlServer struct {
 	address string
 	engine  *gin.Engine
 
-	logger logrus.FieldLogger
-	db     storage.XODB
-	s      storage.Storage
+	db storage.XODB
+	s  storage.Storage
 }
 
-// NNewGQLServer is graphql server
-func NewGQLServer(address string, logger logrus.FieldLogger, db storage.XODB, s storage.Storage) (*gqlServer, error) {
+// NewGQLServer is graphql server
+func NewGQLServer(address string, logger *logrus.Logger, db storage.XODB, s storage.Storage) (*gqlServer, error) {
 
 	// graphql API
 	rootResolver := storage.NewRootResolver(&storage.ResolverConfig{Logger: logger, DB: db, S: s})
@@ -259,7 +258,6 @@ func NewGQLServer(address string, logger logrus.FieldLogger, db storage.XODB, s 
 	return &gqlServer{
 		address: address,
 		engine:  engine,
-		logger:  logger,
 		db:      db,
 		s:       s,
 	}, nil
@@ -272,7 +270,7 @@ func (s *gqlServer) Run() error {
 	}
 
 	// listening http server
-	s.logger.Infoln("Starting http server listening on:", s.address)
+	fmt.Println("Starting http server listening on:", s.address)
 	if err := httpServer.ListenAndServe(); err != nil {
 		return err
 	}
@@ -282,7 +280,8 @@ func (s *gqlServer) Run() error {
 
 func server(driver string) {
 	dsn := getDsn(driver)
-	logger := logrus.New()
+	var logger *logrus.Logger
+	logger = logrus.New()
 
 	db, err := sqlx.Open(driver, dsn)
 	if err != nil {

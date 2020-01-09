@@ -28,7 +28,7 @@ func (s *MssqlStorage) InsertUser(db XODB, u *User) error {
 		`)`
 
 	// run query
-	XOLog(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate)
+	s.info(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate)
 	err = db.QueryRow(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate).Scan(&u.ID)
 	if err != nil {
 		return err
@@ -97,7 +97,7 @@ func (s *MssqlStorage) InsertUserByFields(db XODB, u *User) error {
 		`) OUTPUT ` + retCols +
 		` VALUES (` + placeHolders + `)`
 
-	XOLog(sqlstr, params...)
+	s.info(sqlstr, params)
 	err = db.QueryRow(sqlstr, params...).Scan(retVars...)
 	if err != nil {
 		return err
@@ -129,7 +129,7 @@ func (s *MssqlStorage) UpdateUser(db XODB, u *User) error {
 		` WHERE "id" = $6`
 
 	// run query
-	XOLog(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate, u.ID)
+	s.info(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate, u.ID)
 	_, err = db.Exec(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate, u.ID)
 	return err
 }
@@ -156,7 +156,7 @@ func (s *MssqlStorage) UpdateUserByFields(db XODB, u *User, fields, retCols []st
 	var sqlstr = `UPDATE "dbo"."user" SET ` +
 		setstr + ` OUTPUT ` + retstr +
 		` WHERE id = $` + strconv.Itoa(len(params))
-	XOLog(sqlstr, params...)
+	s.info(sqlstr, params)
 	if err := db.QueryRow(sqlstr, params...).Scan(retVars...); err != nil {
 		return err
 	}
@@ -186,7 +186,7 @@ func (s *MssqlStorage) UpsertUser(db XODB, u *User) error {
 		`WHEN NOT MATCHED THEN INSERT ("subject", "name", "created_date", "changed_date", "deleted_date") VALUES (s."subject", s."name", s."created_date", s."changed_date", s."deleted_date");`
 
 	// run query
-	XOLog(sqlstr, u.ID, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate)
+	s.info(sqlstr, u.ID, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate)
 	_, err = db.Exec(sqlstr, u.ID, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate)
 	if err != nil {
 		return err
@@ -216,7 +216,7 @@ func (s *MssqlStorage) DeleteUser(db XODB, u *User) error {
 	const sqlstr = `DELETE FROM "dbo"."user" WHERE "id" = $1`
 
 	// run query
-	XOLog(sqlstr, u.ID)
+	s.info(sqlstr, u.ID)
 	_, err = db.Exec(sqlstr, u.ID)
 	if err != nil {
 		return err
@@ -250,7 +250,7 @@ func (s *MssqlStorage) DeleteUsers(db XODB, us []*User) error {
 	var sqlstr = `DELETE FROM "dbo"."user" WHERE "id" in (` + placeholder + `)`
 
 	// run query
-	XOLog(sqlstr, args...)
+	s.info(sqlstr, args)
 	_, err = db.Exec(sqlstr, args...)
 	if err != nil {
 		return err
@@ -272,7 +272,7 @@ func (s *MssqlStorage) GetMostRecentUser(db XODB, n int) ([]*User, error) {
 		`FROM "dbo"."user" ` +
 		`ORDER BY created_date DESC`
 
-	XOLog(sqlstr)
+	s.info(sqlstr)
 	q, err := db.Query(sqlstr)
 	if err != nil {
 		return nil, err
@@ -304,7 +304,7 @@ func (s *MssqlStorage) GetMostRecentChangedUser(db XODB, n int) ([]*User, error)
 		`FROM "dbo"."user" ` +
 		`ORDER BY changed_date DESC`
 
-	XOLog(sqlstr)
+	s.info(sqlstr)
 	q, err := db.Query(sqlstr)
 	if err != nil {
 		return nil, err
@@ -379,7 +379,7 @@ func (s *MssqlStorage) GetAllUser(db XODB, queryArgs *UserQueryArguments) ([]*Us
 		desc,
 		offsetPos,
 		limitPos)
-	XOLog(sqlstr, params...)
+	s.info(sqlstr, params)
 
 	q, err := db.Query(sqlstr, params...)
 	if err != nil {
@@ -418,7 +418,7 @@ func (s *MssqlStorage) CountAllUser(db XODB, queryArgs *UserQueryArguments) (int
 
 	var err error
 	var sqlstr = fmt.Sprintf(`SELECT count(*) from "dbo"."user" WHERE %s deleted_date IS %s`, placeHolders, dead)
-	XOLog(sqlstr)
+	s.info(sqlstr)
 
 	var count int
 	err = db.QueryRow(sqlstr, params...).Scan(&count)
@@ -505,7 +505,7 @@ func (s *MssqlStorage) CountUsersBySubjectFK(db XODB, subject string, queryArgs 
 
 	var err error
 	var sqlstr = fmt.Sprintf(`SELECT count(*) from "dbo"."user" WHERE %s deleted_date IS %s`, placeHolders, dead)
-	XOLog(sqlstr)
+	s.info(sqlstr)
 
 	var count int
 	err = db.QueryRow(sqlstr, params...).Scan(&count)
@@ -535,7 +535,7 @@ func (s *MssqlStorage) UserByID(db XODB, id int) (*User, error) {
 		`WHERE "id" = $1`
 
 	// run query
-	XOLog(sqlstr, id)
+	s.info(sqlstr, id)
 	u := User{
 		_exists: true,
 	}

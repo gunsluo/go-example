@@ -28,7 +28,7 @@ func (s *PostgresStorage) InsertAccount(db XODB, a *Account) error {
 		`) RETURNING "id"`
 
 	// run query
-	XOLog(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
+	s.info(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
 	err = db.QueryRow(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate).Scan(&a.ID)
 	if err != nil {
 		return err
@@ -93,7 +93,7 @@ func (s *PostgresStorage) InsertAccountByFields(db XODB, a *Account) error {
 		`) VALUES (` + placeHolders +
 		`) RETURNING ` + retCols
 
-	XOLog(sqlstr, params...)
+	s.info(sqlstr, params)
 	err = db.QueryRow(sqlstr, params...).Scan(retVars...)
 	if err != nil {
 		return err
@@ -128,7 +128,7 @@ func (s *PostgresStorage) UpdateAccount(db XODB, a *Account) error {
 		`) WHERE "id" = $6`
 
 	// run query
-	XOLog(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
+	s.info(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
 	_, err = db.Exec(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
 	return err
 }
@@ -158,7 +158,7 @@ func (s *PostgresStorage) UpdateAccountByFields(db XODB, a *Account, fields, ret
 			`) WHERE id = $` + strconv.Itoa(len(params)) +
 			` RETURNING ` + strings.Join(retCols, ", ")
 	}
-	XOLog(sqlstr, params...)
+	s.info(sqlstr, params)
 	if err := db.QueryRow(sqlstr, params...).Scan(retVars...); err != nil {
 		return err
 	}
@@ -191,7 +191,7 @@ func (s *PostgresStorage) UpsertAccount(db XODB, a *Account) error {
 		`)`
 
 	// run query
-	XOLog(sqlstr, a.ID, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
+	s.info(sqlstr, a.ID, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
 	_, err = db.Exec(sqlstr, a.ID, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
 	if err != nil {
 		return err
@@ -221,7 +221,7 @@ func (s *PostgresStorage) DeleteAccount(db XODB, a *Account) error {
 	const sqlstr = `DELETE FROM "public"."account" WHERE "id" = $1`
 
 	// run query
-	XOLog(sqlstr, a.ID)
+	s.info(sqlstr, a.ID)
 	_, err = db.Exec(sqlstr, a.ID)
 	if err != nil {
 		return err
@@ -255,7 +255,7 @@ func (s *PostgresStorage) DeleteAccounts(db XODB, as []*Account) error {
 	var sqlstr = `DELETE FROM "public"."account" WHERE "id" in (` + placeholder + `)`
 
 	// run query
-	XOLog(sqlstr, args...)
+	s.info(sqlstr, args)
 	_, err = db.Exec(sqlstr, args...)
 	if err != nil {
 		return err
@@ -277,7 +277,7 @@ func (s *PostgresStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, erro
 		`FROM "public"."account" ` +
 		`ORDER BY created_date DESC LIMIT $1`
 
-	XOLog(sqlstr, n)
+	s.info(sqlstr, n)
 	q, err := db.Query(sqlstr, n)
 	if err != nil {
 		return nil, err
@@ -309,7 +309,7 @@ func (s *PostgresStorage) GetMostRecentChangedAccount(db XODB, n int) ([]*Accoun
 		`FROM "public"."account" ` +
 		`ORDER BY changed_date DESC LIMIT $1`
 
-	XOLog(sqlstr, n)
+	s.info(sqlstr, n)
 	q, err := db.Query(sqlstr, n)
 	if err != nil {
 		return nil, err
@@ -400,7 +400,7 @@ func (s *PostgresStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArgument
 		desc,
 		offsetPos,
 		limitPos)
-	XOLog(sqlstr, params...)
+	s.info(sqlstr, params)
 
 	q, err := db.Query(sqlstr, params...)
 	if err != nil {
@@ -455,7 +455,7 @@ func (s *PostgresStorage) CountAllAccount(db XODB, queryArgs *AccountQueryArgume
 
 	var err error
 	var sqlstr = fmt.Sprintf(`SELECT count(*) from "public"."account" WHERE %s deleted_date IS %s`, placeHolders, dead)
-	XOLog(sqlstr)
+	s.info(sqlstr)
 
 	var count int
 	err = db.QueryRow(sqlstr, params...).Scan(&count)
@@ -478,7 +478,7 @@ func (s *PostgresStorage) AccountByID(db XODB, id int) (*Account, error) {
 		`WHERE "id" = $1`
 
 	// run query
-	XOLog(sqlstr, id)
+	s.info(sqlstr, id)
 	a := Account{
 		_exists: true,
 	}
@@ -504,7 +504,7 @@ func (s *PostgresStorage) AccountBySubject(db XODB, subject string) (*Account, e
 		`WHERE "subject" = $1`
 
 	// run query
-	XOLog(sqlstr, subject)
+	s.info(sqlstr, subject)
 	a := Account{
 		_exists: true,
 	}

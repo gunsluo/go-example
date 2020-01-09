@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"fmt"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -94,24 +95,41 @@ type Storage interface {
 }
 
 // PostgresStorage is Postgres for the database.
-type PostgresStorage struct{}
+type PostgresStorage struct {
+	logger XOLogger
+}
+
+func (s *PostgresStorage) info(args ...interface{}) {
+	xoLog(s.logger, logrus.InfoLevel, args...)
+}
 
 // MssqlStorage is Mssql for the database.
-type MssqlStorage struct{}
+type MssqlStorage struct {
+	logger XOLogger
+}
+
+func (s *MssqlStorage) info(args ...interface{}) {
+	xoLog(s.logger, logrus.InfoLevel, args...)
+}
 
 // New is a construction method that return a new Storage
 func New(driver string, c Config) (Storage, error) {
+	// fix bug which interface type is not nil and interface value is nil
+	var logger XOLogger
+	if c.Logger != nil && !(reflect.ValueOf(c.Logger).Kind() == reflect.Ptr && reflect.ValueOf(c.Logger).IsNil()) {
+		logger = c.Logger
+	}
+
 	var s Storage
 	switch driver {
 	case "postgres":
-		s = &PostgresStorage{}
+		s = &PostgresStorage{logger: logger}
 	case "mssql":
-		s = &MssqlStorage{}
+		s = &MssqlStorage{logger: logger}
 	default:
 		return nil, errors.New("driver " + driver + " not support")
 	}
 
-	logger = c.Logger
 	return s, nil
 }
 
@@ -206,7 +224,7 @@ func (r *PageInfoResolver) HasPreviousPage() bool {
 
 // ResolverConfig is a config for Resolver
 type ResolverConfig struct {
-	Logger   logrus.FieldLogger
+	Logger   XOLogger
 	DB       XODB
 	S        Storage
 	Recorder EventRecorder
@@ -214,7 +232,7 @@ type ResolverConfig struct {
 
 // resolverExtensions it's passing between root resolver and  children resolver
 type resolverExtensions struct {
-	logger   logrus.FieldLogger
+	logger   XOLogger
 	db       XODB
 	storage  Storage
 	recorder EventRecorder

@@ -28,7 +28,7 @@ func (s *MssqlStorage) InsertAccount(db XODB, a *Account) error {
 		`)`
 
 	// run query
-	XOLog(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
+	s.info(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
 	err = db.QueryRow(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate).Scan(&a.ID)
 	if err != nil {
 		return err
@@ -93,7 +93,7 @@ func (s *MssqlStorage) InsertAccountByFields(db XODB, a *Account) error {
 		`) OUTPUT ` + retCols +
 		` VALUES (` + placeHolders + `)`
 
-	XOLog(sqlstr, params...)
+	s.info(sqlstr, params)
 	err = db.QueryRow(sqlstr, params...).Scan(retVars...)
 	if err != nil {
 		return err
@@ -125,7 +125,7 @@ func (s *MssqlStorage) UpdateAccount(db XODB, a *Account) error {
 		` WHERE "id" = $6`
 
 	// run query
-	XOLog(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
+	s.info(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
 	_, err = db.Exec(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
 	return err
 }
@@ -152,7 +152,7 @@ func (s *MssqlStorage) UpdateAccountByFields(db XODB, a *Account, fields, retCol
 	var sqlstr = `UPDATE "dbo"."account" SET ` +
 		setstr + ` OUTPUT ` + retstr +
 		` WHERE id = $` + strconv.Itoa(len(params))
-	XOLog(sqlstr, params...)
+	s.info(sqlstr, params)
 	if err := db.QueryRow(sqlstr, params...).Scan(retVars...); err != nil {
 		return err
 	}
@@ -182,7 +182,7 @@ func (s *MssqlStorage) UpsertAccount(db XODB, a *Account) error {
 		`WHEN NOT MATCHED THEN INSERT ("subject", "email", "created_date", "changed_date", "deleted_date") VALUES (s."subject", s."email", s."created_date", s."changed_date", s."deleted_date");`
 
 	// run query
-	XOLog(sqlstr, a.ID, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
+	s.info(sqlstr, a.ID, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
 	_, err = db.Exec(sqlstr, a.ID, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
 	if err != nil {
 		return err
@@ -212,7 +212,7 @@ func (s *MssqlStorage) DeleteAccount(db XODB, a *Account) error {
 	const sqlstr = `DELETE FROM "dbo"."account" WHERE "id" = $1`
 
 	// run query
-	XOLog(sqlstr, a.ID)
+	s.info(sqlstr, a.ID)
 	_, err = db.Exec(sqlstr, a.ID)
 	if err != nil {
 		return err
@@ -246,7 +246,7 @@ func (s *MssqlStorage) DeleteAccounts(db XODB, as []*Account) error {
 	var sqlstr = `DELETE FROM "dbo"."account" WHERE "id" in (` + placeholder + `)`
 
 	// run query
-	XOLog(sqlstr, args...)
+	s.info(sqlstr, args)
 	_, err = db.Exec(sqlstr, args...)
 	if err != nil {
 		return err
@@ -268,7 +268,7 @@ func (s *MssqlStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, error) 
 		`FROM "dbo"."account" ` +
 		`ORDER BY created_date DESC`
 
-	XOLog(sqlstr)
+	s.info(sqlstr)
 	q, err := db.Query(sqlstr)
 	if err != nil {
 		return nil, err
@@ -300,7 +300,7 @@ func (s *MssqlStorage) GetMostRecentChangedAccount(db XODB, n int) ([]*Account, 
 		`FROM "dbo"."account" ` +
 		`ORDER BY changed_date DESC`
 
-	XOLog(sqlstr)
+	s.info(sqlstr)
 	q, err := db.Query(sqlstr)
 	if err != nil {
 		return nil, err
@@ -391,7 +391,7 @@ func (s *MssqlStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArguments) 
 		desc,
 		offsetPos,
 		limitPos)
-	XOLog(sqlstr, params...)
+	s.info(sqlstr, params)
 
 	q, err := db.Query(sqlstr, params...)
 	if err != nil {
@@ -446,7 +446,7 @@ func (s *MssqlStorage) CountAllAccount(db XODB, queryArgs *AccountQueryArguments
 
 	var err error
 	var sqlstr = fmt.Sprintf(`SELECT count(*) from "dbo"."account" WHERE %s deleted_date IS %s`, placeHolders, dead)
-	XOLog(sqlstr)
+	s.info(sqlstr)
 
 	var count int
 	err = db.QueryRow(sqlstr, params...).Scan(&count)
@@ -469,7 +469,7 @@ func (s *MssqlStorage) AccountByID(db XODB, id int) (*Account, error) {
 		`WHERE "id" = $1`
 
 	// run query
-	XOLog(sqlstr, id)
+	s.info(sqlstr, id)
 	a := Account{
 		_exists: true,
 	}
@@ -495,7 +495,7 @@ func (s *MssqlStorage) AccountBySubject(db XODB, subject string) (*Account, erro
 		`WHERE "subject" = $1`
 
 	// run query
-	XOLog(sqlstr, subject)
+	s.info(sqlstr, subject)
 	a := Account{
 		_exists: true,
 	}

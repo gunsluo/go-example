@@ -19,16 +19,7 @@ import (
 
 // Config is storage configuration
 type Config struct {
-	Logger logrus.FieldLogger
-}
-
-var logger logrus.FieldLogger
-
-// XOLog provides the log func used by generated queries.
-func XOLog(s string, args ...interface{}) {
-	if logger != nil {
-		logger.Infof("%s %v", s, args)
-	}
+	Logger XOLogger
 }
 
 // XODB is the common interface for database operations that can be used with
@@ -39,6 +30,25 @@ type XODB interface {
 	Exec(string, ...interface{}) (sql.Result, error)
 	Query(string, ...interface{}) (*sql.Rows, error)
 	QueryRow(string, ...interface{}) *sql.Row
+}
+
+// XOLogger provides the log interface used by generated queries.
+type XOLogger interface {
+	logrus.FieldLogger
+	Log(level logrus.Level, args ...interface{})
+	Logf(level logrus.Level, format string, args ...interface{})
+}
+
+func xoLog(logger XOLogger, level logrus.Level, args ...interface{}) {
+	if logger != nil {
+		logger.Log(level, args...)
+	}
+}
+
+func xoLogf(logger XOLogger, level logrus.Level, format string, args ...interface{}) {
+	if logger != nil {
+		logger.Logf(level, format, args...)
+	}
 }
 
 // ScannerValuer is the common interface for types that implement both the
