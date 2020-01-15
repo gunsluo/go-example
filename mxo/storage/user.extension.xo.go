@@ -185,6 +185,9 @@ func (r *RootResolver) innerUserByIDGraphQL(ctx context.Context, args struct {
 
 	data, err := r.ext.storage.UserByID(r.ext.db, arg0)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.Errorf(`user [`+"%v"+`] not found`, arg0)
+		}
 		return nil, errors.Wrap(err, `unable to get "public"."user"`)
 	}
 

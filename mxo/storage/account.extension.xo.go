@@ -5,6 +5,7 @@ package storage
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strconv"
 
@@ -277,6 +278,9 @@ func (r *RootResolver) innerAccountByIDGraphQL(ctx context.Context, args struct 
 
 	data, err := r.ext.storage.AccountByID(r.ext.db, arg0)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.Errorf(`account [`+"%v"+`] not found`, arg0)
+		}
 		return nil, errors.Wrap(err, `unable to get "public"."account"`)
 	}
 
@@ -310,6 +314,9 @@ func (r *RootResolver) innerAccountBySubjectGraphQL(ctx context.Context, args st
 
 	data, err := r.ext.storage.AccountBySubject(r.ext.db, arg0)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.Errorf(`account [`+"%v"+`] not found`, arg0)
+		}
 		return nil, errors.Wrap(err, `unable to get "public"."account"`)
 	}
 

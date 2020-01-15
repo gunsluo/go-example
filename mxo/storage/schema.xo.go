@@ -99,8 +99,15 @@ type PostgresStorage struct {
 	logger XOLogger
 }
 
-func (s *PostgresStorage) info(args ...interface{}) {
-	xoLog(s.logger, logrus.InfoLevel, args...)
+func (s *PostgresStorage) info(format string, args ...interface{}) {
+	if len(args) == 0 {
+		xoLog(s.logger, logrus.InfoLevel, format)
+	} else {
+		var params []interface{}
+		params = append(params, format)
+		params = append(params, args...)
+		xoLogf(s.logger, logrus.InfoLevel, "%s %v", params...)
+	}
 }
 
 // MssqlStorage is Mssql for the database.
@@ -108,8 +115,15 @@ type MssqlStorage struct {
 	logger XOLogger
 }
 
-func (s *MssqlStorage) info(args ...interface{}) {
-	xoLog(s.logger, logrus.InfoLevel, args...)
+func (s *MssqlStorage) info(format string, args ...interface{}) {
+	if len(args) == 0 {
+		xoLog(s.logger, logrus.InfoLevel, format)
+	} else {
+		var params []interface{}
+		params = append(params, format)
+		params = append(params, args...)
+		xoLogf(s.logger, logrus.InfoLevel, "%s %v", params...)
+	}
 }
 
 // New is a construction method that return a new Storage
