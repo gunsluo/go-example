@@ -223,6 +223,12 @@ func (r AccountResolver) CreatedDate() *graphql.Time { return PointerGqlTime(r.n
 func (r AccountResolver) ChangedDate() *graphql.Time { return PointerGqlTime(r.node.ChangedDate) }
 func (r AccountResolver) DeletedDate() *graphql.Time { return PointerGqlTime(r.node.DeletedDate) }
 func (r AccountResolver) UsersSubject(ctx context.Context, queryArgs *UserQueryArguments) (*UserConnectionResolver, error) {
+	if r.ext.verifier == nil {
+		return nil, errors.New("enable ac, please set verifier")
+	}
+	if err := r.ext.verifier.VerifyRefAC(ctx, "Accounts", "RefGet", r); err != nil {
+		return nil, errors.Wrap(err, "Accounts:RefGet")
+	}
 
 	if queryArgs != nil && (queryArgs.After != nil || queryArgs.First != nil || queryArgs.Before != nil || queryArgs.Last != nil) {
 		return nil, errors.New("not implemented yet, use offset + limit for pagination")
@@ -253,6 +259,12 @@ func (r AccountResolver) UsersSubject(ctx context.Context, queryArgs *UserQueryA
 func (r *RootResolver) AccountByID(ctx context.Context, args struct {
 	ID graphql.ID
 }) (*AccountResolver, error) {
+	if r.ext.verifier == nil {
+		return nil, errors.New("enable ac, please set verifier")
+	}
+	if err := r.ext.verifier.VerifyAC(ctx, "Accounts", "Get", args); err != nil {
+		return nil, errors.Wrap(err, "Accounts:Get")
+	}
 
 	res, err := r.innerAccountByIDGraphQL(ctx, args)
 
@@ -292,6 +304,12 @@ func (r *RootResolver) innerAccountByIDGraphQL(ctx context.Context, args struct 
 func (r *RootResolver) AccountBySubject(ctx context.Context, args struct {
 	Subject string
 }) (*AccountResolver, error) {
+	if r.ext.verifier == nil {
+		return nil, errors.New("enable ac, please set verifier")
+	}
+	if err := r.ext.verifier.VerifyAC(ctx, "Accounts.AccountBySubject", "NonPrimaryKeyGet", args); err != nil {
+		return nil, errors.Wrap(err, "Accounts.AccountBySubject:NonPrimaryKeyGet")
+	}
 
 	res, err := r.innerAccountBySubjectGraphQL(ctx, args)
 
@@ -430,6 +448,12 @@ type DeleteAccountInput struct {
 
 // AllAccounts is a graphQL endpoint of AllAccounts
 func (r *RootResolver) AllAccounts(ctx context.Context, args *AccountQueryArguments) (*AccountConnectionResolver, error) {
+	if r.ext.verifier == nil {
+		return nil, errors.New("enable ac, please set verifier")
+	}
+	if err := r.ext.verifier.VerifyAC(ctx, "Accounts", "GetAll", args); err != nil {
+		return nil, errors.Wrap(err, "Accounts:GetAll")
+	}
 
 	res, err := r.allAccounts(ctx, args)
 
@@ -474,6 +498,12 @@ func (r *RootResolver) allAccounts(ctx context.Context, queryArgs *AccountQueryA
 
 // InsertAccounts is a graphQL endpoint of InsertAccounts
 func (r *RootResolver) InsertAccounts(ctx context.Context, args struct{ Input []InsertAccountInput }) ([]AccountResolver, error) {
+	if r.ext.verifier == nil {
+		return nil, errors.New("enable ac, please set verifier")
+	}
+	if err := r.ext.verifier.VerifyAC(ctx, "Accounts", "Insert", args); err != nil {
+		return nil, errors.Wrap(err, "Accounts:Insert")
+	}
 
 	res, err := r.insertAccountGraphQL(ctx, args.Input)
 
@@ -513,6 +543,12 @@ func (r *RootResolver) insertAccountGraphQL(ctx context.Context, items []InsertA
 
 // UpdateAccountGraphQL is the GraphQL end point for UpdateAccount
 func (r *RootResolver) UpdateAccounts(ctx context.Context, args struct{ Input []UpdateAccountInput }) ([]AccountResolver, error) {
+	if r.ext.verifier == nil {
+		return nil, errors.New("enable ac, please set verifier")
+	}
+	if err := r.ext.verifier.VerifyAC(ctx, "Accounts", "Update", args); err != nil {
+		return nil, errors.Wrap(err, "Accounts:Update")
+	}
 
 	res, err := r.updateAccountGraphQL(ctx, args.Input)
 
@@ -607,6 +643,9 @@ func (r *RootResolver) updateAccountGraphQL(ctx context.Context, items []UpdateA
 		}
 
 		if err := r.ext.storage.UpdateAccountByFields(r.ext.db, node, fields, retCols, params, retVars); err != nil {
+			if err == sql.ErrNoRows {
+				return nil, errors.Errorf(`Account [%d] not found`, node.ID)
+			}
 			return nil, err
 		}
 
@@ -617,6 +656,12 @@ func (r *RootResolver) updateAccountGraphQL(ctx context.Context, items []UpdateA
 
 // DeleteAccountGraphQL is the GraphQL end point for DeleteAccount
 func (r *RootResolver) DeleteAccounts(ctx context.Context, args struct{ Input []DeleteAccountInput }) ([]graphql.ID, error) {
+	if r.ext.verifier == nil {
+		return nil, errors.New("enable ac, please set verifier")
+	}
+	if err := r.ext.verifier.VerifyAC(ctx, "Accounts", "Delete", args); err != nil {
+		return nil, errors.Wrap(err, "Accounts:Delete")
+	}
 
 	res, err := r.deleteAccountGraphQL(ctx, args.Input)
 

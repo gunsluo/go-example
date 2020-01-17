@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -228,7 +229,7 @@ type gqlServer struct {
 func NewGQLServer(address string, logger *logrus.Logger, db storage.XODB, s storage.Storage) (*gqlServer, error) {
 
 	// graphql API
-	rootResolver := storage.NewRootResolver(&storage.ResolverConfig{Logger: logger, DB: db, S: s})
+	rootResolver := storage.NewRootResolver(&storage.ResolverConfig{Logger: logger, DB: db, S: s, Verifier: &Verifier{}})
 	schemaString := rootResolver.BuildSchemaString("", "", "")
 	fmt.Println("--->", schemaString)
 
@@ -344,4 +345,20 @@ func (h *Handler) Query(c *gin.Context, schema string) ([]byte, error) {
 		return nil, err
 	}
 	return responseJSON, nil
+}
+
+// Verifier ac verifier
+type Verifier struct {
+	Enable bool
+	// TODO: ac client
+}
+
+// VerifyAC is
+func (v *Verifier) VerifyAC(ctx context.Context, resource, action string, args interface{}) error {
+	fmt.Printf("enable ac, resource: %s action: %s\n", resource, action)
+	return nil
+}
+
+func (v *Verifier) VerifyRefAC(ctx context.Context, resource, action string, args interface{}) error {
+	return nil
 }

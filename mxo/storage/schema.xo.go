@@ -242,6 +242,7 @@ type ResolverConfig struct {
 	DB       XODB
 	S        Storage
 	Recorder EventRecorder
+	Verifier Verifier
 }
 
 // resolverExtensions it's passing between root resolver and  children resolver
@@ -250,6 +251,7 @@ type resolverExtensions struct {
 	db       XODB
 	storage  Storage
 	recorder EventRecorder
+	verifier Verifier
 }
 
 // RootResolver is a graphql root resolver
@@ -270,6 +272,7 @@ func NewRootResolver(c *ResolverConfig) *RootResolver {
 			db:       c.DB,
 			storage:  c.S,
 			recorder: c.Recorder,
+			verifier: c.Verifier,
 		},
 	}
 }
@@ -474,4 +477,11 @@ func PointerFloat64SqlFloat64(i sql.NullFloat64) *float64 {
 	}
 	s := i.Float64
 	return &s
+}
+
+// access control
+// Verifier is access control verifier
+type Verifier interface {
+	VerifyAC(ctx context.Context, resource, action string, args interface{}) error
+	VerifyRefAC(ctx context.Context, resource, action string, args interface{}) error
 }

@@ -144,6 +144,12 @@ func (r UserResolver) Node() *User {
 }
 func (r UserResolver) ID() graphql.ID { return graphql.ID(strconv.Itoa(r.node.ID)) }
 func (r UserResolver) Subject(ctx context.Context) (*AccountResolver, error) {
+	if r.ext.verifier == nil {
+		return nil, errors.New("enable ac, please set verifier")
+	}
+	if err := r.ext.verifier.VerifyRefAC(ctx, "Users", "RefGet", r); err != nil {
+		return nil, errors.Wrap(err, "Users:RefGet")
+	}
 	subject := r.node.Subject
 	node, err := r.ext.storage.AccountBySubject(r.ext.db, subject)
 	if err != nil {
@@ -160,6 +166,12 @@ func (r UserResolver) DeletedDate() *graphql.Time { return PointerGqlTime(r.node
 func (r *RootResolver) UserByID(ctx context.Context, args struct {
 	ID graphql.ID
 }) (*UserResolver, error) {
+	if r.ext.verifier == nil {
+		return nil, errors.New("enable ac, please set verifier")
+	}
+	if err := r.ext.verifier.VerifyAC(ctx, "Users", "Get", args); err != nil {
+		return nil, errors.Wrap(err, "Users:Get")
+	}
 
 	res, err := r.innerUserByIDGraphQL(ctx, args)
 
@@ -301,6 +313,12 @@ type DeleteUserInput struct {
 
 // AllUsers is a graphQL endpoint of AllUsers
 func (r *RootResolver) AllUsers(ctx context.Context, args *UserQueryArguments) (*UserConnectionResolver, error) {
+	if r.ext.verifier == nil {
+		return nil, errors.New("enable ac, please set verifier")
+	}
+	if err := r.ext.verifier.VerifyAC(ctx, "Users", "GetAll", args); err != nil {
+		return nil, errors.Wrap(err, "Users:GetAll")
+	}
 
 	res, err := r.allUsers(ctx, args)
 
@@ -339,6 +357,12 @@ func (r *RootResolver) allUsers(ctx context.Context, queryArgs *UserQueryArgumen
 
 // InsertUsers is a graphQL endpoint of InsertUsers
 func (r *RootResolver) InsertUsers(ctx context.Context, args struct{ Input []InsertUserInput }) ([]UserResolver, error) {
+	if r.ext.verifier == nil {
+		return nil, errors.New("enable ac, please set verifier")
+	}
+	if err := r.ext.verifier.VerifyAC(ctx, "Users", "Insert", args); err != nil {
+		return nil, errors.Wrap(err, "Users:Insert")
+	}
 
 	res, err := r.insertUserGraphQL(ctx, args.Input)
 
@@ -378,6 +402,12 @@ func (r *RootResolver) insertUserGraphQL(ctx context.Context, items []InsertUser
 
 // UpdateUserGraphQL is the GraphQL end point for UpdateUser
 func (r *RootResolver) UpdateUsers(ctx context.Context, args struct{ Input []UpdateUserInput }) ([]UserResolver, error) {
+	if r.ext.verifier == nil {
+		return nil, errors.New("enable ac, please set verifier")
+	}
+	if err := r.ext.verifier.VerifyAC(ctx, "Users", "Update", args); err != nil {
+		return nil, errors.Wrap(err, "Users:Update")
+	}
 
 	res, err := r.updateUserGraphQL(ctx, args.Input)
 
@@ -473,6 +503,9 @@ func (r *RootResolver) updateUserGraphQL(ctx context.Context, items []UpdateUser
 		}
 
 		if err := r.ext.storage.UpdateUserByFields(r.ext.db, node, fields, retCols, params, retVars); err != nil {
+			if err == sql.ErrNoRows {
+				return nil, errors.Errorf(`User [%d] not found`, node.ID)
+			}
 			return nil, err
 		}
 
@@ -483,6 +516,12 @@ func (r *RootResolver) updateUserGraphQL(ctx context.Context, items []UpdateUser
 
 // DeleteUserGraphQL is the GraphQL end point for DeleteUser
 func (r *RootResolver) DeleteUsers(ctx context.Context, args struct{ Input []DeleteUserInput }) ([]graphql.ID, error) {
+	if r.ext.verifier == nil {
+		return nil, errors.New("enable ac, please set verifier")
+	}
+	if err := r.ext.verifier.VerifyAC(ctx, "Users", "Delete", args); err != nil {
+		return nil, errors.Wrap(err, "Users:Delete")
+	}
 
 	res, err := r.deleteUserGraphQL(ctx, args.Input)
 
