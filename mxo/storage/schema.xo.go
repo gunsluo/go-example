@@ -485,3 +485,47 @@ type Verifier interface {
 	VerifyAC(ctx context.Context, resource, action string, args interface{}) error
 	VerifyRefAC(ctx context.Context, resource, action string, args interface{}) error
 }
+
+// GraphQLResource is a resource of graphql API
+type GraphQLResource struct {
+	Name     string
+	Describe string
+}
+
+// GetResolverResources get all resource
+func (r *RootResolver) GetResolverResources(includes []GraphQLResource, excludes []string) ([]GraphQLResource, error) {
+	uniqueResources := make(map[string]GraphQLResource)
+	for _, r := range r.getAccountGraphQLResources() {
+		if v, ok := uniqueResources[r.Name]; ok {
+			return nil, errors.Errorf("duplicate resource %s", v.Name)
+		} else {
+			uniqueResources[v.Name] = v
+		}
+	}
+	for _, r := range r.getUserGraphQLResources() {
+		if v, ok := uniqueResources[r.Name]; ok {
+			return nil, errors.Errorf("duplicate resource %s", v.Name)
+		} else {
+			uniqueResources[v.Name] = v
+		}
+	}
+
+	for _, r := range includes {
+		if v, ok := uniqueResources[r.Name]; ok {
+			return nil, errors.Errorf("duplicate resource %s", v.Name)
+		} else {
+			uniqueResources[v.Name] = v
+		}
+	}
+
+	for _, k := range excludes {
+		delete(uniqueResources, k)
+	}
+
+	var resources []GraphQLResource
+	for _, v := range uniqueResources {
+		resources = append(resources, v)
+	}
+
+	return resources, nil
+}

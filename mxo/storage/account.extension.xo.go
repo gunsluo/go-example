@@ -697,3 +697,16 @@ func (r *RootResolver) deleteAccountGraphQL(ctx context.Context, items []DeleteA
 
 	return results, nil
 }
+
+func (r *RootResolver) getAccountGraphQLResources() []GraphQLResource {
+	return []GraphQLResource{
+		GraphQLResource{
+			Name:     "Accounts",
+			Describe: "This is a graphQL resource Accounts, have GetAll, Get, Insert, Update, Delete actions.",
+		},
+		GraphQLResource{
+			Name:     "Accounts.AccountBySubject",
+			Describe: "This is a graphQL resource Accounts.AccountBySubject, only have NonPrimaryKeyGet action.",
+		},
+	}
+}

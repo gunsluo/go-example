@@ -557,3 +557,12 @@ func (r *RootResolver) deleteUserGraphQL(ctx context.Context, items []DeleteUser
 
 	return results, nil
 }
+
+func (r *RootResolver) getUserGraphQLResources() []GraphQLResource {
+	return []GraphQLResource{
+		GraphQLResource{
+			Name:     "Users",
+			Describe: "This is a graphQL resource Users, have GetAll, Get, Insert, Update, Delete actions.",
+		},
+	}
+}
