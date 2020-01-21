@@ -83,6 +83,7 @@ func testStoage(driver string) {
 	}
 
 	s, err := storage.New(driver, storage.Config{Logger: logrus.New()})
+	//s, err := storage.NewStorageExtension(driver, storage.Config{Logger: logrus.New()})
 	if err != nil {
 		panic(err)
 	}
@@ -93,6 +94,7 @@ func testStoage(driver string) {
 }
 
 func testStoageAndDB(s storage.Storage, db *sqlx.DB) {
+	//func testStoageAndDB(s storage.StorageExtension, db *sqlx.DB) {
 	account := &storage.Account{
 		Subject:     "luoji",
 		CreatedDate: storage.NullTime{Time: time.Now(), Valid: true},
