@@ -20,4 +20,3 @@ migrate -database 'sqlserver://SA:password@localhost:1433?database=migrate&encry
 migrate -database 'sqlserver://SA:password@localhost:1433?database=migrate&encrypt=disable' -path ./sql/mssql down 
 ```
 
-
