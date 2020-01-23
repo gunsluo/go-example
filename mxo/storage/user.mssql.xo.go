@@ -524,7 +524,7 @@ func (s *MssqlStorage) AccountInUser(db XODB, u *User) (*Account, error) {
 
 // UserByID retrieves a row from '"dbo"."user"' as a User.
 //
-// Generated from index 'PK__user__3213E83F73DCE491'.
+// Generated from index 'PK__user__3213E83F87867274'.
 func (s *MssqlStorage) UserByID(db XODB, id int) (*User, error) {
 	var err error
 

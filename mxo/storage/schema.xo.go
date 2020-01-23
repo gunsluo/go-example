@@ -191,22 +191,23 @@ func (u *User) Deleted() bool {
 	return u._deleted
 }
 
+// extension block
 // GraphQL extension
 
 // GraphQL related types
 const GraphQLCommonTypes = `
-	type PageInfo {
-		hasNextPage: Boolean!
-		hasPreviousPage: Boolean!
-		startCursor: ID
-		endCursor: ID
-	}
-	scalar Time
-	enum FilterConjunction{
-		AND
-		OR
-	}
-`
+        type PageInfo {
+            hasNextPage: Boolean!
+            hasPreviousPage: Boolean!
+            startCursor: ID
+            endCursor: ID
+        }
+        scalar Time
+        enum FilterConjunction{
+            AND
+            OR
+        }
+    `
 
 // PageInfoResolver defines the GraphQL PageInfo type
 type PageInfoResolver struct {
@@ -280,24 +281,24 @@ func NewRootResolver(c *ResolverConfig) *RootResolver {
 // BuildSchemaString build root schema string
 func (r *RootResolver) BuildSchemaString(extraQueries, extraMutations, extraTypes string) string {
 	return `
-	schema {
-		query: Query
-		mutation: Mutation
-	}
+        schema {
+            query: Query
+            mutation: Mutation
+        }
 
-	type Query {
-` +
+        type Query {
+    ` +
 		r.GetAccountQueries() +
 		r.GetUserQueries() + extraQueries +
 		`}
 
-type Mutation {
-` +
+    type Mutation {
+    ` +
 		r.GetAccountMutations() +
 		r.GetUserMutations() + extraMutations +
 		`}
 
-` +
+    ` +
 		r.GetAccountTypes() +
 		r.GetUserTypes() +
 		GraphQLCommonTypes +
