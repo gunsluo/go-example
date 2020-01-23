@@ -47,33 +47,6 @@ type Storage interface {
 	GetAllAccount(db XODB, queryArgs *AccountQueryArguments) ([]*Account, error)
 	// CountAllAccount returns a count of all rows from 'account'
 	CountAllAccount(db XODB, queryArgs *AccountQueryArguments) (int, error)
-	// InsertSchemaMigration inserts the SchemaMigration to the database.
-	InsertSchemaMigration(db XODB, sm *SchemaMigration) error
-	// InsertSchemaMigrationByFields inserts the SchemaMigration to the database.
-	InsertSchemaMigrationByFields(db XODB, sm *SchemaMigration) error
-	// DeleteSchemaMigration deletes the SchemaMigration from the database.
-	DeleteSchemaMigration(db XODB, sm *SchemaMigration) error
-	// DeleteSchemaMigrations deletes the SchemaMigration from the database.
-	DeleteSchemaMigrations(db XODB, sm []*SchemaMigration) error
-	// Update updates the SchemaMigration in the database.
-	UpdateSchemaMigration(db XODB, sm *SchemaMigration) error
-	// UpdateSchemaMigrationByFields updates the SchemaMigration in the database.
-	UpdateSchemaMigrationByFields(db XODB, sm *SchemaMigration, fields, retCols []string, params, retVars []interface{}) error
-	// Save saves the SchemaMigration to the database.
-	SaveSchemaMigration(db XODB, sm *SchemaMigration) error
-	// Upsert performs an upsert for SchemaMigration.
-	UpsertSchemaMigration(db XODB, sm *SchemaMigration) error
-	// GetMostRecentSchemaMigration returns n most recent rows from 'schema_migrations',
-	// ordered by "created_date" in descending order.
-	GetMostRecentSchemaMigration(db XODB, n int) ([]*SchemaMigration, error)
-	// GetMostRecentChangedSchemaMigration returns n most recent rows from 'schema_migrations',
-	// ordered by "changed_date" in descending order.
-	GetMostRecentChangedSchemaMigration(db XODB, n int) ([]*SchemaMigration, error)
-	// GetAllSchemaMigration returns all rows from 'schema_migrations', based on the SchemaMigrationQueryArguments.
-	// If the SchemaMigrationQueryArguments is nil, it will use the default SchemaMigrationQueryArguments instead.
-	GetAllSchemaMigration(db XODB, queryArgs *SchemaMigrationQueryArguments) ([]*SchemaMigration, error)
-	// CountAllSchemaMigration returns a count of all rows from 'schema_migrations'
-	CountAllSchemaMigration(db XODB, queryArgs *SchemaMigrationQueryArguments) (int, error)
 	// InsertUser inserts the User to the database.
 	InsertUser(db XODB, u *User) error
 	// InsertUserByFields inserts the User to the database.
@@ -110,18 +83,31 @@ type Storage interface {
 	// AccountInUser returns the Account associated with the User's Subject (subject).
 	// Generated from foreign key 'user_account_subject_fk'.
 	AccountInUser(db XODB, u *User) (*Account, error)
-	// AccountByID retrieves a row from 'dbo.account' as a Account.
-	// Generated from index 'PK__account__3213E83F136498D2'.
+	// AccountByID retrieves a row from 'public.account' as a Account.
+	// Generated from index 'account_pk'.
 	AccountByID(db XODB, id int) (*Account, error)
-	// AccountBySubject retrieves a row from 'dbo.account' as a Account.
-	// Generated from index 'account_subject_ak'.
+	// AccountBySubject retrieves a row from 'public.account' as a Account.
+	// Generated from index 'account_subject_unique_index'.
 	AccountBySubject(db XODB, subject string) (*Account, error)
-	// SchemaMigrationByVersion retrieves a row from 'dbo.schema_migrations' as a SchemaMigration.
-	// Generated from index 'PK__schema_m__79B5C94C3FC3B209'.
-	SchemaMigrationByVersion(db XODB, version int64) (*SchemaMigration, error)
-	// UserByID retrieves a row from 'dbo.user' as a User.
-	// Generated from index 'PK__user__3213E83F1C7DDFEF'.
+	// UserByID retrieves a row from 'public.user' as a User.
+	// Generated from index 'user_pk'.
 	UserByID(db XODB, id int) (*User, error)
+}
+
+// PostgresStorage is Postgres for the database.
+type PostgresStorage struct {
+	logger XOLogger
+}
+
+func (s *PostgresStorage) info(format string, args ...interface{}) {
+	if len(args) == 0 {
+		xoLog(s.logger, logrus.InfoLevel, format)
+	} else {
+		var params []interface{}
+		params = append(params, format)
+		params = append(params, args...)
+		xoLogf(s.logger, logrus.InfoLevel, "%s %v", params...)
+	}
 }
 
 // MssqlStorage is Mssql for the database.
@@ -150,6 +136,8 @@ func New(driver string, c Config) (Storage, error) {
 
 	var s Storage
 	switch driver {
+	case "postgres":
+		s = &PostgresStorage{logger: logger}
 	case "mssql":
 		s = &MssqlStorage{logger: logger}
 	default:
@@ -159,7 +147,7 @@ func New(driver string, c Config) (Storage, error) {
 	return s, nil
 }
 
-// Account represents a row from 'dbo.account'.
+// Account represents a row from 'public.account'.
 type Account struct {
 	ID          int      `json:"id"`           // id
 	Subject     string   `json:"subject"`      // subject
@@ -180,24 +168,7 @@ func (a *Account) Exists() bool {
 // Deleted provides information if the Account has been deleted from the database.
 func (a *Account) Deleted() bool {
 	return a._deleted
-} // SchemaMigration represents a row from 'dbo.schema_migrations'.
-type SchemaMigration struct {
-	Version int64 `json:"version"` // version
-	Dirty   bool  `json:"dirty"`   // dirty
-
-	// xo fields
-	_exists, _deleted bool
-}
-
-// Exists determines if the SchemaMigration exists in the database.
-func (sm *SchemaMigration) Exists() bool {
-	return sm._exists
-}
-
-// Deleted provides information if the SchemaMigration has been deleted from the database.
-func (sm *SchemaMigration) Deleted() bool {
-	return sm._deleted
-} // User represents a row from 'dbo.user'.
+} // User represents a row from 'public.user'.
 type User struct {
 	ID          int            `json:"id"`           // id
 	Subject     string         `json:"subject"`      // subject
@@ -317,20 +288,17 @@ func (r *RootResolver) BuildSchemaString(extraQueries, extraMutations, extraType
 	type Query {
 ` +
 		r.GetAccountQueries() +
-		r.GetSchemaMigrationQueries() +
 		r.GetUserQueries() + extraQueries +
 		`}
 
 type Mutation {
 ` +
 		r.GetAccountMutations() +
-		r.GetSchemaMigrationMutations() +
 		r.GetUserMutations() + extraMutations +
 		`}
 
 ` +
 		r.GetAccountTypes() +
-		r.GetSchemaMigrationTypes() +
 		r.GetUserTypes() +
 		GraphQLCommonTypes +
 		extraTypes
@@ -528,13 +496,6 @@ type GraphQLResource struct {
 func (r *RootResolver) GetResolverResources(includes []GraphQLResource, excludes []string) ([]GraphQLResource, error) {
 	uniqueResources := make(map[string]GraphQLResource)
 	for _, r := range r.getAccountGraphQLResources() {
-		if v, ok := uniqueResources[r.Name]; ok {
-			return nil, errors.Errorf("duplicate resource %s", v.Name)
-		} else {
-			uniqueResources[v.Name] = v
-		}
-	}
-	for _, r := range r.getSchemaMigrationGraphQLResources() {
 		if v, ok := uniqueResources[r.Name]; ok {
 			return nil, errors.Errorf("duplicate resource %s", v.Name)
 		} else {
