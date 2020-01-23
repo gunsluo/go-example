@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/gunsluo/go-example/migrate/build"
 	"github.com/gunsluo/go-example/migrate/migrate"
 	"github.com/spf13/cobra"
 )
@@ -22,7 +23,7 @@ func init() {
 
 	rootCmd.AddCommand(
 		migrate.Cmd,
-		//build.Cmd,
+		build.Cmd,
 	)
 }
 

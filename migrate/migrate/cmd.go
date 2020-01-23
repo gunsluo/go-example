@@ -2,9 +2,11 @@ package migrate
 
 import (
 	"log"
+	"path"
 
 	"github.com/gunsluo/go-example/migrate/pkg/cli"
 	"github.com/spf13/cobra"
+	"github.com/xo/dburl"
 )
 
 // Cmd is the exported command.
@@ -19,8 +21,8 @@ func init() {
 		Args:  cobra.MinimumNArgs(1),
 	}
 
-	Cmd.Flags().String("dsn", "", "run migrations on a specific database dsn")
-	Cmd.Flags().String("path", "sql/postgres", "specific path of sql file")
+	Cmd.Flags().String("dsn", "postgres://postgres:password@localhost:5432/db?sslmode=disable", "run migrations on a specific database dsn")
+	Cmd.Flags().String("path", "storage/sql", "specific path of sql file")
 	Cmd.Flags().BoolP("dry-run", "n", false, "don't execute anything, only show the commands")
 }
 
@@ -30,10 +32,15 @@ func migrate(cmd *cobra.Command, args []string) {
 		log.Fatalln(err)
 	}
 
-	path, err := cmd.Flags().GetString("path")
+	sqlPath, err := cmd.Flags().GetString("path")
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	cli.RunMigrate(cmd, dsn, path, args)
+	db, err := dburl.Parse(dsn)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	cli.RunMigrate(cmd, dsn, path.Join(sqlPath, db.Driver), args)
 }

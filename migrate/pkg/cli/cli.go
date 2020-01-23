@@ -6,10 +6,46 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
 )
+
+// GetPackagePath returns the path of golang package.
+func GetPackagePath(pathShort string) string {
+	if gopath := os.Getenv("GOPATH"); gopath != "" {
+		return filepath.Join(gopath, "src", pathShort)
+	}
+
+	panic("Go is not installed")
+}
+
+// ForkSplit runs a command represented by a space-separated string.
+func ForkSplit(c *cobra.Command, command string, env ...string) error {
+	return Fork(c, strings.Split(command, " "), env...)
+}
+
+// Fork runs a command represented by a strings slice using std in/out/err,
+// and searching for the first argument in PATH.
+func Fork(c *cobra.Command, args []string, env ...string) error {
+	if len(args) == 0 {
+		return errors.New("no args")
+	}
+
+	cmd := &exec.Cmd{
+		Args:   args,
+		Stdin:  os.Stdin,
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+	}
+
+	if len(env) > 0 {
+		cmd.Env = append(os.Environ(), env...)
+	}
+
+	return fork(c, cmd)
+}
 
 // ForkDir runs a new command with a different working directory.
 func ForkDir(c *cobra.Command, args []string, dir string, env ...string) error {
