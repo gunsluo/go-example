@@ -5,7 +5,6 @@ package storage
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -84,17 +83,17 @@ func (s *PostgresStorage) InsertUserByFields(db XODB, u *User) error {
 		return errors.New("all fields are empty, unable to insert")
 	}
 
-	var placeHolders string
+	var placeHolders []string
+	var placeHolderVals []interface{}
 	for i := range params {
-		placeHolders += "$" + strconv.Itoa(i+1)
-		if i < len(params)-1 {
-			placeHolders += ", "
-		}
+		placeHolders = append(placeHolders, "$%d")
+		placeHolderVals = append(placeHolderVals, i+1)
 	}
+	placeHolderStr := fmt.Sprintf(strings.Join(placeHolders, ","), placeHolderVals...)
 
 	sqlstr := `INSERT INTO "public"."user" (` +
 		strings.Join(fields, ",") +
-		`) VALUES (` + placeHolders +
+		`) VALUES (` + placeHolderStr +
 		`) RETURNING ` + retCols
 
 	s.info(sqlstr, params)
@@ -139,28 +138,28 @@ func (s *PostgresStorage) UpdateUser(db XODB, u *User) error {
 
 // UpdateUserByFields updates the User in the database.
 func (s *PostgresStorage) UpdateUserByFields(db XODB, u *User, fields, retCols []string, params, retVars []interface{}) error {
-	var placeHolders string
+	var placeHolders []string
+	var idxvals []interface{}
 	for i := range params {
-		placeHolders += "$" + strconv.Itoa(i+1)
-		if i < len(params)-1 {
-			placeHolders += ", "
-		}
+		placeHolders = append(placeHolders, "$%d")
+		idxvals = append(idxvals, i+1)
 	}
 	params = append(params, u.ID)
+	idxvals = append(idxvals, len(params))
 
 	var sqlstr string
 	if len(fields) == 1 {
-		sqlstr = `UPDATE "public"."user" SET ` +
-			strings.Join(fields, ",") +
-			` = ` + placeHolders +
-			` WHERE id = $` + strconv.Itoa(len(params)) +
-			` RETURNING ` + strings.Join(retCols, ", ")
+		sqlstr = fmt.Sprintf(`UPDATE "public"."user" SET `+
+			strings.Join(fields, ",")+
+			` = `+strings.Join(placeHolders, ",")+
+			` WHERE id = $%d`+
+			` RETURNING `+strings.Join(retCols, ", "), idxvals...)
 	} else {
-		sqlstr = `UPDATE "public"."user" SET (` +
-			strings.Join(fields, ",") +
-			`) = (` + placeHolders +
-			`) WHERE id = $` + strconv.Itoa(len(params)) +
-			` RETURNING ` + strings.Join(retCols, ", ")
+		sqlstr = fmt.Sprintf(`UPDATE "public"."user" SET (`+
+			strings.Join(fields, ",")+
+			`) = (`+strings.Join(placeHolders, ",")+
+			`) WHERE id = $%d`+
+			` RETURNING `+strings.Join(retCols, ", "), idxvals...)
 	}
 	s.info(sqlstr, params)
 	if err := db.QueryRow(sqlstr, params...).Scan(retVars...); err != nil {

@@ -103,10 +103,7 @@ func (s *PostgresStorage) info(format string, args ...interface{}) {
 	if len(args) == 0 {
 		xoLog(s.logger, logrus.InfoLevel, format)
 	} else {
-		var params []interface{}
-		params = append(params, format)
-		params = append(params, args...)
-		xoLogf(s.logger, logrus.InfoLevel, "%s %v", params...)
+		xoLogf(s.logger, logrus.InfoLevel, "%s %v", format, args)
 	}
 }
 
@@ -119,10 +116,20 @@ func (s *MssqlStorage) info(format string, args ...interface{}) {
 	if len(args) == 0 {
 		xoLog(s.logger, logrus.InfoLevel, format)
 	} else {
-		var params []interface{}
-		params = append(params, format)
-		params = append(params, args...)
-		xoLogf(s.logger, logrus.InfoLevel, "%s %v", params...)
+		xoLogf(s.logger, logrus.InfoLevel, "%s %v", format, args)
+	}
+}
+
+// GodrorStorage is Godror for the database.
+type GodrorStorage struct {
+	logger XOLogger
+}
+
+func (s *GodrorStorage) info(format string, args ...interface{}) {
+	if len(args) == 0 {
+		xoLog(s.logger, logrus.InfoLevel, format)
+	} else {
+		xoLogf(s.logger, logrus.InfoLevel, "%s %v", format, args)
 	}
 }
 
@@ -140,6 +147,8 @@ func New(driver string, c Config) (Storage, error) {
 		s = &PostgresStorage{logger: logger}
 	case "mssql":
 		s = &MssqlStorage{logger: logger}
+	case "godror":
+		s = &GodrorStorage{logger: logger}
 	default:
 		return nil, errors.New("driver " + driver + " not support")
 	}

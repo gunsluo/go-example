@@ -80,18 +80,18 @@ func (s *MssqlStorage) InsertAccountByFields(db XODB, a *Account) error {
 		return errors.New("all fields are empty, unable to insert")
 	}
 
-	var placeHolders string
+	var placeHolders []string
+	var placeHolderVals []interface{}
 	for i := range params {
-		placeHolders += "$" + strconv.Itoa(i+1)
-		if i < len(params)-1 {
-			placeHolders += ", "
-		}
+		placeHolders = append(placeHolders, "$%d")
+		placeHolderVals = append(placeHolderVals, i+1)
 	}
+	placeHolderStr := fmt.Sprintf(strings.Join(placeHolders, ","), placeHolderVals...)
 
 	sqlstr := `INSERT INTO "dbo"."account" (` +
 		strings.Join(fields, ",") +
 		`) OUTPUT ` + retCols +
-		` VALUES (` + placeHolders + `)`
+		` VALUES (` + placeHolderStr + `)`
 
 	s.info(sqlstr, params)
 	err = db.QueryRow(sqlstr, params...).Scan(retVars...)
@@ -133,11 +133,13 @@ func (s *MssqlStorage) UpdateAccount(db XODB, a *Account) error {
 // UpdateAccountByFields updates the Account in the database.
 func (s *MssqlStorage) UpdateAccountByFields(db XODB, a *Account, fields, retCols []string, params, retVars []interface{}) error {
 	var setstr string
+	var idxvals []interface{}
 	for i, field := range fields {
 		if i != 0 {
 			setstr += ", "
 		}
-		setstr += field + ` = $` + strconv.Itoa(i+1)
+		setstr += field + ` = $%d`
+		idxvals = append(idxvals, i+1)
 	}
 
 	var retstr string
@@ -149,9 +151,10 @@ func (s *MssqlStorage) UpdateAccountByFields(db XODB, a *Account, fields, retCol
 	}
 
 	params = append(params, a.ID)
-	var sqlstr = `UPDATE "dbo"."account" SET ` +
-		setstr + ` OUTPUT ` + retstr +
-		` WHERE id = $` + strconv.Itoa(len(params))
+	idxvals = append(idxvals, len(params))
+	var sqlstr = fmt.Sprintf(`UPDATE "dbo"."account" SET `+
+		setstr+` OUTPUT `+retstr+
+		` WHERE id = $%d`, idxvals...)
 	s.info(sqlstr, params)
 	if err := db.QueryRow(sqlstr, params...).Scan(retVars...); err != nil {
 		return err
@@ -458,7 +461,7 @@ func (s *MssqlStorage) CountAllAccount(db XODB, queryArgs *AccountQueryArguments
 
 // AccountByID retrieves a row from '"dbo"."account"' as a Account.
 //
-// Generated from index 'PK__account__3213E83F2095395E'.
+// Generated from index 'PK__account__3213E83FF3A49472'.
 func (s *MssqlStorage) AccountByID(db XODB, id int) (*Account, error) {
 	var err error
 

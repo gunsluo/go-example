@@ -29,6 +29,15 @@ func (s *MssqlStorageExtension) CustomEndpoint(db XODB, args ...interface{}) err
 	return nil
 }
 
+type GodrorStorageExtension struct {
+	GodrorStorage
+}
+
+func (s *GodrorStorageExtension) CustomEndpoint(db XODB, args ...interface{}) error {
+	// TODO:
+	return nil
+}
+
 func NewStorageExtension(driver string, c Config) (StorageExtension, error) {
 	var logger XOLogger
 	if c.Logger != nil && !(reflect.ValueOf(c.Logger).Kind() == reflect.Ptr && reflect.ValueOf(c.Logger).IsNil()) {
@@ -41,6 +50,8 @@ func NewStorageExtension(driver string, c Config) (StorageExtension, error) {
 		s = &PostgresStorageExtension{PostgresStorage: PostgresStorage{logger: logger}}
 	case "mssql":
 		s = &MssqlStorageExtension{MssqlStorage: MssqlStorage{logger: logger}}
+	case "godror":
+		s = &GodrorStorageExtension{GodrorStorage: GodrorStorage{logger: logger}}
 	default:
 		return nil, errors.New("driver " + driver + " not support")
 	}

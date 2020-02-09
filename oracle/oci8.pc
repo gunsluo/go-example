@@ -1,5 +1,8 @@
+# pkg-config file for oracle office website 
 
+version=12.2
 prefixdir=/Users/luoji/oracle/instantclient_12_2
+
 libdir=${prefixdir}
 includedir=${prefixdir}/sdk/include
 
@@ -8,3 +11,4 @@ Description: Oracle database driver
 Version: 12.2
 Libs: -L${libdir} -lclntsh
 Cflags: -I${includedir}
+

@@ -19,65 +19,96 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/xo/dburl"
 
 	_ "github.com/denisenkom/go-mssqldb"
 	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-oci8"
 )
 
 const (
-	driverPostgres = "postgres"
-	dsnPostgres    = "postgres://postgres:password@localhost:5432/xo?sslmode=disable"
-
-	driverMssql = "mssql"
-	dsnMssql    = "sqlserver://SA:Tes9ting@localhost:1433/instance?database=xo&encrypt=disable"
+	postgresMode = "postgres"
+	mssqlMode    = "mssql"
+	oracleMode   = "oracle"
+	serverMode   = "server"
 )
 
+var dsns = map[string]string{
+	postgresMode: "postgres://postgres:password@localhost:5432/xo?sslmode=disable",
+	mssqlMode:    "sqlserver://SA:Tes9ting@localhost:1433/instance?database=xo&encrypt=disable",
+	oracleMode:   "oci8://c##admin/password@127.0.0.1:1521/ORCLCDB",
+}
+
 func main() {
-	var driver string
+	var mode string
 	if len(os.Args) <= 1 {
-		driver = "postgres"
+		mode = postgresMode
 	} else {
-		driver = os.Args[1]
+		mode = os.Args[1]
 	}
 
-	fmt.Println("run driver:", driver)
-	switch driver {
-	case "postgres":
-		testStoage(driver)
-	case "mssql":
-		testStoage(driver)
-	case "server":
+	fmt.Println("run mode:", mode)
+
+	var driver string
+	var fn func(string, string)
+	switch mode {
+	case serverMode:
 		if len(os.Args) > 2 {
 			driver = os.Args[2]
 		} else {
-			driver = "postgres"
+			driver = postgresMode
 		}
-
-		if driver != "postgres" && driver != "mssql" {
-			fmt.Println("invalid parameter, it should be 'postgres' & 'mssql'")
-			return
-		}
-
-		server(driver)
+		fn = server
+	case postgresMode:
+		driver = mode
+		fn = testStoage
+	case mssqlMode:
+		driver = mode
+		fn = testStoage
+	case oracleMode:
+		driver = mode
+		fn = testStoage
 	default:
-		fmt.Println("invalid parameter, it should be 'postgres' & 'mssql' & 'server'")
-	}
-}
-
-func getDsn(driver string) string {
-	switch driver {
-	case "postgres":
-		return dsnPostgres
-	case "mssql":
-		return dsnMssql
+		fmt.Println("invalid parameter, it should be 'postgres' & 'mssql' & 'oracle' & 'server'")
 	}
 
-	return dsnPostgres
+	dsn, ok := dsns[driver]
+	if !ok {
+		fmt.Println("invalid parameter, it should be 'postgres' & 'mssql' & 'oracle'")
+		return
+	}
+
+	url, err := fixOralceDSN(dsn)
+	if err != nil {
+		panic(err)
+	}
+
+	fn(url.Driver, url.DSN)
 }
 
-func testStoage(driver string) {
-	dsn := getDsn(driver)
-	db, err := sqlx.Open(driver, dsn)
+func fixOralceDSN(dsn string) (*dburl.URL, error) {
+	url, err := dburl.Parse(dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	// fix oracle
+	if strings.HasPrefix(dsn, "oci8://") {
+		url.DSN = dsn[7:]
+	}
+
+	return url, nil
+}
+
+func testStoage(driver, dsn string) {
+	var dbDriver string
+	if driver == "godror" {
+		dbDriver = "oci8"
+	} else {
+		dbDriver = driver
+	}
+
+	db, err := sqlx.Open(dbDriver, dsn)
 	if err != nil {
 		panic(err)
 	}
@@ -97,6 +128,7 @@ func testStoageAndDB(s storage.Storage, db *sqlx.DB) {
 	//func testStoageAndDB(s storage.StorageExtension, db *sqlx.DB) {
 	account := &storage.Account{
 		Subject:     "luoji",
+		Email:       "mock",
 		CreatedDate: storage.NullTime{Time: time.Now(), Valid: true},
 		ChangedDate: storage.NullTime{Time: time.Now(), Valid: true},
 		//DeletedDate: time.Now(),
@@ -281,12 +313,18 @@ func (s *gqlServer) Run() error {
 	return nil
 }
 
-func server(driver string) {
-	dsn := getDsn(driver)
+func server(driver, dsn string) {
 	var logger *logrus.Logger
 	logger = logrus.New()
 
-	db, err := sqlx.Open(driver, dsn)
+	var dbDriver string
+	if driver == "godror" {
+		dbDriver = "oci8"
+	} else {
+		dbDriver = driver
+	}
+
+	db, err := sqlx.Open(dbDriver, dsn)
 	if err != nil {
 		panic(err)
 	}
