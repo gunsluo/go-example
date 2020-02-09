@@ -1,0 +1,44 @@
+version: "3"
+services:
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2017-CU1-ubuntu
+    container_name: mssql
+    hostname: mssql
+    ports:
+      - 1433:1433
+    volumes:
+      - mssql-data:/var/opt/mssql
+    environment:
+      ACCEPT_EULA: Y
+      SA_PASSWORD: Tes9ting
+
+  postgres:
+    image: postgres:11.1-alpine
+    container_name: postgres
+    restart: on-failure
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      PGDATA: /var/lib/postgresql/data
+      POSTGRES_DB: sso
+    ports:
+      - 5432:5432
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+
+  oracle:
+    image: maxnilz/oracledatabase:12.2.0.1-ee
+    ports:
+      - 1521:1521
+      - 5500:5500
+    restart: on-failure
+    container_name: oracle
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+
+volumes:
+  pg-data:
+  mssql-data:
+  oracle-data:
+
