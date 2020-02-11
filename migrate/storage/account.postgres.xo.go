@@ -5,14 +5,13 @@ package storage
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
 )
 
 // InsertAccount inserts the Account to the database.
-func (s *MssqlStorage) InsertAccount(db XODB, a *Account) error {
+func (s *PostgresStorage) InsertAccount(db XODB, a *Account) error {
 	var err error
 
 	// if already exist, bail
@@ -20,12 +19,12 @@ func (s *MssqlStorage) InsertAccount(db XODB, a *Account) error {
 		return errors.New("insert failed: already exists")
 	}
 
-	// sql insert query, primary key provided by identity
-	const sqlstr = `INSERT INTO dbo.account (` +
+	// sql insert query, primary key provided by sequence
+	const sqlstr = `INSERT INTO public.account (` +
 		`subject, email, created_date, changed_date, deleted_date` +
-		`) OUTPUT INSERTED.ID VALUES (` +
+		`) VALUES (` +
 		`$1, $2, $3, $4, $5` +
-		`)`
+		`) RETURNING id`
 
 	// run query
 	s.info(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
@@ -34,19 +33,19 @@ func (s *MssqlStorage) InsertAccount(db XODB, a *Account) error {
 		return err
 	}
 
-	// set primary key and existence
+	// set existence
 	a._exists = true
 
 	return nil
 }
 
 // InsertAccountByFields inserts the Account to the database.
-func (s *MssqlStorage) InsertAccountByFields(db XODB, a *Account) error {
+func (s *PostgresStorage) InsertAccountByFields(db XODB, a *Account) error {
 	var err error
 
 	params := make([]interface{}, 0, 5)
 	fields := make([]string, 0, 5)
-	retCols := `INSERTED.id`
+	retCols := `id`
 	retVars := make([]interface{}, 0, 5)
 	retVars = append(retVars, &a.ID)
 	fields = append(fields, `subject`)
@@ -58,21 +57,21 @@ func (s *MssqlStorage) InsertAccountByFields(db XODB, a *Account) error {
 		fields = append(fields, `created_date`)
 		params = append(params, a.CreatedDate)
 	} else {
-		retCols += `, INSERTED.created_date`
+		retCols += `, created_date`
 		retVars = append(retVars, &a.CreatedDate)
 	}
 	if a.ChangedDate.Valid {
 		fields = append(fields, `changed_date`)
 		params = append(params, a.ChangedDate)
 	} else {
-		retCols += `, INSERTED.changed_date`
+		retCols += `, changed_date`
 		retVars = append(retVars, &a.ChangedDate)
 	}
 	if a.DeletedDate.Valid {
 		fields = append(fields, `deleted_date`)
 		params = append(params, a.DeletedDate)
 	} else {
-		retCols += `, INSERTED.deleted_date`
+		retCols += `, deleted_date`
 		retVars = append(retVars, &a.DeletedDate)
 	}
 	if len(params) == 0 {
@@ -88,10 +87,10 @@ func (s *MssqlStorage) InsertAccountByFields(db XODB, a *Account) error {
 	}
 	placeHolderStr := fmt.Sprintf(strings.Join(placeHolders, ","), placeHolderVals...)
 
-	sqlstr := `INSERT INTO dbo.account (` +
+	sqlstr := `INSERT INTO public.account (` +
 		strings.Join(fields, ",") +
-		`) OUTPUT ` + retCols +
-		` VALUES (` + placeHolderStr + `)`
+		`) VALUES (` + placeHolderStr +
+		`) RETURNING ` + retCols
 
 	s.info(sqlstr, params)
 	err = db.QueryRow(sqlstr, params...).Scan(retVars...)
@@ -106,7 +105,7 @@ func (s *MssqlStorage) InsertAccountByFields(db XODB, a *Account) error {
 }
 
 // UpdateAccount updates the Account in the database.
-func (s *MssqlStorage) UpdateAccount(db XODB, a *Account) error {
+func (s *PostgresStorage) UpdateAccount(db XODB, a *Account) error {
 	var err error
 
 	// if doesn't exist, bail
@@ -120,9 +119,12 @@ func (s *MssqlStorage) UpdateAccount(db XODB, a *Account) error {
 	}
 
 	// sql query
-	const sqlstr = `UPDATE dbo.account SET ` +
-		`subject = $1, email = $2, created_date = $3, changed_date = $4, deleted_date = $5` +
-		` WHERE id = $6`
+
+	const sqlstr = `UPDATE public.account SET (` +
+		`subject, email, created_date, changed_date, deleted_date` +
+		`) = ( ` +
+		`$1, $2, $3, $4, $5` +
+		`) WHERE id = $6`
 
 	// run query
 	s.info(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
@@ -131,30 +133,30 @@ func (s *MssqlStorage) UpdateAccount(db XODB, a *Account) error {
 }
 
 // UpdateAccountByFields updates the Account in the database.
-func (s *MssqlStorage) UpdateAccountByFields(db XODB, a *Account, fields, retCols []string, params, retVars []interface{}) error {
-	var setstr string
+func (s *PostgresStorage) UpdateAccountByFields(db XODB, a *Account, fields, retCols []string, params, retVars []interface{}) error {
+	var placeHolders []string
 	var idxvals []interface{}
-	for i, field := range fields {
-		if i != 0 {
-			setstr += ", "
-		}
-		setstr += field + ` = $%d`
+	for i := range params {
+		placeHolders = append(placeHolders, "$%d")
 		idxvals = append(idxvals, i+1)
 	}
-
-	var retstr string
-	for i, retCol := range retCols {
-		if i != 0 {
-			retstr += ", "
-		}
-		retstr += "INSERTED." + retCol
-	}
-
 	params = append(params, a.ID)
 	idxvals = append(idxvals, len(params))
-	var sqlstr = fmt.Sprintf(`UPDATE dbo.account SET `+
-		setstr+` OUTPUT `+retstr+
-		` WHERE id = $%d`, idxvals...)
+
+	var sqlstr string
+	if len(fields) == 1 {
+		sqlstr = fmt.Sprintf(`UPDATE public.account SET `+
+			strings.Join(fields, ",")+
+			` = `+strings.Join(placeHolders, ",")+
+			` WHERE id = $%d`+
+			` RETURNING `+strings.Join(retCols, ", "), idxvals...)
+	} else {
+		sqlstr = fmt.Sprintf(`UPDATE public.account SET (`+
+			strings.Join(fields, ",")+
+			`) = (`+strings.Join(placeHolders, ",")+
+			`) WHERE id = $%d`+
+			` RETURNING `+strings.Join(retCols, ", "), idxvals...)
+	}
 	s.info(sqlstr, params)
 	if err := db.QueryRow(sqlstr, params...).Scan(retVars...); err != nil {
 		return err
@@ -164,7 +166,7 @@ func (s *MssqlStorage) UpdateAccountByFields(db XODB, a *Account, fields, retCol
 }
 
 // SaveAccount saves the Account to the database.
-func (s *MssqlStorage) SaveAccount(db XODB, a *Account) error {
+func (s *PostgresStorage) SaveAccount(db XODB, a *Account) error {
 	if a.Exists() {
 		return s.UpdateAccount(db, a)
 	}
@@ -173,16 +175,19 @@ func (s *MssqlStorage) SaveAccount(db XODB, a *Account) error {
 }
 
 // UpsertAccount performs an upsert for Account.
-func (s *MssqlStorage) UpsertAccount(db XODB, a *Account) error {
+func (s *PostgresStorage) UpsertAccount(db XODB, a *Account) error {
 	var err error
 
 	// sql query
-
-	const sqlstr = `MERGE dbo.account AS t ` +
-		`USING (SELECT $1 AS id, $2 AS subject, $3 AS email, $4 AS created_date, $5 AS changed_date, $6 AS deleted_date) AS s ` +
-		`ON t.id = s.id ` +
-		`WHEN MATCHED THEN UPDATE SET subject = s.subject, email = s.email, created_date = s.created_date, changed_date = s.changed_date, deleted_date = s.deleted_date ` +
-		`WHEN NOT MATCHED THEN INSERT (subject, email, created_date, changed_date, deleted_date) VALUES (s.subject, s.email, s.created_date, s.changed_date, s.deleted_date);`
+	const sqlstr = `INSERT INTO public.account (` +
+		`id, subject, email, created_date, changed_date, deleted_date` +
+		`) VALUES (` +
+		`$1, $2, $3, $4, $5, $6` +
+		`) ON CONFLICT (id) DO UPDATE SET (` +
+		`id, subject, email, created_date, changed_date, deleted_date` +
+		`) = (` +
+		`EXCLUDED.id, EXCLUDED.subject, EXCLUDED.email, EXCLUDED.created_date, EXCLUDED.changed_date, EXCLUDED.deleted_date` +
+		`)`
 
 	// run query
 	s.info(sqlstr, a.ID, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
@@ -198,7 +203,7 @@ func (s *MssqlStorage) UpsertAccount(db XODB, a *Account) error {
 }
 
 // DeleteAccount deletes the Account from the database.
-func (s *MssqlStorage) DeleteAccount(db XODB, a *Account) error {
+func (s *PostgresStorage) DeleteAccount(db XODB, a *Account) error {
 	var err error
 
 	// if doesn't exist, bail
@@ -212,7 +217,7 @@ func (s *MssqlStorage) DeleteAccount(db XODB, a *Account) error {
 	}
 
 	// sql query
-	const sqlstr = `DELETE FROM dbo.account WHERE id = $1`
+	const sqlstr = `DELETE FROM public.account WHERE id = $1`
 
 	// run query
 	s.info(sqlstr, a.ID)
@@ -228,7 +233,7 @@ func (s *MssqlStorage) DeleteAccount(db XODB, a *Account) error {
 }
 
 // DeleteAccounts deletes the Account from the database.
-func (s *MssqlStorage) DeleteAccounts(db XODB, as []*Account) error {
+func (s *PostgresStorage) DeleteAccounts(db XODB, as []*Account) error {
 	var err error
 
 	if len(as) == 0 {
@@ -246,7 +251,7 @@ func (s *MssqlStorage) DeleteAccounts(db XODB, as []*Account) error {
 	}
 
 	// sql query
-	var sqlstr = `DELETE FROM dbo.account WHERE id in (` + placeholder + `)`
+	var sqlstr = `DELETE FROM public.account WHERE id in (` + placeholder + `)`
 
 	// run query
 	s.info(sqlstr, args)
@@ -265,14 +270,14 @@ func (s *MssqlStorage) DeleteAccounts(db XODB, as []*Account) error {
 
 // GetMostRecentAccount returns n most recent rows from 'account',
 // ordered by "created_date" in descending order.
-func (s *MssqlStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, error) {
-	var sqlstr = `SELECT TOP ` + strconv.Itoa(n) +
-		` id, subject, email, created_date, changed_date, deleted_date ` +
-		`FROM dbo.account ` +
-		`ORDER BY created_date DESC`
+func (s *PostgresStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, error) {
+	const sqlstr = `SELECT ` +
+		`id, subject, email, created_date, changed_date, deleted_date ` +
+		`FROM public.account ` +
+		`ORDER BY created_date DESC LIMIT $1`
 
-	s.info(sqlstr)
-	q, err := db.Query(sqlstr)
+	s.info(sqlstr, n)
+	q, err := db.Query(sqlstr, n)
 	if err != nil {
 		return nil, err
 	}
@@ -297,14 +302,14 @@ func (s *MssqlStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, error) 
 
 // GetMostRecentChangedAccount returns n most recent rows from 'account',
 // ordered by "changed_date" in descending order.
-func (s *MssqlStorage) GetMostRecentChangedAccount(db XODB, n int) ([]*Account, error) {
-	var sqlstr = `SELECT TOP ` + strconv.Itoa(n) +
-		` id, subject, email, created_date, changed_date, deleted_date ` +
-		`FROM dbo.account ` +
-		`ORDER BY changed_date DESC`
+func (s *PostgresStorage) GetMostRecentChangedAccount(db XODB, n int) ([]*Account, error) {
+	const sqlstr = `SELECT ` +
+		`id, subject, email, created_date, changed_date, deleted_date ` +
+		`FROM public.account ` +
+		`ORDER BY changed_date DESC LIMIT $1`
 
-	s.info(sqlstr)
-	q, err := db.Query(sqlstr)
+	s.info(sqlstr, n)
+	q, err := db.Query(sqlstr, n)
 	if err != nil {
 		return nil, err
 	}
@@ -329,7 +334,7 @@ func (s *MssqlStorage) GetMostRecentChangedAccount(db XODB, n int) ([]*Account, 
 
 // GetAllAccount returns all rows from 'account', based on the AccountQueryArguments.
 // If the AccountQueryArguments is nil, it will use the default AccountQueryArguments instead.
-func (s *MssqlStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArguments) ([]*Account, error) { // nolint: gocyclo
+func (s *PostgresStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArguments) ([]*Account, error) { // nolint: gocyclo
 	queryArgs = ApplyAccountQueryArgsDefaults(queryArgs)
 	if queryArgs.filterArgs == nil {
 		filterArgs, err := getAccountFilter(queryArgs.Where)
@@ -385,9 +390,9 @@ func (s *MssqlStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArguments) 
 	params = append(params, *queryArgs.Limit)
 	limitPos := len(params)
 
-	var sqlstr = fmt.Sprintf(`SELECT %s FROM %s WHERE %s deleted_date IS %s ORDER BY %s %s OFFSET $%d ROWS FETCH NEXT $%d ROWS ONLY`,
+	var sqlstr = fmt.Sprintf(`SELECT %s FROM %s WHERE %s deleted_date IS %s ORDER BY %s %s OFFSET $%d LIMIT $%d`,
 		`id, subject, email, created_date, changed_date, deleted_date `,
-		`dbo.account`,
+		`public.account`,
 		placeHolders,
 		dead,
 		orderBy,
@@ -420,7 +425,7 @@ func (s *MssqlStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArguments) 
 }
 
 // CountAllAccount returns a count of all rows from 'account'
-func (s *MssqlStorage) CountAllAccount(db XODB, queryArgs *AccountQueryArguments) (int, error) {
+func (s *PostgresStorage) CountAllAccount(db XODB, queryArgs *AccountQueryArguments) (int, error) {
 	queryArgs = ApplyAccountQueryArgsDefaults(queryArgs)
 	if queryArgs.filterArgs == nil {
 		filterArgs, err := getAccountFilter(queryArgs.Where)
@@ -448,7 +453,7 @@ func (s *MssqlStorage) CountAllAccount(db XODB, queryArgs *AccountQueryArguments
 	}
 
 	var err error
-	var sqlstr = fmt.Sprintf(`SELECT count(*) from dbo.account WHERE %s deleted_date IS %s`, placeHolders, dead)
+	var sqlstr = fmt.Sprintf(`SELECT count(*) from public.account WHERE %s deleted_date IS %s`, placeHolders, dead)
 	s.info(sqlstr)
 
 	var count int
@@ -459,16 +464,16 @@ func (s *MssqlStorage) CountAllAccount(db XODB, queryArgs *AccountQueryArguments
 	return count, nil
 }
 
-// AccountByID retrieves a row from 'dbo.account' as a Account.
+// AccountByID retrieves a row from 'public.account' as a Account.
 //
-// Generated from index 'PK__account__3213E83F7BF2A4F5'.
-func (s *MssqlStorage) AccountByID(db XODB, id int) (*Account, error) {
+// Generated from index 'account_pk'.
+func (s *PostgresStorage) AccountByID(db XODB, id int) (*Account, error) {
 	var err error
 
 	// sql query
 	const sqlstr = `SELECT ` +
 		`id, subject, email, created_date, changed_date, deleted_date ` +
-		`FROM dbo.account ` +
+		`FROM public.account ` +
 		`WHERE id = $1`
 
 	// run query
@@ -485,16 +490,16 @@ func (s *MssqlStorage) AccountByID(db XODB, id int) (*Account, error) {
 	return &a, nil
 }
 
-// AccountBySubject retrieves a row from 'dbo.account' as a Account.
+// AccountBySubject retrieves a row from 'public.account' as a Account.
 //
-// Generated from index 'account_subject_ak'.
-func (s *MssqlStorage) AccountBySubject(db XODB, subject string) (*Account, error) {
+// Generated from index 'account_subject_unique_index'.
+func (s *PostgresStorage) AccountBySubject(db XODB, subject string) (*Account, error) {
 	var err error
 
 	// sql query
 	const sqlstr = `SELECT ` +
 		`id, subject, email, created_date, changed_date, deleted_date ` +
-		`FROM dbo.account ` +
+		`FROM public.account ` +
 		`WHERE subject = $1`
 
 	// run query

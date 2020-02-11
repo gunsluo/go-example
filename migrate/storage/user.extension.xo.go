@@ -55,62 +55,63 @@ func ApplyUserQueryArgsDefaults(queryArgs *UserQueryArguments) *UserQueryArgumen
 	return queryArgs
 }
 
+// extension block
 const graphQLUserQueries = `
-	allUsers(offset: Int, limit: Int, orderBy: String, desc: Boolean): UserConnection!
-	userByID(id:ID!):User
-`
+        allUsers(offset: Int, limit: Int, orderBy: String, desc: Boolean): UserConnection!
+        userByID(id:ID!):User
+    `
 
 const graphQLUserMutations = `
-	insertUsers(input: [InsertUserInput!]!): [User!]!
-	updateUsers(input: [UpdateUserInput!]!): [User!]!
-	deleteUsers(input: [DeleteUserInput!]!): [ID!]!
-`
+        insertUsers(input: [InsertUserInput!]!): [User!]!
+        updateUsers(input: [UpdateUserInput!]!): [User!]!
+        deleteUsers(input: [DeleteUserInput!]!): [ID!]!
+    `
 
 var graphQLUserTypes = `
-	type User {
-		id: ID!
-		subject: Account
-		name: String
-		createdDate: Time
-		changedDate: Time
-		deletedDate: Time
-	}
+        type User {
+            id: ID!
+            subject: Account
+            name: String
+            createdDate: Time
+            changedDate: Time
+            deletedDate: Time
+        }
 
-	type UserConnection {
-		pageInfo: PageInfo!
-		edges: [UserEdge]
-		totalCount: Int
-		users: [User]
-	}
+        type UserConnection {
+            pageInfo: PageInfo!
+            edges: [UserEdge]
+            totalCount: Int
+            users: [User]
+        }
 
-	type UserEdge {
-		node: User
-		cursor: ID!
-	}
+        type UserEdge {
+            node: User
+            cursor: ID!
+        }
+    
 
+        input InsertUserInput {
+            subject: String!
+            name: String
+            createdDate: Time
+            changedDate: Time
+            deletedDate: Time
+        }
 
-	input InsertUserInput {
-		subject: String!
-		name: String
-		createdDate: Time
-		changedDate: Time
-		deletedDate: Time
-	}
+        input UpdateUserInput {
+            id: ID!
+            subject: String
+            name: String
+            createdDate: Time
+            changedDate: Time
+            deletedDate: Time
+            _deletions: [String!]
+        }
 
-	input UpdateUserInput {
-		id: ID!
-		subject: String
-		name: String
-		createdDate: Time
-		changedDate: Time
-		deletedDate: Time
-		_deletions: [String!]
-	}
-
-	input DeleteUserInput {
-		id: ID!
-	}
-`
+        input DeleteUserInput {
+            id: ID!
+        }
+    `
 
 // GetUserQueries specifies the GraphQL queries for User
 func (r *RootResolver) GetUserQueries() string {

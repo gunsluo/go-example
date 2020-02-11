@@ -77,6 +77,7 @@ func buildXO(cmd *cobra.Command, dsn, templatePath, sqlPath, outputPath string) 
 			"--package", "storage",
 			"--ignore-tables", "schema_migrations", "schema_lock",
 			"--enable-ac",
+			"--enable-extension",
 		},
 	})
 }

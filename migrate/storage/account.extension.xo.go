@@ -119,72 +119,73 @@ func ApplyAccountQueryArgsDefaults(queryArgs *AccountQueryArguments) *AccountQue
 	return queryArgs
 }
 
+// extension block
 const graphQLAccountQueries = `
-	allAccounts(where: AccountFilter, offset: Int, limit: Int, orderBy: String, desc: Boolean): AccountConnection!
-	accountByID(id:ID!):Account
-	accountBySubject(subject:String!):Account
-`
+        allAccounts(where: AccountFilter, offset: Int, limit: Int, orderBy: String, desc: Boolean): AccountConnection!
+        accountByID(id:ID!):Account
+        accountBySubject(subject:String!):Account
+    `
 
 const graphQLAccountMutations = `
-	insertAccounts(input: [InsertAccountInput!]!): [Account!]!
-	updateAccounts(input: [UpdateAccountInput!]!): [Account!]!
-	deleteAccounts(input: [DeleteAccountInput!]!): [ID!]!
-`
+        insertAccounts(input: [InsertAccountInput!]!): [Account!]!
+        updateAccounts(input: [UpdateAccountInput!]!): [Account!]!
+        deleteAccounts(input: [DeleteAccountInput!]!): [ID!]!
+    `
 
 var graphQLAccountTypes = `
-	type Account {
-		id: ID!
-		subject: String!
-		email: String!
-		createdDate: Time
-		changedDate: Time
-		deletedDate: Time
-		usersSubject(offset: Int, limit: Int, orderBy: String, desc: Boolean): UserConnection!
-	}
+        type Account {
+            id: ID!
+            subject: String!
+            email: String!
+            createdDate: Time
+            changedDate: Time
+            deletedDate: Time
+            usersSubject(offset: Int, limit: Int, orderBy: String, desc: Boolean): UserConnection!
+        }
 
-	type AccountConnection {
-		pageInfo: PageInfo!
-		edges: [AccountEdge]
-		totalCount: Int
-		accounts: [Account]
-	}
+        type AccountConnection {
+            pageInfo: PageInfo!
+            edges: [AccountEdge]
+            totalCount: Int
+            accounts: [Account]
+        }
 
-	type AccountEdge {
-		node: Account
-		cursor: ID!
-	}
+        type AccountEdge {
+            node: Account
+            cursor: ID!
+        }
+    
+        input AccountFilter {
+            conjunction: FilterConjunction
+            subject: String
+            subject_like: String // LIKE
+            subject_ilike: String // LIKE case insensitive
+            subject_nlike: String	// NOT LIKE
+            subject_nilike: String // NOT LIKE case insensitive
+        }
 
-	input AccountFilter {
-		conjunction: FilterConjunction
-		subject: String
-		subject_like: String // LIKE
-		subject_ilike: String // LIKE case insensitive
-		subject_nlike: String	// NOT LIKE
-		subject_nilike: String // NOT LIKE case insensitive
-	}
+        input InsertAccountInput {
+            subject: String!
+            email: String!
+            createdDate: Time
+            changedDate: Time
+            deletedDate: Time
+        }
 
-	input InsertAccountInput {
-		subject: String!
-		email: String!
-		createdDate: Time
-		changedDate: Time
-		deletedDate: Time
-	}
+        input UpdateAccountInput {
+            id: ID!
+            subject: String
+            email: String
+            createdDate: Time
+            changedDate: Time
+            deletedDate: Time
+            _deletions: [String!]
+        }
 
-	input UpdateAccountInput {
-		id: ID!
-		subject: String
-		email: String
-		createdDate: Time
-		changedDate: Time
-		deletedDate: Time
-		_deletions: [String!]
-	}
-
-	input DeleteAccountInput {
-		id: ID!
-	}
-`
+        input DeleteAccountInput {
+            id: ID!
+        }
+    `
 
 // GetAccountQueries specifies the GraphQL queries for Account
 func (r *RootResolver) GetAccountQueries() string {
