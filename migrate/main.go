@@ -6,7 +6,10 @@ import (
 
 	"github.com/gunsluo/go-example/migrate/build"
 	"github.com/gunsluo/go-example/migrate/migrate"
+	"github.com/gunsluo/go-example/migrate/serve"
 	"github.com/spf13/cobra"
+
+	_ "github.com/lib/pq"
 )
 
 var verbose bool
@@ -24,6 +27,7 @@ func init() {
 	rootCmd.AddCommand(
 		migrate.Cmd,
 		build.Cmd,
+		serve.Cmd,
 	)
 }
 
