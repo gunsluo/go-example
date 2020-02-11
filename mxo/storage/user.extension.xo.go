@@ -440,63 +440,63 @@ func (r *RootResolver) updateUserGraphQL(ctx context.Context, items []UpdateUser
 			return nil, errors.New("couldn't set subject to null")
 		}
 		if input.Subject != nil {
-			fields = append(fields, `subject`)
+			fields = append(fields, `"subject"`)
 			params = append(params, *input.Subject)
 			node.Subject = *input.Subject
 		} else {
-			retCols = append(retCols, `subject`)
+			retCols = append(retCols, `"subject"`)
 			retVars = append(retVars, &node.Subject)
 		}
 
 		if isDeletionFields(input.Deletions, "name") {
-			fields = append(fields, `name`)
+			fields = append(fields, `"name"`)
 			params = append(params, sql.NullString{})
 			node.Name = sql.NullString{}
 		} else if input.Name != nil {
-			fields = append(fields, `name`)
+			fields = append(fields, `"name"`)
 			params = append(params, *input.Name)
 			node.Name = sql.NullString{String: *input.Name, Valid: true}
 		} else {
-			retCols = append(retCols, `name`)
+			retCols = append(retCols, `"name"`)
 			retVars = append(retVars, &node.Name)
 		}
 
 		if isDeletionFields(input.Deletions, "createdDate") {
-			fields = append(fields, `created_date`)
+			fields = append(fields, `"created_date"`)
 			params = append(params, NullTime{})
 			node.CreatedDate = NullTime{}
 		} else if input.CreatedDate != nil {
-			fields = append(fields, `created_date`)
+			fields = append(fields, `"created_date"`)
 			params = append(params, input.CreatedDate.Time)
 			node.CreatedDate = NullTime{Time: input.CreatedDate.Time, Valid: true}
 		} else {
-			retCols = append(retCols, `created_date`)
+			retCols = append(retCols, `"created_date"`)
 			retVars = append(retVars, &node.CreatedDate)
 		}
 
 		if isDeletionFields(input.Deletions, "changedDate") {
-			fields = append(fields, `changed_date`)
+			fields = append(fields, `"changed_date"`)
 			params = append(params, NullTime{})
 			node.ChangedDate = NullTime{}
 		} else if input.ChangedDate != nil {
-			fields = append(fields, `changed_date`)
+			fields = append(fields, `"changed_date"`)
 			params = append(params, input.ChangedDate.Time)
 			node.ChangedDate = NullTime{Time: input.ChangedDate.Time, Valid: true}
 		} else {
-			retCols = append(retCols, `changed_date`)
+			retCols = append(retCols, `"changed_date"`)
 			retVars = append(retVars, &node.ChangedDate)
 		}
 
 		if isDeletionFields(input.Deletions, "deletedDate") {
-			fields = append(fields, `deleted_date`)
+			fields = append(fields, `"deleted_date"`)
 			params = append(params, NullTime{})
 			node.DeletedDate = NullTime{}
 		} else if input.DeletedDate != nil {
-			fields = append(fields, `deleted_date`)
+			fields = append(fields, `"deleted_date"`)
 			params = append(params, input.DeletedDate.Time)
 			node.DeletedDate = NullTime{Time: input.DeletedDate.Time, Valid: true}
 		} else {
-			retCols = append(retCols, `deleted_date`)
+			retCols = append(retCols, `"deleted_date"`)
 			retVars = append(retVars, &node.DeletedDate)
 		}
 		if len(params) == 0 {

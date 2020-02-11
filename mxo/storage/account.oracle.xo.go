@@ -22,7 +22,7 @@ func (s *GodrorStorage) InsertAccount(db XODB, a *Account) error {
 
 	// sql insert query, primary key provided by sequence
 	const sqlstr = `INSERT INTO "C##ADMIN"."account" (` +
-		`subject, email, created_date, changed_date, deleted_date` +
+		`"subject", "email", "created_date", "changed_date", "deleted_date"` +
 		`) VALUES (` +
 		`:1, :2, :3, :4, :5` +
 		`)`
@@ -42,7 +42,7 @@ func (s *GodrorStorage) InsertAccount(db XODB, a *Account) error {
 	rowid := oci8.GetLastInsertId(lastInsertId)
 
 	var id int
-	err = db.QueryRow(`SELECT id from "C##ADMIN"."account" WHERE rowid = :1`, rowid).Scan(&id)
+	err = db.QueryRow(`SELECT "id" from "C##ADMIN"."account" WHERE rowid = :1`, rowid).Scan(&id)
 	if err != nil {
 		return err
 	}
@@ -60,33 +60,33 @@ func (s *GodrorStorage) InsertAccountByFields(db XODB, a *Account) error {
 
 	params := make([]interface{}, 0, 5)
 	fields := make([]string, 0, 5)
-	retCols := `id`
+	retCols := `"id"`
 	retVars := make([]interface{}, 0, 5)
 	retVars = append(retVars, &a.ID)
-	fields = append(fields, `subject`)
+	fields = append(fields, `"subject"`)
 	params = append(params, a.Subject)
 
-	fields = append(fields, `email`)
+	fields = append(fields, `"email"`)
 	params = append(params, a.Email)
 	if a.CreatedDate.Valid {
-		fields = append(fields, `created_date`)
+		fields = append(fields, `"created_date"`)
 		params = append(params, a.CreatedDate)
 	} else {
-		retCols += `, created_date`
+		retCols += `, "created_date"`
 		retVars = append(retVars, &a.CreatedDate)
 	}
 	if a.ChangedDate.Valid {
-		fields = append(fields, `changed_date`)
+		fields = append(fields, `"changed_date"`)
 		params = append(params, a.ChangedDate)
 	} else {
-		retCols += `, changed_date`
+		retCols += `, "changed_date"`
 		retVars = append(retVars, &a.ChangedDate)
 	}
 	if a.DeletedDate.Valid {
-		fields = append(fields, `deleted_date`)
+		fields = append(fields, `"deleted_date"`)
 		params = append(params, a.DeletedDate)
 	} else {
-		retCols += `, deleted_date`
+		retCols += `, "deleted_date"`
 		retVars = append(retVars, &a.DeletedDate)
 	}
 	if len(params) == 0 {
@@ -147,8 +147,8 @@ func (s *GodrorStorage) UpdateAccount(db XODB, a *Account) error {
 
 	// sql query
 	const sqlstr = `UPDATE "C##ADMIN"."account" SET ` +
-		`subject = :1, email = :2, created_date = :3, changed_date = :4, deleted_date = :5` +
-		` WHERE id = :6`
+		`"subject" = :1, "email" = :2, "created_date" = :3, "changed_date" = :4, "deleted_date" = :5` +
+		` WHERE "id" = :6`
 
 	// run query
 	s.info(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
@@ -171,13 +171,13 @@ func (s *GodrorStorage) UpdateAccountByFields(db XODB, a *Account, fields, retCo
 	params = append(params, a.ID)
 	idxvals = append(idxvals, len(params))
 	var sqlstr = fmt.Sprintf(`UPDATE "C##ADMIN"."account" SET `+
-		setstr+` WHERE id = :%d`, idxvals...)
+		setstr+` WHERE "id" = :%d`, idxvals...)
 	s.info(sqlstr, params)
 	if _, err := db.Exec(sqlstr, params...); err != nil {
 		return err
 	}
 
-	err := db.QueryRow(`SELECT `+strings.Join(retCols, ",")+` from "C##ADMIN"."account" WHERE id = :1`, a.ID).Scan(retVars...)
+	err := db.QueryRow(`SELECT `+strings.Join(retCols, ",")+` from "C##ADMIN"."account" WHERE "id" = :1`, a.ID).Scan(retVars...)
 	if err != nil {
 		return err
 	}
@@ -201,10 +201,10 @@ func (s *GodrorStorage) UpsertAccount(db XODB, a *Account) error {
 	// sql query
 
 	const sqlstr = `MERGE INTO "C##ADMIN"."account" t ` +
-		`USING (SELECT :1 AS id, :2 AS subject, :3 AS email, :4 AS created_date, :5 AS changed_date, :6 AS deleted_date FROM dual) s ` +
-		`ON (t.id = s.id) ` +
-		`WHEN MATCHED THEN UPDATE SET subject = s.subject, email = s.email, created_date = s.created_date, changed_date = s.changed_date, deleted_date = s.deleted_date ` +
-		`WHEN NOT MATCHED THEN INSERT (subject, email, created_date, changed_date, deleted_date) VALUES (s.subject, s.email, s.created_date, s.changed_date, s.deleted_date)`
+		`USING (SELECT :1 AS "id", :2 AS "subject", :3 AS "email", :4 AS "created_date", :5 AS "changed_date", :6 AS "deleted_date" FROM dual) s ` +
+		`ON (t."id" = s."id") ` +
+		`WHEN MATCHED THEN UPDATE SET "subject" = s."subject", "email" = s."email", "created_date" = s."created_date", "changed_date" = s."changed_date", "deleted_date" = s."deleted_date" ` +
+		`WHEN NOT MATCHED THEN INSERT ("subject", "email", "created_date", "changed_date", "deleted_date") VALUES (s."subject", s."email", s."created_date", s."changed_date", s."deleted_date")`
 
 	// run query
 	s.info(sqlstr, a.ID, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
@@ -234,7 +234,7 @@ func (s *GodrorStorage) DeleteAccount(db XODB, a *Account) error {
 	}
 
 	// sql query
-	const sqlstr = `DELETE FROM "C##ADMIN"."account" WHERE id = :1`
+	const sqlstr = `DELETE FROM "C##ADMIN"."account" WHERE "id" = :1`
 
 	// run query
 	s.info(sqlstr, a.ID)
@@ -268,7 +268,7 @@ func (s *GodrorStorage) DeleteAccounts(db XODB, as []*Account) error {
 	}
 
 	// sql query
-	var sqlstr = `DELETE FROM "C##ADMIN"."account" WHERE id in (` + placeholder + `)`
+	var sqlstr = `DELETE FROM "C##ADMIN"."account" WHERE "id" in (` + placeholder + `)`
 
 	// run query
 	s.info(sqlstr, args)
@@ -289,9 +289,9 @@ func (s *GodrorStorage) DeleteAccounts(db XODB, as []*Account) error {
 // ordered by "created_date" in descending order.
 func (s *GodrorStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, error) {
 	const sqlstr = `SELECT ` +
-		`id, subject, email, created_date, changed_date, deleted_date ` +
+		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "C##ADMIN"."account" ` +
-		`ORDER BY created_date DESC FETCH NEXT :1 ROWS ONLY`
+		`ORDER BY "created_date" DESC FETCH NEXT :1 ROWS ONLY`
 
 	s.info(sqlstr, n)
 	q, err := db.Query(sqlstr, n)
@@ -321,9 +321,9 @@ func (s *GodrorStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, error)
 // ordered by "changed_date" in descending order.
 func (s *GodrorStorage) GetMostRecentChangedAccount(db XODB, n int) ([]*Account, error) {
 	const sqlstr = `SELECT ` +
-		`id, subject, email, created_date, changed_date, deleted_date ` +
+		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "C##ADMIN"."account" ` +
-		`ORDER BY changed_date DESC FETCH NEXT :1 ROWS ONLY`
+		`ORDER BY "changed_date" DESC FETCH NEXT :1 ROWS ONLY`
 
 	s.info(sqlstr, n)
 	q, err := db.Query(sqlstr, n)
@@ -407,8 +407,8 @@ func (s *GodrorStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArguments)
 	params = append(params, *queryArgs.Limit)
 	limitPos := len(params)
 
-	var sqlstr = fmt.Sprintf(`SELECT %s FROM %s WHERE %s deleted_date IS %s ORDER BY %s %s OFFSET :%d ROWS FETCH NEXT :%d ROWS ONLY`,
-		`id, subject, email, created_date, changed_date, deleted_date `,
+	var sqlstr = fmt.Sprintf(`SELECT %s FROM %s WHERE %s "deleted_date" IS %s ORDER BY "%s" %s OFFSET :%d ROWS FETCH NEXT :%d ROWS ONLY`,
+		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" `,
 		`"C##ADMIN"."account"`,
 		placeHolders,
 		dead,
@@ -470,7 +470,7 @@ func (s *GodrorStorage) CountAllAccount(db XODB, queryArgs *AccountQueryArgument
 	}
 
 	var err error
-	var sqlstr = fmt.Sprintf(`SELECT count(*) from "C##ADMIN"."account" WHERE %s deleted_date IS %s`, placeHolders, dead)
+	var sqlstr = fmt.Sprintf(`SELECT count(*) from "C##ADMIN"."account" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
 	s.info(sqlstr)
 
 	var count int
@@ -489,9 +489,9 @@ func (s *GodrorStorage) AccountByID(db XODB, id int) (*Account, error) {
 
 	// sql query
 	const sqlstr = `SELECT ` +
-		`id, subject, email, created_date, changed_date, deleted_date ` +
+		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "C##ADMIN"."account" ` +
-		`WHERE id = :1`
+		`WHERE "id" = :1`
 
 	// run query
 	s.info(sqlstr, id)
@@ -515,9 +515,9 @@ func (s *GodrorStorage) AccountBySubject(db XODB, subject string) (*Account, err
 
 	// sql query
 	const sqlstr = `SELECT ` +
-		`id, subject, email, created_date, changed_date, deleted_date ` +
+		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "C##ADMIN"."account" ` +
-		`WHERE subject = :1`
+		`WHERE "subject" = :1`
 
 	// run query
 	s.info(sqlstr, subject)

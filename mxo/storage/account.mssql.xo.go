@@ -154,7 +154,7 @@ func (s *MssqlStorage) UpdateAccountByFields(db XODB, a *Account, fields, retCol
 	idxvals = append(idxvals, len(params))
 	var sqlstr = fmt.Sprintf(`UPDATE "dbo"."account" SET `+
 		setstr+` OUTPUT `+retstr+
-		` WHERE id = $%d`, idxvals...)
+		` WHERE "id" = $%d`, idxvals...)
 	s.info(sqlstr, params)
 	if err := db.QueryRow(sqlstr, params...).Scan(retVars...); err != nil {
 		return err
@@ -269,7 +269,7 @@ func (s *MssqlStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, error) 
 	var sqlstr = `SELECT TOP ` + strconv.Itoa(n) +
 		` "id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "dbo"."account" ` +
-		`ORDER BY created_date DESC`
+		`ORDER BY "created_date" DESC`
 
 	s.info(sqlstr)
 	q, err := db.Query(sqlstr)
@@ -301,7 +301,7 @@ func (s *MssqlStorage) GetMostRecentChangedAccount(db XODB, n int) ([]*Account, 
 	var sqlstr = `SELECT TOP ` + strconv.Itoa(n) +
 		` "id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "dbo"."account" ` +
-		`ORDER BY changed_date DESC`
+		`ORDER BY "changed_date" DESC`
 
 	s.info(sqlstr)
 	q, err := db.Query(sqlstr)
@@ -385,7 +385,7 @@ func (s *MssqlStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArguments) 
 	params = append(params, *queryArgs.Limit)
 	limitPos := len(params)
 
-	var sqlstr = fmt.Sprintf(`SELECT %s FROM %s WHERE %s deleted_date IS %s ORDER BY %s %s OFFSET $%d ROWS FETCH NEXT $%d ROWS ONLY`,
+	var sqlstr = fmt.Sprintf(`SELECT %s FROM %s WHERE %s "deleted_date" IS %s ORDER BY "%s"  %s OFFSET $%d ROWS FETCH NEXT $%d ROWS ONLY`,
 		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" `,
 		`"dbo"."account"`,
 		placeHolders,
@@ -448,7 +448,7 @@ func (s *MssqlStorage) CountAllAccount(db XODB, queryArgs *AccountQueryArguments
 	}
 
 	var err error
-	var sqlstr = fmt.Sprintf(`SELECT count(*) from "dbo"."account" WHERE %s deleted_date IS %s`, placeHolders, dead)
+	var sqlstr = fmt.Sprintf(`SELECT count(*) from "dbo"."account" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
 	s.info(sqlstr)
 
 	var count int
@@ -461,7 +461,7 @@ func (s *MssqlStorage) CountAllAccount(db XODB, queryArgs *AccountQueryArguments
 
 // AccountByID retrieves a row from '"dbo"."account"' as a Account.
 //
-// Generated from index 'PK__account__3213E83FF3A49472'.
+// Generated from index 'PK__account__3213E83F019AA2B0'.
 func (s *MssqlStorage) AccountByID(db XODB, id int) (*Account, error) {
 	var err error
 

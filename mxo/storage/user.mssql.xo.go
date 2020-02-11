@@ -158,7 +158,7 @@ func (s *MssqlStorage) UpdateUserByFields(db XODB, u *User, fields, retCols []st
 	idxvals = append(idxvals, len(params))
 	var sqlstr = fmt.Sprintf(`UPDATE "dbo"."user" SET `+
 		setstr+` OUTPUT `+retstr+
-		` WHERE id = $%d`, idxvals...)
+		` WHERE "id" = $%d`, idxvals...)
 	s.info(sqlstr, params)
 	if err := db.QueryRow(sqlstr, params...).Scan(retVars...); err != nil {
 		return err
@@ -273,7 +273,7 @@ func (s *MssqlStorage) GetMostRecentUser(db XODB, n int) ([]*User, error) {
 	var sqlstr = `SELECT TOP ` + strconv.Itoa(n) +
 		` "id", "subject", "name", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "dbo"."user" ` +
-		`ORDER BY created_date DESC`
+		`ORDER BY "created_date" DESC`
 
 	s.info(sqlstr)
 	q, err := db.Query(sqlstr)
@@ -305,7 +305,7 @@ func (s *MssqlStorage) GetMostRecentChangedUser(db XODB, n int) ([]*User, error)
 	var sqlstr = `SELECT TOP ` + strconv.Itoa(n) +
 		` "id", "subject", "name", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "dbo"."user" ` +
-		`ORDER BY changed_date DESC`
+		`ORDER BY "changed_date" DESC`
 
 	s.info(sqlstr)
 	q, err := db.Query(sqlstr)
@@ -373,7 +373,7 @@ func (s *MssqlStorage) GetAllUser(db XODB, queryArgs *UserQueryArguments) ([]*Us
 	params = append(params, *queryArgs.Limit)
 	limitPos := len(params)
 
-	var sqlstr = fmt.Sprintf(`SELECT %s FROM %s WHERE %s deleted_date IS %s ORDER BY %s %s OFFSET $%d ROWS FETCH NEXT $%d ROWS ONLY`,
+	var sqlstr = fmt.Sprintf(`SELECT %s FROM %s WHERE %s "deleted_date" IS %s ORDER BY "%s"  %s OFFSET $%d ROWS FETCH NEXT $%d ROWS ONLY`,
 		`"id", "subject", "name", "created_date", "changed_date", "deleted_date" `,
 		`"dbo"."user"`,
 		placeHolders,
@@ -420,7 +420,7 @@ func (s *MssqlStorage) CountAllUser(db XODB, queryArgs *UserQueryArguments) (int
 	placeHolders := ""
 
 	var err error
-	var sqlstr = fmt.Sprintf(`SELECT count(*) from "dbo"."user" WHERE %s deleted_date IS %s`, placeHolders, dead)
+	var sqlstr = fmt.Sprintf(`SELECT count(*) from "dbo"."user" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
 	s.info(sqlstr)
 
 	var count int
@@ -449,7 +449,7 @@ func (s *MssqlStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *User
 	var params []interface{}
 	placeHolders := ""
 	params = append(params, subject)
-	placeHolders = fmt.Sprintf("%s subject = $%d AND ", placeHolders, len(params))
+	placeHolders = fmt.Sprintf(`%s "subject" = $%d AND `, placeHolders, len(params))
 
 	params = append(params, *queryArgs.Offset)
 	offsetPos := len(params)
@@ -458,7 +458,7 @@ func (s *MssqlStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *User
 	limitPos := len(params)
 
 	var sqlstr = fmt.Sprintf(
-		`SELECT %s FROM %s WHERE %s deleted_date IS %s ORDER BY %s %s OFFSET $%d ROWS FETCH NEXT $%d ROWS ONLY`,
+		`SELECT %s FROM %s WHERE %s "deleted_date" IS %s ORDER BY "%s" %s OFFSET $%d ROWS FETCH NEXT $%d ROWS ONLY`,
 		`"id", "subject", "name", "created_date", "changed_date", "deleted_date" `,
 		`"dbo"."user"`,
 		placeHolders,
@@ -468,6 +468,7 @@ func (s *MssqlStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *User
 		offsetPos,
 		limitPos)
 
+	s.info(sqlstr, params...)
 	q, err := db.Query(sqlstr, params...)
 	if err != nil {
 		return nil, err
@@ -504,10 +505,10 @@ func (s *MssqlStorage) CountUsersBySubjectFK(db XODB, subject string, queryArgs 
 	var params []interface{}
 	placeHolders := ""
 	params = append(params, subject)
-	placeHolders = fmt.Sprintf("%s subject = $%d AND ", placeHolders, len(params))
+	placeHolders = fmt.Sprintf(`%s "subject" = $%d AND `, placeHolders, len(params))
 
 	var err error
-	var sqlstr = fmt.Sprintf(`SELECT count(*) from "dbo"."user" WHERE %s deleted_date IS %s`, placeHolders, dead)
+	var sqlstr = fmt.Sprintf(`SELECT count(*) from "dbo"."user" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
 	s.info(sqlstr)
 
 	var count int
@@ -527,7 +528,7 @@ func (s *MssqlStorage) AccountInUser(db XODB, u *User) (*Account, error) {
 
 // UserByID retrieves a row from '"dbo"."user"' as a User.
 //
-// Generated from index 'PK__user__3213E83FEC321C5B'.
+// Generated from index 'PK__user__3213E83F08603F4B'.
 func (s *MssqlStorage) UserByID(db XODB, id int) (*User, error) {
 	var err error
 

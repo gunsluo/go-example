@@ -158,7 +158,7 @@ func (s *PostgresStorage) UpdateUserByFields(db XODB, u *User, fields, retCols [
 		sqlstr = fmt.Sprintf(`UPDATE "public"."user" SET (`+
 			strings.Join(fields, ",")+
 			`) = (`+strings.Join(placeHolders, ",")+
-			`) WHERE id = $%d`+
+			`) WHERE "id" = $%d`+
 			` RETURNING `+strings.Join(retCols, ", "), idxvals...)
 	}
 	s.info(sqlstr, params)
@@ -278,7 +278,7 @@ func (s *PostgresStorage) GetMostRecentUser(db XODB, n int) ([]*User, error) {
 	const sqlstr = `SELECT ` +
 		`"id", "subject", "name", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "public"."user" ` +
-		`ORDER BY created_date DESC LIMIT $1`
+		`ORDER BY "created_date" DESC LIMIT $1`
 
 	s.info(sqlstr, n)
 	q, err := db.Query(sqlstr, n)
@@ -310,7 +310,7 @@ func (s *PostgresStorage) GetMostRecentChangedUser(db XODB, n int) ([]*User, err
 	const sqlstr = `SELECT ` +
 		`"id", "subject", "name", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "public"."user" ` +
-		`ORDER BY changed_date DESC LIMIT $1`
+		`ORDER BY "changed_date" DESC LIMIT $1`
 
 	s.info(sqlstr, n)
 	q, err := db.Query(sqlstr, n)
@@ -378,7 +378,7 @@ func (s *PostgresStorage) GetAllUser(db XODB, queryArgs *UserQueryArguments) ([]
 	params = append(params, *queryArgs.Limit)
 	limitPos := len(params)
 
-	var sqlstr = fmt.Sprintf(`SELECT %s FROM %s WHERE %s deleted_date IS %s ORDER BY %s %s OFFSET $%d LIMIT $%d`,
+	var sqlstr = fmt.Sprintf(`SELECT %s FROM %s WHERE %s "deleted_date" IS %s ORDER BY "%s" %s OFFSET $%d LIMIT $%d`,
 		`"id", "subject", "name", "created_date", "changed_date", "deleted_date" `,
 		`"public"."user"`,
 		placeHolders,
@@ -425,7 +425,7 @@ func (s *PostgresStorage) CountAllUser(db XODB, queryArgs *UserQueryArguments) (
 	placeHolders := ""
 
 	var err error
-	var sqlstr = fmt.Sprintf(`SELECT count(*) from "public"."user" WHERE %s deleted_date IS %s`, placeHolders, dead)
+	var sqlstr = fmt.Sprintf(`SELECT count(*) from "public"."user" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
 	s.info(sqlstr)
 
 	var count int
@@ -454,7 +454,7 @@ func (s *PostgresStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *U
 	var params []interface{}
 	placeHolders := ""
 	params = append(params, subject)
-	placeHolders = fmt.Sprintf("%s subject = $%d AND ", placeHolders, len(params))
+	placeHolders = fmt.Sprintf(`%s "subject" = $%d AND `, placeHolders, len(params))
 
 	params = append(params, *queryArgs.Offset)
 	offsetPos := len(params)
@@ -463,7 +463,7 @@ func (s *PostgresStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *U
 	limitPos := len(params)
 
 	var sqlstr = fmt.Sprintf(
-		`SELECT %s FROM %s WHERE %s deleted_date IS %s ORDER BY %s %s OFFSET $%d LIMIT $%d`,
+		`SELECT %s FROM %s WHERE %s "deleted_date" IS %s ORDER BY "%s" %s OFFSET $%d LIMIT $%d`,
 		`"id", "subject", "name", "created_date", "changed_date", "deleted_date" `,
 		`"public"."user"`,
 		placeHolders,
@@ -473,6 +473,7 @@ func (s *PostgresStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *U
 		offsetPos,
 		limitPos)
 
+	s.info(sqlstr, params...)
 	q, err := db.Query(sqlstr, params...)
 	if err != nil {
 		return nil, err
@@ -509,10 +510,10 @@ func (s *PostgresStorage) CountUsersBySubjectFK(db XODB, subject string, queryAr
 	var params []interface{}
 	placeHolders := ""
 	params = append(params, subject)
-	placeHolders = fmt.Sprintf("%s subject = $%d AND ", placeHolders, len(params))
+	placeHolders = fmt.Sprintf(`%s "subject" = $%d AND `, placeHolders, len(params))
 
 	var err error
-	var sqlstr = fmt.Sprintf(`SELECT count(*) from "public"."user" WHERE %s deleted_date IS %s`, placeHolders, dead)
+	var sqlstr = fmt.Sprintf(`SELECT count(*) from "public"."user" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
 	s.info(sqlstr)
 
 	var count int

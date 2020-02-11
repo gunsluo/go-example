@@ -154,7 +154,7 @@ func (s *PostgresStorage) UpdateAccountByFields(db XODB, a *Account, fields, ret
 		sqlstr = fmt.Sprintf(`UPDATE "public"."account" SET (`+
 			strings.Join(fields, ",")+
 			`) = (`+strings.Join(placeHolders, ",")+
-			`) WHERE id = $%d`+
+			`) WHERE "id" = $%d`+
 			` RETURNING `+strings.Join(retCols, ", "), idxvals...)
 	}
 	s.info(sqlstr, params)
@@ -274,7 +274,7 @@ func (s *PostgresStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, erro
 	const sqlstr = `SELECT ` +
 		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "public"."account" ` +
-		`ORDER BY created_date DESC LIMIT $1`
+		`ORDER BY "created_date" DESC LIMIT $1`
 
 	s.info(sqlstr, n)
 	q, err := db.Query(sqlstr, n)
@@ -306,7 +306,7 @@ func (s *PostgresStorage) GetMostRecentChangedAccount(db XODB, n int) ([]*Accoun
 	const sqlstr = `SELECT ` +
 		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "public"."account" ` +
-		`ORDER BY changed_date DESC LIMIT $1`
+		`ORDER BY "changed_date" DESC LIMIT $1`
 
 	s.info(sqlstr, n)
 	q, err := db.Query(sqlstr, n)
@@ -390,7 +390,7 @@ func (s *PostgresStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArgument
 	params = append(params, *queryArgs.Limit)
 	limitPos := len(params)
 
-	var sqlstr = fmt.Sprintf(`SELECT %s FROM %s WHERE %s deleted_date IS %s ORDER BY %s %s OFFSET $%d LIMIT $%d`,
+	var sqlstr = fmt.Sprintf(`SELECT %s FROM %s WHERE %s "deleted_date" IS %s ORDER BY "%s" %s OFFSET $%d LIMIT $%d`,
 		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" `,
 		`"public"."account"`,
 		placeHolders,
@@ -453,7 +453,7 @@ func (s *PostgresStorage) CountAllAccount(db XODB, queryArgs *AccountQueryArgume
 	}
 
 	var err error
-	var sqlstr = fmt.Sprintf(`SELECT count(*) from "public"."account" WHERE %s deleted_date IS %s`, placeHolders, dead)
+	var sqlstr = fmt.Sprintf(`SELECT count(*) from "public"."account" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
 	s.info(sqlstr)
 
 	var count int
