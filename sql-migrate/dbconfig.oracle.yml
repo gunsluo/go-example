@@ -1,0 +1,11 @@
+development:
+    dialect: oci8
+    datasource: c##admin/password@127.0.0.1:1521/ORCLCDB
+    dir: migrations/oracle
+    table: migrations
+
+production:
+    dialect: oci8 
+    datasource: c##admin/password@127.0.0.1:1521/ORCLCDB
+    dir: migrations/oracle
+    table: migrations
