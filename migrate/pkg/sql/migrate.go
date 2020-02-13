@@ -16,12 +16,6 @@ const (
 	migrateRetries = 12
 )
 
-// MMigrateFuncs is a mapping  between specified database and the migrate tool
-var MigrateFuncs = map[string]func(string, string) error{
-	"postgres": tools.MigrateUp,
-	"godror":   tools.SqlMigrateUp,
-}
-
 // Migrate runs migrations. It's supposed to run in production,
 // so assume the target database is CockroachDB.
 func Migrate(dsn, service string, sqlPath string) DBSetupOpt {
@@ -35,7 +29,7 @@ func Migrate(dsn, service string, sqlPath string) DBSetupOpt {
 			return errors.Wrap(err, "couldn't parse database address")
 		}
 
-		migrateUp, ok := MigrateFuncs[u.Driver]
+		migrateUp, ok := tools.MigrateFuncs[u.Driver]
 		if !ok {
 			return errors.Errorf("unsupported database %s", u.Driver)
 		}

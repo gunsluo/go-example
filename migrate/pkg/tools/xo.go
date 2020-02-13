@@ -6,9 +6,11 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/xo/dburl"
@@ -18,6 +20,13 @@ import (
 // XOArguments is command parameters for xo tool
 type XOArguments cli.Arguments
 
+// MMigrateFuncs is a mapping  between specified database and the migrate tool
+var MigrateFuncs = map[string]func(string, string) error{
+	"postgres": MigrateUp,
+	"mssql":    MigrateUp,
+	"godror":   SqlMigrateUp,
+}
+
 // BuildXO builds db into the .xo.go files
 func BuildXO(cmd *cobra.Command, sqlPath string, args XOArguments) {
 	if Verbose(cmd) {
@@ -26,18 +35,31 @@ func BuildXO(cmd *cobra.Command, sqlPath string, args XOArguments) {
 
 	// step 1: Migrate up
 	for _, dsn := range args.DSNS {
-		db, err := dburl.Parse(dsn)
+		u, err := dburl.Parse(dsn)
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		fmt.Println("migrate up:", dsn)
-		db = db
-		//migrateUp(cmd, dsn, path.Join(sqlPath, db.Driver))
+		migrateUp, ok := MigrateFuncs[u.Driver]
+		if !ok {
+			log.Fatalln(errors.Errorf("unsupported database %s", u.Driver))
+		}
+
+		var subPath string
+		if strings.HasPrefix(dsn, "oci8://") {
+			subPath = "oracle"
+		} else {
+			subPath = u.Driver
+		}
+
+		err = migrateUp(dsn, path.Join(sqlPath, subPath))
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 
 	// step 2: run xo generator
-	buildXO(cmd, args)
+	//buildXO(cmd, args)
 }
 
 func buildXO(cmd *cobra.Command, args XOArguments) {

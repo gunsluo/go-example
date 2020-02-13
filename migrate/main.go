@@ -9,6 +9,7 @@ import (
 	"github.com/gunsluo/go-example/migrate/serve"
 	"github.com/spf13/cobra"
 
+	_ "github.com/denisenkom/go-mssqldb"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-oci8"
 )
