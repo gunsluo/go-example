@@ -21,8 +21,8 @@ func (s *MssqlStorage) InsertUser(db XODB, u *User) error {
 	}
 
 	// sql insert query, primary key provided by identity
-	const sqlstr = `INSERT INTO dbo.user (` +
-		`subject, name, created_date, changed_date, deleted_date` +
+	const sqlstr = `INSERT INTO "dbo"."user" (` +
+		`"subject", "name", "created_date", "changed_date", "deleted_date"` +
 		`) OUTPUT INSERTED.ID VALUES (` +
 		`$1, $2, $3, $4, $5` +
 		`)`
@@ -46,37 +46,37 @@ func (s *MssqlStorage) InsertUserByFields(db XODB, u *User) error {
 
 	params := make([]interface{}, 0, 5)
 	fields := make([]string, 0, 5)
-	retCols := `INSERTED.id`
+	retCols := `INSERTED."id"`
 	retVars := make([]interface{}, 0, 5)
 	retVars = append(retVars, &u.ID)
-	fields = append(fields, `subject`)
+	fields = append(fields, `"subject"`)
 	params = append(params, u.Subject)
 	if u.Name.Valid {
-		fields = append(fields, `name`)
+		fields = append(fields, `"name"`)
 		params = append(params, u.Name)
 	} else {
-		retCols += `, INSERTED.name`
+		retCols += `, INSERTED."name"`
 		retVars = append(retVars, &u.Name)
 	}
 	if u.CreatedDate.Valid {
-		fields = append(fields, `created_date`)
+		fields = append(fields, `"created_date"`)
 		params = append(params, u.CreatedDate)
 	} else {
-		retCols += `, INSERTED.created_date`
+		retCols += `, INSERTED."created_date"`
 		retVars = append(retVars, &u.CreatedDate)
 	}
 	if u.ChangedDate.Valid {
-		fields = append(fields, `changed_date`)
+		fields = append(fields, `"changed_date"`)
 		params = append(params, u.ChangedDate)
 	} else {
-		retCols += `, INSERTED.changed_date`
+		retCols += `, INSERTED."changed_date"`
 		retVars = append(retVars, &u.ChangedDate)
 	}
 	if u.DeletedDate.Valid {
-		fields = append(fields, `deleted_date`)
+		fields = append(fields, `"deleted_date"`)
 		params = append(params, u.DeletedDate)
 	} else {
-		retCols += `, INSERTED.deleted_date`
+		retCols += `, INSERTED."deleted_date"`
 		retVars = append(retVars, &u.DeletedDate)
 	}
 	if len(params) == 0 {
@@ -92,7 +92,7 @@ func (s *MssqlStorage) InsertUserByFields(db XODB, u *User) error {
 	}
 	placeHolderStr := fmt.Sprintf(strings.Join(placeHolders, ","), placeHolderVals...)
 
-	sqlstr := `INSERT INTO dbo.user (` +
+	sqlstr := `INSERT INTO "dbo"."user" (` +
 		strings.Join(fields, ",") +
 		`) OUTPUT ` + retCols +
 		` VALUES (` + placeHolderStr + `)`
@@ -124,9 +124,9 @@ func (s *MssqlStorage) UpdateUser(db XODB, u *User) error {
 	}
 
 	// sql query
-	const sqlstr = `UPDATE dbo.user SET ` +
-		`subject = $1, name = $2, created_date = $3, changed_date = $4, deleted_date = $5` +
-		` WHERE id = $6`
+	const sqlstr = `UPDATE "dbo"."user" SET ` +
+		`"subject" = $1, "name" = $2, "created_date" = $3, "changed_date" = $4, "deleted_date" = $5` +
+		` WHERE "id" = $6`
 
 	// run query
 	s.info(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate, u.ID)
@@ -156,9 +156,9 @@ func (s *MssqlStorage) UpdateUserByFields(db XODB, u *User, fields, retCols []st
 
 	params = append(params, u.ID)
 	idxvals = append(idxvals, len(params))
-	var sqlstr = fmt.Sprintf(`UPDATE dbo.user SET `+
+	var sqlstr = fmt.Sprintf(`UPDATE "dbo"."user" SET `+
 		setstr+` OUTPUT `+retstr+
-		` WHERE id = $%d`, idxvals...)
+		` WHERE "id" = $%d`, idxvals...)
 	s.info(sqlstr, params)
 	if err := db.QueryRow(sqlstr, params...).Scan(retVars...); err != nil {
 		return err
@@ -182,11 +182,11 @@ func (s *MssqlStorage) UpsertUser(db XODB, u *User) error {
 
 	// sql query
 
-	const sqlstr = `MERGE dbo.user AS t ` +
-		`USING (SELECT $1 AS id, $2 AS subject, $3 AS name, $4 AS created_date, $5 AS changed_date, $6 AS deleted_date) AS s ` +
-		`ON t.id = s.id ` +
-		`WHEN MATCHED THEN UPDATE SET subject = s.subject, name = s.name, created_date = s.created_date, changed_date = s.changed_date, deleted_date = s.deleted_date ` +
-		`WHEN NOT MATCHED THEN INSERT (subject, name, created_date, changed_date, deleted_date) VALUES (s.subject, s.name, s.created_date, s.changed_date, s.deleted_date);`
+	const sqlstr = `MERGE "dbo"."user" AS t ` +
+		`USING (SELECT $1 AS "id", $2 AS "subject", $3 AS "name", $4 AS "created_date", $5 AS "changed_date", $6 AS "deleted_date") AS s ` +
+		`ON t."id" = s."id" ` +
+		`WHEN MATCHED THEN UPDATE SET "subject" = s."subject", "name" = s."name", "created_date" = s."created_date", "changed_date" = s."changed_date", "deleted_date" = s."deleted_date" ` +
+		`WHEN NOT MATCHED THEN INSERT ("subject", "name", "created_date", "changed_date", "deleted_date") VALUES (s."subject", s."name", s."created_date", s."changed_date", s."deleted_date");`
 
 	// run query
 	s.info(sqlstr, u.ID, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate)
@@ -216,7 +216,7 @@ func (s *MssqlStorage) DeleteUser(db XODB, u *User) error {
 	}
 
 	// sql query
-	const sqlstr = `DELETE FROM dbo.user WHERE id = $1`
+	const sqlstr = `DELETE FROM "dbo"."user" WHERE "id" = $1`
 
 	// run query
 	s.info(sqlstr, u.ID)
@@ -250,7 +250,7 @@ func (s *MssqlStorage) DeleteUsers(db XODB, us []*User) error {
 	}
 
 	// sql query
-	var sqlstr = `DELETE FROM dbo.user WHERE id in (` + placeholder + `)`
+	var sqlstr = `DELETE FROM "dbo"."user" WHERE "id" in (` + placeholder + `)`
 
 	// run query
 	s.info(sqlstr, args)
@@ -271,9 +271,9 @@ func (s *MssqlStorage) DeleteUsers(db XODB, us []*User) error {
 // ordered by "created_date" in descending order.
 func (s *MssqlStorage) GetMostRecentUser(db XODB, n int) ([]*User, error) {
 	var sqlstr = `SELECT TOP ` + strconv.Itoa(n) +
-		` id, subject, name, created_date, changed_date, deleted_date ` +
-		`FROM dbo.user ` +
-		`ORDER BY created_date DESC`
+		` "id", "subject", "name", "created_date", "changed_date", "deleted_date" ` +
+		`FROM "dbo"."user" ` +
+		`ORDER BY "created_date" DESC`
 
 	s.info(sqlstr)
 	q, err := db.Query(sqlstr)
@@ -303,9 +303,9 @@ func (s *MssqlStorage) GetMostRecentUser(db XODB, n int) ([]*User, error) {
 // ordered by "changed_date" in descending order.
 func (s *MssqlStorage) GetMostRecentChangedUser(db XODB, n int) ([]*User, error) {
 	var sqlstr = `SELECT TOP ` + strconv.Itoa(n) +
-		` id, subject, name, created_date, changed_date, deleted_date ` +
-		`FROM dbo.user ` +
-		`ORDER BY changed_date DESC`
+		` "id", "subject", "name", "created_date", "changed_date", "deleted_date" ` +
+		`FROM "dbo"."user" ` +
+		`ORDER BY "changed_date" DESC`
 
 	s.info(sqlstr)
 	q, err := db.Query(sqlstr)
@@ -373,9 +373,9 @@ func (s *MssqlStorage) GetAllUser(db XODB, queryArgs *UserQueryArguments) ([]*Us
 	params = append(params, *queryArgs.Limit)
 	limitPos := len(params)
 
-	var sqlstr = fmt.Sprintf(`SELECT %s FROM %s WHERE %s deleted_date IS %s ORDER BY %s %s OFFSET $%d ROWS FETCH NEXT $%d ROWS ONLY`,
-		`id, subject, name, created_date, changed_date, deleted_date `,
-		`dbo.user`,
+	var sqlstr = fmt.Sprintf(`SELECT %s FROM %s WHERE %s "deleted_date" IS %s ORDER BY "%s"  %s OFFSET $%d ROWS FETCH NEXT $%d ROWS ONLY`,
+		`"id", "subject", "name", "created_date", "changed_date", "deleted_date" `,
+		`"dbo"."user"`,
 		placeHolders,
 		dead,
 		orderBy,
@@ -420,7 +420,7 @@ func (s *MssqlStorage) CountAllUser(db XODB, queryArgs *UserQueryArguments) (int
 	placeHolders := ""
 
 	var err error
-	var sqlstr = fmt.Sprintf(`SELECT count(*) from dbo.user WHERE %s deleted_date IS %s`, placeHolders, dead)
+	var sqlstr = fmt.Sprintf(`SELECT count(*) from "dbo"."user" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
 	s.info(sqlstr)
 
 	var count int
@@ -431,7 +431,7 @@ func (s *MssqlStorage) CountAllUser(db XODB, queryArgs *UserQueryArguments) (int
 	return count, nil
 }
 
-// UsersBySubjectFK retrieves rows from dbo.user by foreign key Subject.
+// UsersBySubjectFK retrieves rows from "dbo"."user" by foreign key Subject.
 // Generated from foreign key Account.
 func (s *MssqlStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *UserQueryArguments) ([]*User, error) {
 	queryArgs = ApplyUserQueryArgsDefaults(queryArgs)
@@ -449,7 +449,7 @@ func (s *MssqlStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *User
 	var params []interface{}
 	placeHolders := ""
 	params = append(params, subject)
-	placeHolders = fmt.Sprintf("%s subject = $%d AND ", placeHolders, len(params))
+	placeHolders = fmt.Sprintf(`%s "subject" = $%d AND `, placeHolders, len(params))
 
 	params = append(params, *queryArgs.Offset)
 	offsetPos := len(params)
@@ -458,9 +458,9 @@ func (s *MssqlStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *User
 	limitPos := len(params)
 
 	var sqlstr = fmt.Sprintf(
-		`SELECT %s FROM %s WHERE %s deleted_date IS %s ORDER BY %s %s OFFSET $%d ROWS FETCH NEXT $%d ROWS ONLY`,
-		`id, subject, name, created_date, changed_date, deleted_date `,
-		`dbo.user`,
+		`SELECT %s FROM %s WHERE %s "deleted_date" IS %s ORDER BY "%s" %s OFFSET $%d ROWS FETCH NEXT $%d ROWS ONLY`,
+		`"id", "subject", "name", "created_date", "changed_date", "deleted_date" `,
+		`"dbo"."user"`,
 		placeHolders,
 		dead,
 		"id",
@@ -468,6 +468,7 @@ func (s *MssqlStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *User
 		offsetPos,
 		limitPos)
 
+	s.info(sqlstr, params...)
 	q, err := db.Query(sqlstr, params...)
 	if err != nil {
 		return nil, err
@@ -491,7 +492,7 @@ func (s *MssqlStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *User
 	return res, nil
 }
 
-// CountUsersBySubjectFK count rows from dbo.user by foreign key Subject.
+// CountUsersBySubjectFK count rows from "dbo"."user" by foreign key Subject.
 // Generated from foreign key Account.
 func (s *MssqlStorage) CountUsersBySubjectFK(db XODB, subject string, queryArgs *UserQueryArguments) (int, error) {
 	queryArgs = ApplyUserQueryArgsDefaults(queryArgs)
@@ -504,10 +505,10 @@ func (s *MssqlStorage) CountUsersBySubjectFK(db XODB, subject string, queryArgs 
 	var params []interface{}
 	placeHolders := ""
 	params = append(params, subject)
-	placeHolders = fmt.Sprintf("%s subject = $%d AND ", placeHolders, len(params))
+	placeHolders = fmt.Sprintf(`%s "subject" = $%d AND `, placeHolders, len(params))
 
 	var err error
-	var sqlstr = fmt.Sprintf(`SELECT count(*) from dbo.user WHERE %s deleted_date IS %s`, placeHolders, dead)
+	var sqlstr = fmt.Sprintf(`SELECT count(*) from "dbo"."user" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
 	s.info(sqlstr)
 
 	var count int
@@ -525,17 +526,17 @@ func (s *MssqlStorage) AccountInUser(db XODB, u *User) (*Account, error) {
 	return s.AccountBySubject(db, u.Subject)
 }
 
-// UserByID retrieves a row from 'dbo.user' as a User.
+// UserByID retrieves a row from '"dbo"."user"' as a User.
 //
-// Generated from index 'PK__user__3213E83FD9631A4B'.
+// Generated from index 'PK__user__3213E83F08603F4B'.
 func (s *MssqlStorage) UserByID(db XODB, id int) (*User, error) {
 	var err error
 
 	// sql query
 	const sqlstr = `SELECT ` +
-		`id, subject, name, created_date, changed_date, deleted_date ` +
-		`FROM dbo.user ` +
-		`WHERE id = $1`
+		`"id", "subject", "name", "created_date", "changed_date", "deleted_date" ` +
+		`FROM "dbo"."user" ` +
+		`WHERE "id" = $1`
 
 	// run query
 	s.info(sqlstr, id)

@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/xo/dburl"
 )
 
 var Cmd = &cobra.Command{
@@ -34,13 +33,8 @@ func run(cmd *cobra.Command, _ []string) {
 		log.Fatalln(errors.Wrap(err, "couldn't create db "+dsn))
 	}
 
-	u, err := dburl.Parse(dsn)
-	if err != nil {
-		log.Fatalln(errors.Wrap(err, "couldn't parse database address "+dsn))
-	}
-
-	sqlPath := path.Join(common.GetProjectPath(), "storage/sql", u.Driver)
-	db, err := sql.Connect(logger, u.Driver, u.DSN, 6, sql.Migrate(dsn, "test", sqlPath))
+	sqlPath := path.Join(common.GetProjectPath(), "storage/migrations")
+	db, err := sql.Connect(logger, dsn, 6, sql.Migrate(dsn, "test", sqlPath))
 	if err != nil {
 		log.Fatalln(errors.Wrap(err, "couldn't connect to db "+dsn))
 	}

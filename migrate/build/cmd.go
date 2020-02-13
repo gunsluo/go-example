@@ -3,9 +3,10 @@ package build
 import (
 	"log"
 	"path/filepath"
+	"strings"
 
 	"github.com/gunsluo/go-example/migrate/common"
-	"github.com/gunsluo/go-example/migrate/pkg/cli"
+	"github.com/gunsluo/go-example/migrate/pkg/tools"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +25,7 @@ func init() {
 		"run building on a specific database dsn")
 	Cmd.Flags().String("template", "", "path of templates file")
 	Cmd.Flags().String("path", "", "specific path of sql file")
-	Cmd.Flags().StringP("output", "o", "storage", "the path of generating code file")
+	Cmd.Flags().StringP("output", "o", "", "the path of generating code file")
 	Cmd.Flags().BoolP("dry-run", "n", false, "don't execute anything, only show the commands")
 }
 
@@ -66,18 +67,25 @@ func buildXO(cmd *cobra.Command, dsn, templatePath, sqlPath, outputPath string) 
 	}
 
 	if sqlPath == "" {
-		sqlPath = filepath.Join(common.GetProjectPath(), "storage/sql")
+		sqlPath = filepath.Join(common.GetProjectPath(), "storage/migrations")
 	}
 
-	cli.BuildXO(cmd, xoPath, sqlPath, cli.XOCommand{
-		DSN:          dsn,
-		TemplatePath: templatePath,
-		OutputPath:   outputPath,
-		Args: []string{
-			"--package", "storage",
-			"--ignore-tables", "schema_migrations", "schema_lock",
-			"--enable-ac",
-			"--enable-extension",
-		},
+	if outputPath == "" {
+		outputPath = filepath.Join(common.GetProjectPath(), "storage")
+	}
+
+	// "--package", "storage",
+	// "--ignore-tables", "schema_migrations", "schema_lock",
+	// "--enable-ac",
+	// "--enable-extension",
+	tools.BuildXO(cmd, sqlPath, tools.XOArguments{
+		DSNS:            strings.Split(dsn, ","),
+		TemplatePath:    templatePath,
+		Out:             outputPath,
+		Package:         "storage",
+		EscapeAll:       true,
+		IgnoreTables:    []string{"schema_migrations", "schema_lock"},
+		EnableAC:        true,
+		EnableExtension: true,
 	})
 }

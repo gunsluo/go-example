@@ -1,3 +1,4 @@
+// deprecated, please use tools package
 package cli
 
 import (

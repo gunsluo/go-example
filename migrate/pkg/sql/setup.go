@@ -31,23 +31,29 @@ func CreateDB(dbname string) DBSetupOpt {
 }
 
 func CreateDBIfNotExist(logger *logrus.Logger, dsn string) error {
-	db, err := dburl.Parse(dsn)
+	u, err := dburl.Parse(dsn)
 	if err != nil {
 		return errors.Wrap(err, "couldn't parse database address")
 	}
 
+	if u.Driver == "godror" {
+		// skip creating db for oracle
+		return nil
+	}
+
 	// create db
-	dbname := strings.TrimPrefix(db.Path, "/")
+	dbname := strings.TrimPrefix(u.Path, "/")
 	if dbname != "" {
-		dsnNoDB := strings.Replace(db.DSN, "dbname="+dbname, "", 1)
-		if cdb, err := Connect(logger, db.Driver, dsnNoDB, 1); err != nil {
+		//dsnNoDB := strings.Replace(u.DSN, "dbname="+dbname, "", 1)
+		dsnNoDB := strings.Replace(dsn, "/"+dbname, "", 1)
+		if db, err := Connect(logger, dsnNoDB, 1); err != nil {
 			return errors.Wrap(err, "Couldn't connect to db ")
 		} else {
-			_, err = cdb.Exec("CREATE DATABASE " + dbname)
+			_, err = db.Exec("CREATE DATABASE " + dbname)
 			if err == nil {
 				logger.Infof("Created empty database %s, as it did not exist", dbname)
 			}
-			cdb.Close()
+			db.Close()
 		}
 	}
 

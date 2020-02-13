@@ -83,13 +83,13 @@ type Storage interface {
 	// AccountInUser returns the Account associated with the User's Subject (subject).
 	// Generated from foreign key 'user_account_subject_fk'.
 	AccountInUser(db XODB, u *User) (*Account, error)
-	// AccountByID retrieves a row from 'public.account' as a Account.
+	// AccountByID retrieves a row from '"public"."account"' as a Account.
 	// Generated from index 'account_pk'.
 	AccountByID(db XODB, id int) (*Account, error)
-	// AccountBySubject retrieves a row from 'public.account' as a Account.
+	// AccountBySubject retrieves a row from '"public"."account"' as a Account.
 	// Generated from index 'account_subject_unique_index'.
 	AccountBySubject(db XODB, subject string) (*Account, error)
-	// UserByID retrieves a row from 'public.user' as a User.
+	// UserByID retrieves a row from '"public"."user"' as a User.
 	// Generated from index 'user_pk'.
 	UserByID(db XODB, id int) (*User, error)
 }
@@ -120,6 +120,19 @@ func (s *MssqlStorage) info(format string, args ...interface{}) {
 	}
 }
 
+// GodrorStorage is Godror for the database.
+type GodrorStorage struct {
+	logger XOLogger
+}
+
+func (s *GodrorStorage) info(format string, args ...interface{}) {
+	if len(args) == 0 {
+		xoLog(s.logger, logrus.InfoLevel, format)
+	} else {
+		xoLogf(s.logger, logrus.InfoLevel, "%s %v", format, args)
+	}
+}
+
 // New is a construction method that return a new Storage
 func New(driver string, c Config) (Storage, error) {
 	// fix bug which interface type is not nil and interface value is nil
@@ -134,6 +147,8 @@ func New(driver string, c Config) (Storage, error) {
 		s = &PostgresStorage{logger: logger}
 	case "mssql":
 		s = &MssqlStorage{logger: logger}
+	case "godror":
+		s = &GodrorStorage{logger: logger}
 	default:
 		return nil, errors.New("driver " + driver + " not support")
 	}
@@ -141,7 +156,7 @@ func New(driver string, c Config) (Storage, error) {
 	return s, nil
 }
 
-// Account represents a row from 'public.account'.
+// Account represents a row from '"public"."account"'.
 type Account struct {
 	ID          int      `json:"id"`           // id
 	Subject     string   `json:"subject"`      // subject
@@ -162,7 +177,7 @@ func (a *Account) Exists() bool {
 // Deleted provides information if the Account has been deleted from the database.
 func (a *Account) Deleted() bool {
 	return a._deleted
-} // User represents a row from 'public.user'.
+} // User represents a row from '"public"."user"'.
 type User struct {
 	ID          int            `json:"id"`           // id
 	Subject     string         `json:"subject"`      // subject

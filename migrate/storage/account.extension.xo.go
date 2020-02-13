@@ -278,7 +278,7 @@ func (r *RootResolver) AccountByID(ctx context.Context, args struct {
 	return res, err
 }
 
-// innerAccountByIDGraphQL retrieves a row from 'public.account' as a Account.
+// innerAccountByIDGraphQL retrieves a row from '"public"."account"' as a Account.
 // Generated from index 'account_pk'.
 func (r *RootResolver) innerAccountByIDGraphQL(ctx context.Context, args struct {
 	ID graphql.ID
@@ -294,7 +294,7 @@ func (r *RootResolver) innerAccountByIDGraphQL(ctx context.Context, args struct 
 		if err == sql.ErrNoRows {
 			return nil, errors.Errorf(`account [`+"%v"+`] not found`, arg0)
 		}
-		return nil, errors.Wrap(err, `unable to get public.account`)
+		return nil, errors.Wrap(err, `unable to get "public"."account"`)
 	}
 
 	return NewAccountResolver(data, r.ext), nil
@@ -323,7 +323,7 @@ func (r *RootResolver) AccountBySubject(ctx context.Context, args struct {
 	return res, err
 }
 
-// innerAccountBySubjectGraphQL retrieves a row from 'public.account' as a Account.
+// innerAccountBySubjectGraphQL retrieves a row from '"public"."account"' as a Account.
 // Generated from index 'account_subject_unique_index'.
 func (r *RootResolver) innerAccountBySubjectGraphQL(ctx context.Context, args struct {
 	Subject string
@@ -336,7 +336,7 @@ func (r *RootResolver) innerAccountBySubjectGraphQL(ctx context.Context, args st
 		if err == sql.ErrNoRows {
 			return nil, errors.Errorf(`account [`+"%v"+`] not found`, arg0)
 		}
-		return nil, errors.Wrap(err, `unable to get public.account`)
+		return nil, errors.Wrap(err, `unable to get "public"."account"`)
 	}
 
 	return NewAccountResolver(data, r.ext), nil
@@ -581,11 +581,11 @@ func (r *RootResolver) updateAccountGraphQL(ctx context.Context, items []UpdateA
 			return nil, errors.New("couldn't set subject to null")
 		}
 		if input.Subject != nil {
-			fields = append(fields, `subject`)
+			fields = append(fields, `"subject"`)
 			params = append(params, *input.Subject)
 			node.Subject = *input.Subject
 		} else {
-			retCols = append(retCols, `subject`)
+			retCols = append(retCols, `"subject"`)
 			retVars = append(retVars, &node.Subject)
 		}
 
@@ -593,50 +593,50 @@ func (r *RootResolver) updateAccountGraphQL(ctx context.Context, items []UpdateA
 			return nil, errors.New("couldn't set email to null")
 		}
 		if input.Email != nil {
-			fields = append(fields, `email`)
+			fields = append(fields, `"email"`)
 			params = append(params, *input.Email)
 			node.Email = *input.Email
 		} else {
-			retCols = append(retCols, `email`)
+			retCols = append(retCols, `"email"`)
 			retVars = append(retVars, &node.Email)
 		}
 
 		if isDeletionFields(input.Deletions, "createdDate") {
-			fields = append(fields, `created_date`)
+			fields = append(fields, `"created_date"`)
 			params = append(params, NullTime{})
 			node.CreatedDate = NullTime{}
 		} else if input.CreatedDate != nil {
-			fields = append(fields, `created_date`)
+			fields = append(fields, `"created_date"`)
 			params = append(params, input.CreatedDate.Time)
 			node.CreatedDate = NullTime{Time: input.CreatedDate.Time, Valid: true}
 		} else {
-			retCols = append(retCols, `created_date`)
+			retCols = append(retCols, `"created_date"`)
 			retVars = append(retVars, &node.CreatedDate)
 		}
 
 		if isDeletionFields(input.Deletions, "changedDate") {
-			fields = append(fields, `changed_date`)
+			fields = append(fields, `"changed_date"`)
 			params = append(params, NullTime{})
 			node.ChangedDate = NullTime{}
 		} else if input.ChangedDate != nil {
-			fields = append(fields, `changed_date`)
+			fields = append(fields, `"changed_date"`)
 			params = append(params, input.ChangedDate.Time)
 			node.ChangedDate = NullTime{Time: input.ChangedDate.Time, Valid: true}
 		} else {
-			retCols = append(retCols, `changed_date`)
+			retCols = append(retCols, `"changed_date"`)
 			retVars = append(retVars, &node.ChangedDate)
 		}
 
 		if isDeletionFields(input.Deletions, "deletedDate") {
-			fields = append(fields, `deleted_date`)
+			fields = append(fields, `"deleted_date"`)
 			params = append(params, NullTime{})
 			node.DeletedDate = NullTime{}
 		} else if input.DeletedDate != nil {
-			fields = append(fields, `deleted_date`)
+			fields = append(fields, `"deleted_date"`)
 			params = append(params, input.DeletedDate.Time)
 			node.DeletedDate = NullTime{Time: input.DeletedDate.Time, Valid: true}
 		} else {
-			retCols = append(retCols, `deleted_date`)
+			retCols = append(retCols, `"deleted_date"`)
 			retVars = append(retVars, &node.DeletedDate)
 		}
 		if len(params) == 0 {

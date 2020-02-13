@@ -7,11 +7,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/mattn/go-oci8"
 	"github.com/pkg/errors"
 )
 
 // InsertUser inserts the User to the database.
-func (s *PostgresStorage) InsertUser(db XODB, u *User) error {
+func (s *GodrorStorage) InsertUser(db XODB, u *User) error {
 	var err error
 
 	// if already exist, bail
@@ -20,18 +21,32 @@ func (s *PostgresStorage) InsertUser(db XODB, u *User) error {
 	}
 
 	// sql insert query, primary key provided by sequence
-	const sqlstr = `INSERT INTO "public"."user" (` +
+	const sqlstr = `INSERT INTO "C##ADMIN"."user" (` +
 		`"subject", "name", "created_date", "changed_date", "deleted_date"` +
 		`) VALUES (` +
-		`$1, $2, $3, $4, $5` +
-		`) RETURNING "id"`
+		`:1, :2, :3, :4, :5` +
+		`)`
 
 	// run query
 	s.info(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate)
-	err = db.QueryRow(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate).Scan(&u.ID)
+	ret, err := db.Exec(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate)
 	if err != nil {
 		return err
 	}
+
+	// query lastInsertId
+	lastInsertId, err := ret.LastInsertId()
+	if err != nil {
+		return err
+	}
+	rowid := oci8.GetLastInsertId(lastInsertId)
+
+	var id int
+	err = db.QueryRow(`SELECT "id" from "C##ADMIN"."user" WHERE rowid = :1`, rowid).Scan(&id)
+	if err != nil {
+		return err
+	}
+	u.ID = id
 
 	// set existence
 	u._exists = true
@@ -40,7 +55,7 @@ func (s *PostgresStorage) InsertUser(db XODB, u *User) error {
 }
 
 // InsertUserByFields inserts the User to the database.
-func (s *PostgresStorage) InsertUserByFields(db XODB, u *User) error {
+func (s *GodrorStorage) InsertUserByFields(db XODB, u *User) error {
 	var err error
 
 	params := make([]interface{}, 0, 5)
@@ -86,18 +101,30 @@ func (s *PostgresStorage) InsertUserByFields(db XODB, u *User) error {
 	var placeHolders []string
 	var placeHolderVals []interface{}
 	for i := range params {
-		placeHolders = append(placeHolders, "$%d")
+		placeHolders = append(placeHolders, ":%d")
 		placeHolderVals = append(placeHolderVals, i+1)
 	}
 	placeHolderStr := fmt.Sprintf(strings.Join(placeHolders, ","), placeHolderVals...)
-
-	sqlstr := `INSERT INTO "public"."user" (` +
+	sqlstr := `INSERT INTO "C##ADMIN"."user" (` +
 		strings.Join(fields, ",") +
 		`) VALUES (` + placeHolderStr +
-		`) RETURNING ` + retCols
+		`)`
 
+		// run query
 	s.info(sqlstr, params)
-	err = db.QueryRow(sqlstr, params...).Scan(retVars...)
+	ret, err := db.Exec(sqlstr, params...)
+	if err != nil {
+		return err
+	}
+
+	// query lastInsertId
+	lastInsertId, err := ret.LastInsertId()
+	if err != nil {
+		return err
+	}
+	rowid := oci8.GetLastInsertId(lastInsertId)
+
+	err = db.QueryRow(`SELECT `+retCols+` from "C##ADMIN"."user" WHERE rowid = :1`, rowid).Scan(retVars...)
 	if err != nil {
 		return err
 	}
@@ -109,7 +136,7 @@ func (s *PostgresStorage) InsertUserByFields(db XODB, u *User) error {
 }
 
 // UpdateUser updates the User in the database.
-func (s *PostgresStorage) UpdateUser(db XODB, u *User) error {
+func (s *GodrorStorage) UpdateUser(db XODB, u *User) error {
 	var err error
 
 	// if doesn't exist, bail
@@ -123,12 +150,9 @@ func (s *PostgresStorage) UpdateUser(db XODB, u *User) error {
 	}
 
 	// sql query
-
-	const sqlstr = `UPDATE "public"."user" SET (` +
-		`"subject", "name", "created_date", "changed_date", "deleted_date"` +
-		`) = ( ` +
-		`$1, $2, $3, $4, $5` +
-		`) WHERE "id" = $6`
+	const sqlstr = `UPDATE "C##ADMIN"."user" SET ` +
+		`"subject" = :1, "name" = :2, "created_date" = :3, "changed_date" = :4, "deleted_date" = :5` +
+		` WHERE "id" = :6`
 
 	// run query
 	s.info(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate, u.ID)
@@ -137,32 +161,28 @@ func (s *PostgresStorage) UpdateUser(db XODB, u *User) error {
 }
 
 // UpdateUserByFields updates the User in the database.
-func (s *PostgresStorage) UpdateUserByFields(db XODB, u *User, fields, retCols []string, params, retVars []interface{}) error {
-	var placeHolders []string
+func (s *GodrorStorage) UpdateUserByFields(db XODB, u *User, fields, retCols []string, params, retVars []interface{}) error {
+	var setstr string
 	var idxvals []interface{}
-	for i := range params {
-		placeHolders = append(placeHolders, "$%d")
+	for i, field := range fields {
+		if i != 0 {
+			setstr += ", "
+		}
+		setstr += field + ` = :%d`
 		idxvals = append(idxvals, i+1)
 	}
+
 	params = append(params, u.ID)
 	idxvals = append(idxvals, len(params))
-
-	var sqlstr string
-	if len(fields) == 1 {
-		sqlstr = fmt.Sprintf(`UPDATE "public"."user" SET `+
-			strings.Join(fields, ",")+
-			` = `+strings.Join(placeHolders, ",")+
-			` WHERE id = $%d`+
-			` RETURNING `+strings.Join(retCols, ", "), idxvals...)
-	} else {
-		sqlstr = fmt.Sprintf(`UPDATE "public"."user" SET (`+
-			strings.Join(fields, ",")+
-			`) = (`+strings.Join(placeHolders, ",")+
-			`) WHERE "id" = $%d`+
-			` RETURNING `+strings.Join(retCols, ", "), idxvals...)
-	}
+	var sqlstr = fmt.Sprintf(`UPDATE "C##ADMIN"."user" SET `+
+		setstr+` WHERE "id" = :%d`, idxvals...)
 	s.info(sqlstr, params)
-	if err := db.QueryRow(sqlstr, params...).Scan(retVars...); err != nil {
+	if _, err := db.Exec(sqlstr, params...); err != nil {
+		return err
+	}
+
+	err := db.QueryRow(`SELECT `+strings.Join(retCols, ",")+` from "C##ADMIN"."user" WHERE "id" = :1`, u.ID).Scan(retVars...)
+	if err != nil {
 		return err
 	}
 
@@ -170,7 +190,7 @@ func (s *PostgresStorage) UpdateUserByFields(db XODB, u *User, fields, retCols [
 }
 
 // SaveUser saves the User to the database.
-func (s *PostgresStorage) SaveUser(db XODB, u *User) error {
+func (s *GodrorStorage) SaveUser(db XODB, u *User) error {
 	if u.Exists() {
 		return s.UpdateUser(db, u)
 	}
@@ -179,19 +199,16 @@ func (s *PostgresStorage) SaveUser(db XODB, u *User) error {
 }
 
 // UpsertUser performs an upsert for User.
-func (s *PostgresStorage) UpsertUser(db XODB, u *User) error {
+func (s *GodrorStorage) UpsertUser(db XODB, u *User) error {
 	var err error
 
 	// sql query
-	const sqlstr = `INSERT INTO "public"."user" (` +
-		`"id", "subject", "name", "created_date", "changed_date", "deleted_date"` +
-		`) VALUES (` +
-		`$1, $2, $3, $4, $5, $6` +
-		`) ON CONFLICT ("id") DO UPDATE SET (` +
-		`"id", "subject", "name", "created_date", "changed_date", "deleted_date"` +
-		`) = (` +
-		`EXCLUDED."id", EXCLUDED."subject", EXCLUDED."name", EXCLUDED."created_date", EXCLUDED."changed_date", EXCLUDED."deleted_date"` +
-		`)`
+
+	const sqlstr = `MERGE INTO "C##ADMIN"."user" t ` +
+		`USING (SELECT :1 AS "id", :2 AS "subject", :3 AS "name", :4 AS "created_date", :5 AS "changed_date", :6 AS "deleted_date" FROM dual) s ` +
+		`ON (t."id" = s."id") ` +
+		`WHEN MATCHED THEN UPDATE SET "subject" = s."subject", "name" = s."name", "created_date" = s."created_date", "changed_date" = s."changed_date", "deleted_date" = s."deleted_date" ` +
+		`WHEN NOT MATCHED THEN INSERT ("subject", "name", "created_date", "changed_date", "deleted_date") VALUES (s."subject", s."name", s."created_date", s."changed_date", s."deleted_date")`
 
 	// run query
 	s.info(sqlstr, u.ID, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate)
@@ -207,7 +224,7 @@ func (s *PostgresStorage) UpsertUser(db XODB, u *User) error {
 }
 
 // DeleteUser deletes the User from the database.
-func (s *PostgresStorage) DeleteUser(db XODB, u *User) error {
+func (s *GodrorStorage) DeleteUser(db XODB, u *User) error {
 	var err error
 
 	// if doesn't exist, bail
@@ -221,7 +238,7 @@ func (s *PostgresStorage) DeleteUser(db XODB, u *User) error {
 	}
 
 	// sql query
-	const sqlstr = `DELETE FROM "public"."user" WHERE "id" = $1`
+	const sqlstr = `DELETE FROM "C##ADMIN"."user" WHERE "id" = :1`
 
 	// run query
 	s.info(sqlstr, u.ID)
@@ -237,7 +254,7 @@ func (s *PostgresStorage) DeleteUser(db XODB, u *User) error {
 }
 
 // DeleteUsers deletes the User from the database.
-func (s *PostgresStorage) DeleteUsers(db XODB, us []*User) error {
+func (s *GodrorStorage) DeleteUsers(db XODB, us []*User) error {
 	var err error
 
 	if len(us) == 0 {
@@ -251,11 +268,11 @@ func (s *PostgresStorage) DeleteUsers(db XODB, us []*User) error {
 		if i != 0 {
 			placeholder = placeholder + ", "
 		}
-		placeholder += fmt.Sprintf("$%d", i+1)
+		placeholder += fmt.Sprintf(":%d", i+1)
 	}
 
 	// sql query
-	var sqlstr = `DELETE FROM "public"."user" WHERE "id" in (` + placeholder + `)`
+	var sqlstr = `DELETE FROM "C##ADMIN"."user" WHERE "id" in (` + placeholder + `)`
 
 	// run query
 	s.info(sqlstr, args)
@@ -274,11 +291,11 @@ func (s *PostgresStorage) DeleteUsers(db XODB, us []*User) error {
 
 // GetMostRecentUser returns n most recent rows from 'user',
 // ordered by "created_date" in descending order.
-func (s *PostgresStorage) GetMostRecentUser(db XODB, n int) ([]*User, error) {
+func (s *GodrorStorage) GetMostRecentUser(db XODB, n int) ([]*User, error) {
 	const sqlstr = `SELECT ` +
 		`"id", "subject", "name", "created_date", "changed_date", "deleted_date" ` +
-		`FROM "public"."user" ` +
-		`ORDER BY "created_date" DESC LIMIT $1`
+		`FROM "C##ADMIN"."user" ` +
+		`ORDER BY "created_date" DESC FETCH NEXT :1 ROWS ONLY`
 
 	s.info(sqlstr, n)
 	q, err := db.Query(sqlstr, n)
@@ -306,11 +323,11 @@ func (s *PostgresStorage) GetMostRecentUser(db XODB, n int) ([]*User, error) {
 
 // GetMostRecentChangedUser returns n most recent rows from 'user',
 // ordered by "changed_date" in descending order.
-func (s *PostgresStorage) GetMostRecentChangedUser(db XODB, n int) ([]*User, error) {
+func (s *GodrorStorage) GetMostRecentChangedUser(db XODB, n int) ([]*User, error) {
 	const sqlstr = `SELECT ` +
 		`"id", "subject", "name", "created_date", "changed_date", "deleted_date" ` +
-		`FROM "public"."user" ` +
-		`ORDER BY "changed_date" DESC LIMIT $1`
+		`FROM "C##ADMIN"."user" ` +
+		`ORDER BY "changed_date" DESC FETCH NEXT :1 ROWS ONLY`
 
 	s.info(sqlstr, n)
 	q, err := db.Query(sqlstr, n)
@@ -338,7 +355,7 @@ func (s *PostgresStorage) GetMostRecentChangedUser(db XODB, n int) ([]*User, err
 
 // GetAllUser returns all rows from 'user', based on the UserQueryArguments.
 // If the UserQueryArguments is nil, it will use the default UserQueryArguments instead.
-func (s *PostgresStorage) GetAllUser(db XODB, queryArgs *UserQueryArguments) ([]*User, error) { // nolint: gocyclo
+func (s *GodrorStorage) GetAllUser(db XODB, queryArgs *UserQueryArguments) ([]*User, error) { // nolint: gocyclo
 	queryArgs = ApplyUserQueryArgsDefaults(queryArgs)
 
 	desc := ""
@@ -378,9 +395,9 @@ func (s *PostgresStorage) GetAllUser(db XODB, queryArgs *UserQueryArguments) ([]
 	params = append(params, *queryArgs.Limit)
 	limitPos := len(params)
 
-	var sqlstr = fmt.Sprintf(`SELECT %s FROM %s WHERE %s "deleted_date" IS %s ORDER BY "%s" %s OFFSET $%d LIMIT $%d`,
+	var sqlstr = fmt.Sprintf(`SELECT %s FROM %s WHERE %s "deleted_date" IS %s ORDER BY "%s" %s OFFSET :%d ROWS FETCH NEXT :%d ROWS ONLY`,
 		`"id", "subject", "name", "created_date", "changed_date", "deleted_date" `,
-		`"public"."user"`,
+		`"C##ADMIN"."user"`,
 		placeHolders,
 		dead,
 		orderBy,
@@ -413,7 +430,7 @@ func (s *PostgresStorage) GetAllUser(db XODB, queryArgs *UserQueryArguments) ([]
 }
 
 // CountAllUser returns a count of all rows from 'user'
-func (s *PostgresStorage) CountAllUser(db XODB, queryArgs *UserQueryArguments) (int, error) {
+func (s *GodrorStorage) CountAllUser(db XODB, queryArgs *UserQueryArguments) (int, error) {
 	queryArgs = ApplyUserQueryArgsDefaults(queryArgs)
 
 	dead := "NULL"
@@ -425,7 +442,7 @@ func (s *PostgresStorage) CountAllUser(db XODB, queryArgs *UserQueryArguments) (
 	placeHolders := ""
 
 	var err error
-	var sqlstr = fmt.Sprintf(`SELECT count(*) from "public"."user" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
+	var sqlstr = fmt.Sprintf(`SELECT count(*) from "C##ADMIN"."user" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
 	s.info(sqlstr)
 
 	var count int
@@ -436,9 +453,9 @@ func (s *PostgresStorage) CountAllUser(db XODB, queryArgs *UserQueryArguments) (
 	return count, nil
 }
 
-// UsersBySubjectFK retrieves rows from "public"."user" by foreign key Subject.
+// UsersBySubjectFK retrieves rows from "C##ADMIN"."user" by foreign key Subject.
 // Generated from foreign key Account.
-func (s *PostgresStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *UserQueryArguments) ([]*User, error) {
+func (s *GodrorStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *UserQueryArguments) ([]*User, error) {
 	queryArgs = ApplyUserQueryArgsDefaults(queryArgs)
 
 	desc := ""
@@ -454,7 +471,7 @@ func (s *PostgresStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *U
 	var params []interface{}
 	placeHolders := ""
 	params = append(params, subject)
-	placeHolders = fmt.Sprintf(`%s "subject" = $%d AND `, placeHolders, len(params))
+	placeHolders = fmt.Sprintf(`%s "subject" = :%d AND `, placeHolders, len(params))
 
 	params = append(params, *queryArgs.Offset)
 	offsetPos := len(params)
@@ -463,9 +480,9 @@ func (s *PostgresStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *U
 	limitPos := len(params)
 
 	var sqlstr = fmt.Sprintf(
-		`SELECT %s FROM %s WHERE %s "deleted_date" IS %s ORDER BY "%s" %s OFFSET $%d LIMIT $%d`,
+		`SELECT %s FROM %s WHERE %s "deleted_date" IS %s ORDER BY "%s" %s OFFSET :%d ROWS FETCH NEXT :%d ROWS ONLY`,
 		`"id", "subject", "name", "created_date", "changed_date", "deleted_date" `,
-		`"public"."user"`,
+		`"C##ADMIN"."user"`,
 		placeHolders,
 		dead,
 		"id",
@@ -497,9 +514,9 @@ func (s *PostgresStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *U
 	return res, nil
 }
 
-// CountUsersBySubjectFK count rows from "public"."user" by foreign key Subject.
+// CountUsersBySubjectFK count rows from "C##ADMIN"."user" by foreign key Subject.
 // Generated from foreign key Account.
-func (s *PostgresStorage) CountUsersBySubjectFK(db XODB, subject string, queryArgs *UserQueryArguments) (int, error) {
+func (s *GodrorStorage) CountUsersBySubjectFK(db XODB, subject string, queryArgs *UserQueryArguments) (int, error) {
 	queryArgs = ApplyUserQueryArgsDefaults(queryArgs)
 
 	dead := "NULL"
@@ -510,10 +527,10 @@ func (s *PostgresStorage) CountUsersBySubjectFK(db XODB, subject string, queryAr
 	var params []interface{}
 	placeHolders := ""
 	params = append(params, subject)
-	placeHolders = fmt.Sprintf(`%s "subject" = $%d AND `, placeHolders, len(params))
+	placeHolders = fmt.Sprintf(`%s "subject" = :%d AND `, placeHolders, len(params))
 
 	var err error
-	var sqlstr = fmt.Sprintf(`SELECT count(*) from "public"."user" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
+	var sqlstr = fmt.Sprintf(`SELECT count(*) from "C##ADMIN"."user" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
 	s.info(sqlstr)
 
 	var count int
@@ -527,21 +544,21 @@ func (s *PostgresStorage) CountUsersBySubjectFK(db XODB, subject string, queryAr
 // AccountInUser returns the Account associated with the User's Subject (subject).
 //
 // Generated from foreign key 'user_account_subject_fk'.
-func (s *PostgresStorage) AccountInUser(db XODB, u *User) (*Account, error) {
+func (s *GodrorStorage) AccountInUser(db XODB, u *User) (*Account, error) {
 	return s.AccountBySubject(db, u.Subject)
 }
 
-// UserByID retrieves a row from '"public"."user"' as a User.
+// UserByID retrieves a row from '"C##ADMIN"."user"' as a User.
 //
 // Generated from index 'user_pk'.
-func (s *PostgresStorage) UserByID(db XODB, id int) (*User, error) {
+func (s *GodrorStorage) UserByID(db XODB, id int) (*User, error) {
 	var err error
 
 	// sql query
 	const sqlstr = `SELECT ` +
 		`"id", "subject", "name", "created_date", "changed_date", "deleted_date" ` +
-		`FROM "public"."user" ` +
-		`WHERE "id" = $1`
+		`FROM "C##ADMIN"."user" ` +
+		`WHERE "id" = :1`
 
 	// run query
 	s.info(sqlstr, id)

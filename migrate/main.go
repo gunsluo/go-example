@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-oci8"
 )
 
 var verbose bool
