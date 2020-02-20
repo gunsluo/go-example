@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"context"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -56,9 +57,9 @@ func NewClient(logger logrus.FieldLogger, conn *websocket.Conn, reader ClientRea
 // The application runs Read in a per-connection goroutine. The application
 // ensures that there is at most one reader on a connection by executing all
 // reads from this goroutine.
-func (c *Client) Read(ctx *Context) {
+func (c *Client) Read(ctx context.Context, chain *Chain) {
 	defer func() {
-		h := ctx.Repeater.Hub()
+		h := chain.Repeater.Hub()
 		h.Unregister(c)
 		c.conn.Close()
 	}()
@@ -73,7 +74,9 @@ func (c *Client) Read(ctx *Context) {
 			}
 			break
 		}
-		c.reader.Read(ctx, message)
+		// TODO: unmarshaml message
+		// update group information of client to hub
+		c.reader.Read(ctx, chain, message)
 	}
 }
 
@@ -82,7 +85,7 @@ func (c *Client) Read(ctx *Context) {
 // A goroutine running Write is started for each connection. The
 // application ensures that there is at most one writer to a connection by
 // executing all writes from this goroutine.
-func (c *Client) Write(ctx *Context) {
+func (c *Client) Write(ctx context.Context, chain *Chain) {
 	ticker := time.NewTicker(c.pingPeriod)
 	defer func() {
 		ticker.Stop()
@@ -124,6 +127,6 @@ func (c *Client) Write(ctx *Context) {
 }
 
 // Send send messages to client
-func (c *Client) Send(ctx *Context, message []byte) {
+func (c *Client) Send(ctx context.Context, message []byte) {
 	c.send <- message
 }

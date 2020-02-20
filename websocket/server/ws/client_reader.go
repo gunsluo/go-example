@@ -1,9 +1,11 @@
 package ws
 
+import "context"
+
 // ClientReader is a client reader
 type ClientReader interface {
 	// call the method when the user send a request
-	Read(ctx *Context, meesage []byte) error
+	Read(ctx context.Context, chain *Chain, meesage []byte) error
 }
 
 var DefaultClientReader ClientReader = &TODOClientReader{}
@@ -13,20 +15,20 @@ type TODOClientReader struct {
 }
 
 // Read read message
-func (r *TODOClientReader) Read(ctx *Context, message []byte) error {
+func (r *TODOClientReader) Read(ctx context.Context, chain *Chain, message []byte) error {
 	return nil
 }
 
-// PushlisherClientReader is pushlisher ClientReader, broadcast messages to clients.
-type PushlisherClientReader struct {
+// PublisherClientReader is publisher ClientReader, broadcast messages to clients.
+type PublisherClientReader struct {
 }
 
-func (r *PushlisherClientReader) Read(ctx *Context, message []byte) error {
-	// pushlish the message to subscribe hub
-	ctx.Repeater.Broadcast(message)
+func (r *PublisherClientReader) Read(ctx context.Context, chain *Chain, message []byte) error {
+	// publish the message to subscribe hub
+	chain.Repeater.Broadcast(message)
 
 	// send response to client
-	ctx.CurrentClient.Send(ctx, []byte("pushlish done"))
+	chain.CurrentClient.Send(ctx, []byte("publish done"))
 
 	return nil
 }

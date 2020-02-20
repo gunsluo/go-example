@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -10,7 +11,7 @@ import (
 
 const (
 	SUBSCRIBE = "subscribe"
-	PUSHLISH  = "pushlish"
+	PUBLISH   = "publish"
 )
 
 // Config is config
@@ -60,25 +61,27 @@ func (s *Server) subscribe(w http.ResponseWriter, r *http.Request) {
 	client = ws.NewClient(s.logger, conn, ws.DefaultClientReader)
 	s.repeater.Hub().Register(client)
 
-	ctx := ws.NewContext(s.repeater, client)
-	go client.Write(ctx)
-	go client.Read(ctx)
+	ctx := context.Background()
+	chain := ws.NewChain(s.repeater, client)
+	go client.Write(ctx, chain)
+	go client.Read(ctx, chain)
 }
 
 // Handler is handler responds to handles websocket requests
-func (s *Server) pushlish(w http.ResponseWriter, r *http.Request) {
+func (s *Server) publish(w http.ResponseWriter, r *http.Request) {
 	conn, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		s.logger.WithError(err).Warnln("unable to create websocket connection")
 		return
 	}
 
-	cr := &ws.PushlisherClientReader{}
+	cr := &ws.PublisherClientReader{}
 	client := ws.NewClient(s.logger, conn, cr)
 
-	ctx := ws.NewContext(s.repeater, client)
-	go client.Write(ctx)
-	go client.Read(ctx)
+	ctx := context.Background()
+	chain := ws.NewChain(s.repeater, client)
+	go client.Write(ctx, chain)
+	go client.Read(ctx, chain)
 }
 
 func (s *Server) Run() {
@@ -86,8 +89,8 @@ func (s *Server) Run() {
 		s.subscribe(w, r)
 	})
 
-	http.HandleFunc("/"+PUSHLISH, func(w http.ResponseWriter, r *http.Request) {
-		s.pushlish(w, r)
+	http.HandleFunc("/"+PUBLISH, func(w http.ResponseWriter, r *http.Request) {
+		s.publish(w, r)
 	})
 
 	go s.repeater.Run()
