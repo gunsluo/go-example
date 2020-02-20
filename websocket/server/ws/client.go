@@ -1,10 +1,10 @@
-package hub
+package ws
 
 import (
-	"log"
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -33,10 +33,12 @@ type Client struct {
 	maxMessageSize int64
 
 	reader ClientReader
+
+	logger logrus.FieldLogger
 }
 
 // NewClient return a new client
-func NewClient(conn *websocket.Conn, reader ClientReader) *Client {
+func NewClient(logger logrus.FieldLogger, conn *websocket.Conn, reader ClientReader) *Client {
 	return &Client{
 		conn:           conn,
 		send:           make(chan []byte, 1024),
@@ -45,6 +47,7 @@ func NewClient(conn *websocket.Conn, reader ClientReader) *Client {
 		pingPeriod:     50 * time.Second,
 		maxMessageSize: 2048,
 		reader:         reader,
+		logger:         logger,
 	}
 }
 
@@ -66,7 +69,7 @@ func (c *Client) Read(ctx *Context) {
 		_, message, err := c.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error: %v", err)
+				c.logger.WithError(err).Warnln("unable to read message")
 			}
 			break
 		}

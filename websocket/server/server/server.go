@@ -1,11 +1,11 @@
-package ws
+package server
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
-	"github.com/gunsluo/go-example/websocket/server/hub"
+	"github.com/gunsluo/go-example/websocket/server/ws"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -13,9 +13,11 @@ const (
 	PUSHLISH  = "pushlish"
 )
 
-// Option is option
-type Option struct {
+// Config is config
+type Config struct {
 	Address string
+
+	Logger logrus.FieldLogger
 }
 
 // Server is a websocket server
@@ -23,18 +25,21 @@ type Server struct {
 	address string
 
 	upgrader websocket.Upgrader
-	h        *hub.Hub
+	repeater *ws.Repeater
+
+	logger logrus.FieldLogger
 }
 
-// NewServer return a websocket server
-func NewServer(option Option) *Server {
+// New return a websocket server
+func New(cfg Config) *Server {
 	return &Server{
-		address: option.Address,
+		address: cfg.Address,
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
 		},
-		h: hub.New(),
+		repeater: ws.NewRepeater(ws.NewHub()),
+		logger:   cfg.Logger,
 	}
 }
 
@@ -42,15 +47,15 @@ func NewServer(option Option) *Server {
 func (s *Server) subscribe(w http.ResponseWriter, r *http.Request) {
 	conn, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("error: %v", err)
+		s.logger.WithError(err).Warnln("unable to create websocket connection")
 		return
 	}
 
-	var client *hub.Client
-	client = hub.NewClient(conn, hub.DefaultClientReader)
-	s.h.Register(client)
+	var client *ws.Client
+	client = ws.NewClient(s.logger, conn, ws.DefaultClientReader)
+	s.repeater.Hub().Register(client)
 
-	ctx := hub.NewContext(s.h, client)
+	ctx := ws.NewContext(s.repeater, client)
 	go client.Write(ctx)
 	go client.Read(ctx)
 }
@@ -59,14 +64,14 @@ func (s *Server) subscribe(w http.ResponseWriter, r *http.Request) {
 func (s *Server) pushlish(w http.ResponseWriter, r *http.Request) {
 	conn, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("error: %v", err)
+		s.logger.WithError(err).Warnln("unable to create websocket connection")
 		return
 	}
 
-	cr := &hub.PushlisherClientReader{}
-	client := hub.NewClient(conn, cr)
+	cr := &ws.PushlisherClientReader{}
+	client := ws.NewClient(s.logger, conn, cr)
 
-	ctx := hub.NewContext(s.h, client)
+	ctx := ws.NewContext(s.repeater, client)
 	go client.Write(ctx)
 	go client.Read(ctx)
 }
@@ -80,11 +85,11 @@ func (s *Server) Run() {
 		s.pushlish(w, r)
 	})
 
-	go s.h.Run()
+	go s.repeater.Run()
 
-	log.Println("start up websocket server, listen on", s.address)
+	s.logger.Infoln("start up websocket server, listen on", s.address)
 	err := http.ListenAndServe(s.address, nil)
 	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
+		s.logger.WithError(err).Warnln("unable to start up websocket server")
 	}
 }

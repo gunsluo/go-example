@@ -3,7 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/gunsluo/go-example/websocket/server/ws"
+	"github.com/gunsluo/go-example/websocket/server/server"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -26,7 +27,7 @@ func run(cmd *cobra.Command, args []string) {
 		log.Fatalln(err)
 	}
 
-	s := ws.NewServer(ws.Option{Address: address})
+	s := server.New(server.Config{Address: address, Logger: logrus.New()})
 	s.Run()
 }
 

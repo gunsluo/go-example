@@ -1,4 +1,4 @@
-package hub
+package ws
 
 import (
 	"context"
@@ -14,10 +14,10 @@ type Context struct {
 }
 
 // NewContext return a websocket context
-func NewContext(h *Hub, client *Client) *Context {
+func NewContext(r *Repeater, client *Client) *Context {
 	return &Context{
 		ctx:           context.Background(),
-		Repeater:      &Repeater{h: h},
+		Repeater:      r,
 		CurrentClient: client,
 	}
 }

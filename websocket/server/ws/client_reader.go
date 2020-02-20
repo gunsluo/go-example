@@ -1,4 +1,4 @@
-package hub
+package ws
 
 // ClientReader is a client reader
 type ClientReader interface {

@@ -1,4 +1,4 @@
-package hub
+package ws
 
 // Hub maintains the set of active clients and broadcasts messages to the
 // clients.
@@ -16,8 +16,8 @@ type Hub struct {
 	unregister chan *Client
 }
 
-// New return client hub
-func New() *Hub {
+// NewHub return client hub
+func NewHub() *Hub {
 	return &Hub{
 		broadcast:  make(chan []byte),
 		register:   make(chan *Client),

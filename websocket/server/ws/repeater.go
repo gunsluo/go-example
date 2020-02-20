@@ -1,8 +1,13 @@
-package hub
+package ws
 
 // Repeater is a repeater
 type Repeater struct {
 	h *Hub
+}
+
+// NewRepeater return a repeater
+func NewRepeater(h *Hub) *Repeater {
+	return &Repeater{h: h}
 }
 
 // Broadcast broadcast messages to the clients.
@@ -21,6 +26,12 @@ func (r *Repeater) Multicast(message []byte) error {
 	return nil
 }
 
+// Hub get clients hub
 func (r *Repeater) Hub() *Hub {
 	return r.h
+}
+
+// Run start receiving channel
+func (r *Repeater) Run() {
+	go r.h.Run()
 }
