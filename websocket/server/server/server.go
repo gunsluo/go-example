@@ -37,6 +37,11 @@ func New(cfg Config) *Server {
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
+			CheckOrigin: func(r *http.Request) bool {
+				// allow all origin
+				// TODO: it should be configurable
+				return true
+			},
 		},
 		repeater: ws.NewRepeater(ws.NewHub()),
 		logger:   cfg.Logger,
