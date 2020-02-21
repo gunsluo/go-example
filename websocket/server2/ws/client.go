@@ -2,6 +2,7 @@ package ws
 
 import (
 	"context"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"nhooyr.io/websocket"
@@ -20,6 +21,9 @@ type Client struct {
 	// Buffered channel of outbound messages.
 	send chan []byte
 
+	// Send pings to peer with this period. Must be less than pongWait.
+	pingPeriod time.Duration
+
 	// Maximum message size allowed from peer.
 	maxMessageSize int64
 
@@ -33,6 +37,7 @@ func NewClient(logger logrus.FieldLogger, conn *websocket.Conn, reader ClientRea
 	return &Client{
 		conn:           conn,
 		send:           make(chan []byte, 1024),
+		pingPeriod:     60 * time.Second,
 		maxMessageSize: 2048,
 		reader:         reader,
 		logger:         logger,
@@ -74,7 +79,9 @@ func (c *Client) Read(ctx context.Context, chain *Chain) {
 // application ensures that there is at most one writer to a connection by
 // executing all writes from this goroutine.
 func (c *Client) Write(ctx context.Context, chain *Chain) {
+	ticker := time.NewTicker(c.pingPeriod)
 	defer func() {
+		ticker.Stop()
 		c.conn.Close(websocket.StatusNoStatusRcvd, "client is closed")
 	}()
 
@@ -98,6 +105,10 @@ func (c *Client) Write(ctx context.Context, chain *Chain) {
 				if err != nil {
 					return
 				}
+			}
+		case <-ticker.C:
+			if err := c.conn.Ping(ctx); err != nil {
+				return
 			}
 		}
 	}

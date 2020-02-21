@@ -89,8 +89,8 @@ func (s *Server) Run() {
 
 	httpServer := http.Server{
 		Handler:      m,
-		ReadTimeout:  time.Second * 10,
-		WriteTimeout: time.Second * 10,
+		ReadTimeout:  time.Second * 60,
+		WriteTimeout: time.Second * 60,
 	}
 
 	go s.repeater.Run()
