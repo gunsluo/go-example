@@ -38,6 +38,8 @@ func main() {
 		fmt.Println("is:", errors.Is(w, e))
 		fmt.Println("is:", errors.Is(e, w))
 
+		// new error
+
 		var target *Error
 		if errors.As(w, &target) {
 			fmt.Println(target.Path)
