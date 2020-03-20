@@ -13,7 +13,7 @@ type User struct {
 }
 
 func main() {
-	//test()
+	test()
 	test2()
 }
 
