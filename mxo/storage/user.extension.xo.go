@@ -130,12 +130,12 @@ func (r *RootResolver) GetUserTypes() string {
 
 // UserResolver defines the GraphQL resolver for 'User'.
 type UserResolver struct {
-	ext  resolverExtensions
+	ext  ResolverExtensions
 	node *User
 }
 
 // UserResolver defines a GraphQL resolver for User
-func NewUserResolver(node *User, ext resolverExtensions) *UserResolver {
+func NewUserResolver(node *User, ext ResolverExtensions) *UserResolver {
 	return &UserResolver{ext: ext, node: node}
 }
 
@@ -210,14 +210,14 @@ func (r *RootResolver) innerUserByIDGraphQL(ctx context.Context, args struct {
 
 // UserConnectionResolver defines a GraphQL resolver for UserConnection
 type UserConnectionResolver struct {
-	ext resolverExtensions
+	ext ResolverExtensions
 
 	data  []*User
 	count int32
 }
 
 // NewUserConnectionResolver return a GraphQL resolver for UserConnection
-func NewUserConnectionResolver(data []*User, count int, ext resolverExtensions) *UserConnectionResolver {
+func NewUserConnectionResolver(data []*User, count int, ext ResolverExtensions) *UserConnectionResolver {
 	return &UserConnectionResolver{
 		ext:   ext,
 		data:  data,
@@ -265,12 +265,12 @@ func (r UserConnectionResolver) Users() *[]*UserResolver {
 
 // UserEdgeResolver defines the User edge
 type UserEdgeResolver struct {
-	ext  resolverExtensions
+	ext  ResolverExtensions
 	node *User
 }
 
 // NewUserEdgeResolver return a GraphQL resolver for UserEdgeResolver
-func NewUserEdgeResolver(node *User, ext resolverExtensions) *UserEdgeResolver {
+func NewUserEdgeResolver(node *User, ext ResolverExtensions) *UserEdgeResolver {
 	return &UserEdgeResolver{
 		ext:  ext,
 		node: node,

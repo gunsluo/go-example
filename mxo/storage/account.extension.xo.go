@@ -204,12 +204,12 @@ func (r *RootResolver) GetAccountTypes() string {
 
 // AccountResolver defines the GraphQL resolver for 'Account'.
 type AccountResolver struct {
-	ext  resolverExtensions
+	ext  ResolverExtensions
 	node *Account
 }
 
 // AccountResolver defines a GraphQL resolver for Account
-func NewAccountResolver(node *Account, ext resolverExtensions) *AccountResolver {
+func NewAccountResolver(node *Account, ext ResolverExtensions) *AccountResolver {
 	return &AccountResolver{ext: ext, node: node}
 }
 
@@ -345,14 +345,14 @@ func (r *RootResolver) innerAccountBySubjectGraphQL(ctx context.Context, args st
 
 // AccountConnectionResolver defines a GraphQL resolver for AccountConnection
 type AccountConnectionResolver struct {
-	ext resolverExtensions
+	ext ResolverExtensions
 
 	data  []*Account
 	count int32
 }
 
 // NewAccountConnectionResolver return a GraphQL resolver for AccountConnection
-func NewAccountConnectionResolver(data []*Account, count int, ext resolverExtensions) *AccountConnectionResolver {
+func NewAccountConnectionResolver(data []*Account, count int, ext ResolverExtensions) *AccountConnectionResolver {
 	return &AccountConnectionResolver{
 		ext:   ext,
 		data:  data,
@@ -400,12 +400,12 @@ func (r AccountConnectionResolver) Accounts() *[]*AccountResolver {
 
 // AccountEdgeResolver defines the Account edge
 type AccountEdgeResolver struct {
-	ext  resolverExtensions
+	ext  ResolverExtensions
 	node *Account
 }
 
 // NewAccountEdgeResolver return a GraphQL resolver for AccountEdgeResolver
-func NewAccountEdgeResolver(node *Account, ext resolverExtensions) *AccountEdgeResolver {
+func NewAccountEdgeResolver(node *Account, ext ResolverExtensions) *AccountEdgeResolver {
 	return &AccountEdgeResolver{
 		ext:  ext,
 		node: node,

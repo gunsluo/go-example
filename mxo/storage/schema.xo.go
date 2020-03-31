@@ -255,8 +255,8 @@ type ResolverConfig struct {
 	Verifier Verifier
 }
 
-// resolverExtensions it's passing between root resolver and  children resolver
-type resolverExtensions struct {
+// ResolverExtensions it's passing between root resolver and  children resolver
+type ResolverExtensions struct {
 	logger   XOLogger
 	db       XODB
 	storage  Storager
@@ -266,7 +266,7 @@ type resolverExtensions struct {
 
 // RootResolver is a graphql root resolver
 type RootResolver struct {
-	ext resolverExtensions
+	ext ResolverExtensions
 }
 
 // NewRootResolver return a root resolver for ggraphql
@@ -277,7 +277,7 @@ func NewRootResolver(c *ResolverConfig) *RootResolver {
 	}
 
 	return &RootResolver{
-		ext: resolverExtensions{
+		ext: ResolverExtensions{
 			logger:   logger,
 			db:       c.DB,
 			storage:  c.S,
@@ -287,8 +287,24 @@ func NewRootResolver(c *ResolverConfig) *RootResolver {
 	}
 }
 
+// NewResolverExtensions create a resolver extension by config
+func NewResolverExtensions(c *ResolverConfig) ResolverExtensions {
+	logger := c.Logger
+	if logger == nil {
+		logger = logrus.New()
+	}
+
+	return ResolverExtensions{
+		logger:   logger,
+		db:       c.DB,
+		storage:  c.S,
+		recorder: c.Recorder,
+		verifier: c.Verifier,
+	}
+}
+
 // Extension return the extension and use it to create a sub resolver
-func (r *RootResolver) Extension() resolverExtensions {
+func (r *RootResolver) Extension() ResolverExtensions {
 	return r.ext
 }
 
