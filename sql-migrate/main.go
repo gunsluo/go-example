@@ -6,20 +6,20 @@ import (
 	"path"
 	"strings"
 
+	_ "github.com/godror/godror"
 	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-oci8"
 	migrate "github.com/rubenv/sql-migrate"
 	"github.com/xo/dburl"
 )
 
 func main() {
 	//dsn := "postgres://postgres:password@localhost:5432/db?sslmode=disable"
-	dsn := "oci8://c##admin/password@127.0.0.1:1521/ORCLCDB"
+	dsn := "oracle://c##admin/password@127.0.0.1:1521/ORCLCDB"
 
 	var driver, dataSourceName, subDir string
-	if strings.HasPrefix(dsn, "oci8://") {
-		driver = "oci8"
-		dataSourceName = dsn[7:]
+	if strings.HasPrefix(dsn, "oracle://") {
+		driver = "godror"
+		dataSourceName = dsn[9:]
 		subDir = "oracle"
 	} else {
 		u, err := dburl.Parse(dsn)
@@ -42,7 +42,7 @@ func main() {
 	}
 
 	fmt.Println(driver, migrations.Dir)
-	n, err := migrate.Exec(db, driver, migrations, migrate.Up)
+	n, err := migrate.Exec(db, "oci8", migrations, migrate.Up)
 	if err != nil {
 		panic(err)
 	}
