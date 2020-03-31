@@ -49,6 +49,7 @@ func (s *MssqlStorage) InsertAccountByFields(db XODB, a *Account) error {
 	retCols := `INSERTED."id"`
 	retVars := make([]interface{}, 0, 5)
 	retVars = append(retVars, &a.ID)
+
 	fields = append(fields, `"subject"`)
 	params = append(params, a.Subject)
 
@@ -461,7 +462,7 @@ func (s *MssqlStorage) CountAllAccount(db XODB, queryArgs *AccountQueryArguments
 
 // AccountByID retrieves a row from '"dbo"."account"' as a Account.
 //
-// Generated from index 'PK__account__3213E83F019AA2B0'.
+// Generated from index 'PK__account__3213E83F3F2974E1'.
 func (s *MssqlStorage) AccountByID(db XODB, id int) (*Account, error) {
 	var err error
 

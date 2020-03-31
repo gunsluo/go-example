@@ -18,8 +18,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Storage is interface structure for database operation that can be called
-type Storage interface {
+// Storager is interface structure for database operation that can be called
+type Storager interface {
 	// InsertAccount inserts the Account to the database.
 	InsertAccount(db XODB, a *Account) error
 	// InsertAccountByFields inserts the Account to the database.
@@ -96,59 +96,59 @@ type Storage interface {
 
 // PostgresStorage is Postgres for the database.
 type PostgresStorage struct {
-	logger XOLogger
+	Logger XOLogger
 }
 
 func (s *PostgresStorage) info(format string, args ...interface{}) {
 	if len(args) == 0 {
-		xoLog(s.logger, logrus.InfoLevel, format)
+		xoLog(s.Logger, logrus.InfoLevel, format)
 	} else {
-		xoLogf(s.logger, logrus.InfoLevel, "%s %v", format, args)
+		xoLogf(s.Logger, logrus.InfoLevel, "%s %v", format, args)
 	}
 }
 
 // MssqlStorage is Mssql for the database.
 type MssqlStorage struct {
-	logger XOLogger
+	Logger XOLogger
 }
 
 func (s *MssqlStorage) info(format string, args ...interface{}) {
 	if len(args) == 0 {
-		xoLog(s.logger, logrus.InfoLevel, format)
+		xoLog(s.Logger, logrus.InfoLevel, format)
 	} else {
-		xoLogf(s.logger, logrus.InfoLevel, "%s %v", format, args)
+		xoLogf(s.Logger, logrus.InfoLevel, "%s %v", format, args)
 	}
 }
 
 // GodrorStorage is Godror for the database.
 type GodrorStorage struct {
-	logger XOLogger
+	Logger XOLogger
 }
 
 func (s *GodrorStorage) info(format string, args ...interface{}) {
 	if len(args) == 0 {
-		xoLog(s.logger, logrus.InfoLevel, format)
+		xoLog(s.Logger, logrus.InfoLevel, format)
 	} else {
-		xoLogf(s.logger, logrus.InfoLevel, "%s %v", format, args)
+		xoLogf(s.Logger, logrus.InfoLevel, "%s %v", format, args)
 	}
 }
 
 // New is a construction method that return a new Storage
-func New(driver string, c Config) (Storage, error) {
+func New(driver string, c Config) (Storager, error) {
 	// fix bug which interface type is not nil and interface value is nil
 	var logger XOLogger
 	if c.Logger != nil && !(reflect.ValueOf(c.Logger).Kind() == reflect.Ptr && reflect.ValueOf(c.Logger).IsNil()) {
 		logger = c.Logger
 	}
 
-	var s Storage
+	var s Storager
 	switch driver {
 	case "postgres":
-		s = &PostgresStorage{logger: logger}
+		s = &PostgresStorage{Logger: logger}
 	case "mssql":
-		s = &MssqlStorage{logger: logger}
+		s = &MssqlStorage{Logger: logger}
 	case "godror":
-		s = &GodrorStorage{logger: logger}
+		s = &GodrorStorage{Logger: logger}
 	default:
 		return nil, errors.New("driver " + driver + " not support")
 	}
@@ -158,12 +158,12 @@ func New(driver string, c Config) (Storage, error) {
 
 // Account represents a row from '"public"."account"'.
 type Account struct {
-	ID          int      `json:"id"`           // id
-	Subject     string   `json:"subject"`      // subject
-	Email       string   `json:"email"`        // email
-	CreatedDate NullTime `json:"created_date"` // created_date
-	ChangedDate NullTime `json:"changed_date"` // changed_date
-	DeletedDate NullTime `json:"deleted_date"` // deleted_date
+	ID          int          `db:"id" json:"id"`                     // id
+	Subject     string       `db:"subject" json:"subject"`           // subject
+	Email       string       `db:"email" json:"email"`               // email
+	CreatedDate sql.NullTime `db:"created_date" json:"created_date"` // created_date
+	ChangedDate sql.NullTime `db:"changed_date" json:"changed_date"` // changed_date
+	DeletedDate sql.NullTime `db:"deleted_date" json:"deleted_date"` // deleted_date
 
 	// xo fields
 	_exists, _deleted bool
@@ -179,12 +179,12 @@ func (a *Account) Deleted() bool {
 	return a._deleted
 } // User represents a row from '"public"."user"'.
 type User struct {
-	ID          int            `json:"id"`           // id
-	Subject     string         `json:"subject"`      // subject
-	Name        sql.NullString `json:"name"`         // name
-	CreatedDate NullTime       `json:"created_date"` // created_date
-	ChangedDate NullTime       `json:"changed_date"` // changed_date
-	DeletedDate NullTime       `json:"deleted_date"` // deleted_date
+	ID          int            `db:"id" json:"id"`                     // id
+	Subject     string         `db:"subject" json:"subject"`           // subject
+	Name        sql.NullString `db:"name" json:"name"`                 // name
+	CreatedDate sql.NullTime   `db:"created_date" json:"created_date"` // created_date
+	ChangedDate sql.NullTime   `db:"changed_date" json:"changed_date"` // changed_date
+	DeletedDate sql.NullTime   `db:"deleted_date" json:"deleted_date"` // deleted_date
 
 	// xo fields
 	_exists, _deleted bool
@@ -250,7 +250,7 @@ func (r *PageInfoResolver) HasPreviousPage() bool {
 type ResolverConfig struct {
 	Logger   XOLogger
 	DB       XODB
-	S        Storage
+	S        Storager
 	Recorder EventRecorder
 	Verifier Verifier
 }
@@ -259,7 +259,7 @@ type ResolverConfig struct {
 type resolverExtensions struct {
 	logger   XOLogger
 	db       XODB
-	storage  Storage
+	storage  Storager
 	recorder EventRecorder
 	verifier Verifier
 }
@@ -285,6 +285,11 @@ func NewRootResolver(c *ResolverConfig) *RootResolver {
 			verifier: c.Verifier,
 		},
 	}
+}
+
+// Extension return the extension and use it to create a sub resolver
+func (r *RootResolver) Extension() resolverExtensions {
+	return r.ext
 }
 
 // BuildSchemaString build root schema string
@@ -417,28 +422,28 @@ func PointerString(s sql.NullString) *string {
 }
 
 // Time returns a nullable Time
-func Time(t time.Time) NullTime {
-	return NullTime{Time: t, Valid: true}
+func Time(t time.Time) sql.NullTime {
+	return sql.NullTime{Time: t, Valid: true}
 }
 
-// TimePointer converts time.Time pointer to NullTime
-func TimePointer(t *time.Time) NullTime {
+// TimePointer converts time.Time pointer to sql.NullTime
+func TimePointer(t *time.Time) sql.NullTime {
 	if t == nil {
-		return NullTime{}
+		return sql.NullTime{}
 	}
-	return NullTime{Time: *t, Valid: true}
+	return sql.NullTime{Time: *t, Valid: true}
 }
 
-// TimeGqlPointer converts graphql.Time pointer to NullTime
-func TimeGqlPointer(t *graphql.Time) NullTime {
+// TimeGqlPointer converts graphql.Time pointer to sql.NullTime
+func TimeGqlPointer(t *graphql.Time) sql.NullTime {
 	if t == nil {
-		return NullTime{}
+		return sql.NullTime{}
 	}
-	return NullTime{Time: t.Time, Valid: true}
+	return sql.NullTime{Time: t.Time, Valid: true}
 }
 
 // PointerTime converts NullTIme to pointer to time.Time
-func PointerTime(t NullTime) *time.Time {
+func PointerTime(t sql.NullTime) *time.Time {
 	if !t.Valid {
 		return nil
 	}
@@ -446,7 +451,7 @@ func PointerTime(t NullTime) *time.Time {
 }
 
 // PointerGqlTime converts NullType to pointer to graphql.Time
-func PointerGqlTime(t NullTime) *graphql.Time {
+func PointerGqlTime(t sql.NullTime) *graphql.Time {
 	if !t.Valid {
 		return nil
 	}

@@ -48,6 +48,7 @@ func (s *PostgresStorage) InsertUserByFields(db XODB, u *User) error {
 	retCols := `"id"`
 	retVars := make([]interface{}, 0, 5)
 	retVars = append(retVars, &u.ID)
+
 	fields = append(fields, `"subject"`)
 	params = append(params, u.Subject)
 	if u.Name.Valid {

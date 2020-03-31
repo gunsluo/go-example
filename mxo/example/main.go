@@ -22,8 +22,8 @@ import (
 	"github.com/xo/dburl"
 
 	_ "github.com/denisenkom/go-mssqldb"
+	_ "github.com/godror/godror"
 	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-oci8"
 )
 
 const (
@@ -36,7 +36,7 @@ const (
 var dsns = map[string]string{
 	postgresMode: "postgres://postgres:password@localhost:5432/xo?sslmode=disable",
 	mssqlMode:    "sqlserver://SA:Tes9ting@localhost:1433/instance?database=xo&encrypt=disable",
-	oracleMode:   "oci8://c##admin/password@127.0.0.1:1521/ORCLCDB",
+	oracleMode:   "oracle://c##admin/password@127.0.0.1:1521/ORCLCDB",
 }
 
 func main() {
@@ -93,22 +93,15 @@ func fixOralceDSN(dsn string) (*dburl.URL, error) {
 	}
 
 	// fix oracle
-	if strings.HasPrefix(dsn, "oci8://") {
-		url.DSN = dsn[7:]
+	if strings.HasPrefix(dsn, "oracle://") {
+		url.DSN = dsn[9:]
 	}
 
 	return url, nil
 }
 
 func testStoage(driver, dsn string) {
-	var dbDriver string
-	if driver == "godror" {
-		dbDriver = "oci8"
-	} else {
-		dbDriver = driver
-	}
-
-	db, err := sqlx.Open(dbDriver, dsn)
+	db, err := sqlx.Open(driver, dsn)
 	if err != nil {
 		panic(err)
 	}
@@ -124,13 +117,13 @@ func testStoage(driver, dsn string) {
 	db.Close()
 }
 
-func testStoageAndDB(s storage.Storage, db *sqlx.DB) {
+func testStoageAndDB(s storage.Storager, db *sqlx.DB) {
 	//func testStoageAndDB(s storage.StorageExtension, db *sqlx.DB) {
 	account := &storage.Account{
 		Subject:     "luoji",
 		Email:       "mock",
-		CreatedDate: storage.NullTime{Time: time.Now(), Valid: true},
-		ChangedDate: storage.NullTime{Time: time.Now(), Valid: true},
+		CreatedDate: sql.NullTime{Time: time.Now(), Valid: true},
+		ChangedDate: sql.NullTime{Time: time.Now(), Valid: true},
 		//DeletedDate: time.Now(),
 	}
 
@@ -154,8 +147,8 @@ func testStoageAndDB(s storage.Storage, db *sqlx.DB) {
 
 	user := &storage.User{
 		Subject:     account.Subject,
-		CreatedDate: storage.NullTime{Time: time.Now(), Valid: true},
-		ChangedDate: storage.NullTime{Time: time.Now(), Valid: true},
+		CreatedDate: sql.NullTime{Time: time.Now(), Valid: true},
+		ChangedDate: sql.NullTime{Time: time.Now(), Valid: true},
 	}
 
 	err = s.InsertUser(db, user)
@@ -256,11 +249,11 @@ type gqlServer struct {
 	engine  *gin.Engine
 
 	db storage.XODB
-	s  storage.Storage
+	s  storage.Storager
 }
 
 // NewGQLServer is graphql server
-func NewGQLServer(address string, logger *logrus.Logger, db storage.XODB, s storage.Storage) (*gqlServer, error) {
+func NewGQLServer(address string, logger *logrus.Logger, db storage.XODB, s storage.Storager) (*gqlServer, error) {
 
 	// graphql API
 	rootResolver := storage.NewRootResolver(&storage.ResolverConfig{Logger: logger, DB: db, S: s, Verifier: &Verifier{}})
@@ -317,14 +310,7 @@ func server(driver, dsn string) {
 	var logger *logrus.Logger
 	logger = logrus.New()
 
-	var dbDriver string
-	if driver == "godror" {
-		dbDriver = "oci8"
-	} else {
-		dbDriver = driver
-	}
-
-	db, err := sqlx.Open(dbDriver, dsn)
+	db, err := sqlx.Open(driver, dsn)
 	if err != nil {
 		panic(err)
 	}

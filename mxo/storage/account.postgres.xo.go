@@ -48,6 +48,7 @@ func (s *PostgresStorage) InsertAccountByFields(db XODB, a *Account) error {
 	retCols := `"id"`
 	retVars := make([]interface{}, 0, 5)
 	retVars = append(retVars, &a.ID)
+
 	fields = append(fields, `"subject"`)
 	params = append(params, a.Subject)
 

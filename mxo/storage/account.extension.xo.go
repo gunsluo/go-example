@@ -603,12 +603,12 @@ func (r *RootResolver) updateAccountGraphQL(ctx context.Context, items []UpdateA
 
 		if isDeletionFields(input.Deletions, "createdDate") {
 			fields = append(fields, `"created_date"`)
-			params = append(params, NullTime{})
-			node.CreatedDate = NullTime{}
+			params = append(params, sql.NullTime{})
+			node.CreatedDate = sql.NullTime{}
 		} else if input.CreatedDate != nil {
 			fields = append(fields, `"created_date"`)
 			params = append(params, input.CreatedDate.Time)
-			node.CreatedDate = NullTime{Time: input.CreatedDate.Time, Valid: true}
+			node.CreatedDate = sql.NullTime{Time: input.CreatedDate.Time, Valid: true}
 		} else {
 			retCols = append(retCols, `"created_date"`)
 			retVars = append(retVars, &node.CreatedDate)
@@ -616,12 +616,12 @@ func (r *RootResolver) updateAccountGraphQL(ctx context.Context, items []UpdateA
 
 		if isDeletionFields(input.Deletions, "changedDate") {
 			fields = append(fields, `"changed_date"`)
-			params = append(params, NullTime{})
-			node.ChangedDate = NullTime{}
+			params = append(params, sql.NullTime{})
+			node.ChangedDate = sql.NullTime{}
 		} else if input.ChangedDate != nil {
 			fields = append(fields, `"changed_date"`)
 			params = append(params, input.ChangedDate.Time)
-			node.ChangedDate = NullTime{Time: input.ChangedDate.Time, Valid: true}
+			node.ChangedDate = sql.NullTime{Time: input.ChangedDate.Time, Valid: true}
 		} else {
 			retCols = append(retCols, `"changed_date"`)
 			retVars = append(retVars, &node.ChangedDate)
@@ -629,12 +629,12 @@ func (r *RootResolver) updateAccountGraphQL(ctx context.Context, items []UpdateA
 
 		if isDeletionFields(input.Deletions, "deletedDate") {
 			fields = append(fields, `"deleted_date"`)
-			params = append(params, NullTime{})
-			node.DeletedDate = NullTime{}
+			params = append(params, sql.NullTime{})
+			node.DeletedDate = sql.NullTime{}
 		} else if input.DeletedDate != nil {
 			fields = append(fields, `"deleted_date"`)
 			params = append(params, input.DeletedDate.Time)
-			node.DeletedDate = NullTime{Time: input.DeletedDate.Time, Valid: true}
+			node.DeletedDate = sql.NullTime{Time: input.DeletedDate.Time, Valid: true}
 		} else {
 			retCols = append(retCols, `"deleted_date"`)
 			retVars = append(retVars, &node.DeletedDate)

@@ -7,7 +7,7 @@ import (
 )
 
 type StorageExtension interface {
-	Storage
+	Storager
 	CustomEndpoint(db XODB, args ...interface{}) error
 }
 
@@ -47,11 +47,11 @@ func NewStorageExtension(driver string, c Config) (StorageExtension, error) {
 	var s StorageExtension
 	switch driver {
 	case "postgres":
-		s = &PostgresStorageExtension{PostgresStorage: PostgresStorage{logger: logger}}
+		s = &PostgresStorageExtension{PostgresStorage: PostgresStorage{Logger: logger}}
 	case "mssql":
-		s = &MssqlStorageExtension{MssqlStorage: MssqlStorage{logger: logger}}
+		s = &MssqlStorageExtension{MssqlStorage: MssqlStorage{Logger: logger}}
 	case "godror":
-		s = &GodrorStorageExtension{GodrorStorage: GodrorStorage{logger: logger}}
+		s = &GodrorStorageExtension{GodrorStorage: GodrorStorage{Logger: logger}}
 	default:
 		return nil, errors.New("driver " + driver + " not support")
 	}

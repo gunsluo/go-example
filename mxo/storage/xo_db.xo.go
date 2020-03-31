@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/graph-gophers/graphql-go"
 	"github.com/pkg/errors"
@@ -108,28 +107,6 @@ func (ss StringSlice) Value() (driver.Value, error) {
 
 // Slice is a slice of ScannerValuers.
 type Slice []ScannerValuer
-
-// NullTime represents a time.Time that may be null. NullTime implements the
-// sql.Scanner interface so it can be used as a scan destination, similar to
-// sql.NullString.
-type NullTime struct {
-	Time  time.Time
-	Valid bool // Valid is true if Time is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (nt *NullTime) Scan(value interface{}) error {
-	nt.Time, nt.Valid = value.(time.Time)
-	return nil
-}
-
-// Value implements the driver Valuer interface.
-func (nt NullTime) Value() (driver.Value, error) {
-	if !nt.Valid {
-		return nil, nil
-	}
-	return nt.Time, nil
-}
 
 // Cursor specifies an index to sort by, the direction of the sort, an offset, and a limit.
 type Cursor struct {

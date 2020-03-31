@@ -49,6 +49,7 @@ func (s *MssqlStorage) InsertUserByFields(db XODB, u *User) error {
 	retCols := `INSERTED."id"`
 	retVars := make([]interface{}, 0, 5)
 	retVars = append(retVars, &u.ID)
+
 	fields = append(fields, `"subject"`)
 	params = append(params, u.Subject)
 	if u.Name.Valid {
@@ -528,7 +529,7 @@ func (s *MssqlStorage) AccountInUser(db XODB, u *User) (*Account, error) {
 
 // UserByID retrieves a row from '"dbo"."user"' as a User.
 //
-// Generated from index 'PK__user__3213E83F08603F4B'.
+// Generated from index 'PK__user__3213E83FC8BDB47C'.
 func (s *MssqlStorage) UserByID(db XODB, id int) (*User, error) {
 	var err error
 
