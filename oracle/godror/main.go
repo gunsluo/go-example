@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	db, err := sql.Open("godror", `c##admin/password@127.0.0.1:1521/ORCLCDB`)
+	db, err := sql.Open("godror", `ac/password@127.0.0.1:1521/ORCLPDB1`)
 	if err != nil {
 		fmt.Println(err)
 		return
