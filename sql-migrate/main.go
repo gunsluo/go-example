@@ -42,7 +42,7 @@ func main() {
 	}
 
 	fmt.Println(driver, migrations.Dir)
-	n, err := migrate.Exec(db, "oci8", migrations, migrate.Up)
+	n, err := migrate.Exec(db, "godror", migrations, migrate.Up)
 	if err != nil {
 		panic(err)
 	}
