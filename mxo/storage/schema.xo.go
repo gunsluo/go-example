@@ -266,7 +266,7 @@ type ResolverExtensions struct {
 
 // RootResolver is a graphql root resolver
 type RootResolver struct {
-	ext ResolverExtensions
+	Ext ResolverExtensions
 }
 
 // NewRootResolver return a root resolver for ggraphql
@@ -277,7 +277,7 @@ func NewRootResolver(c *ResolverConfig) *RootResolver {
 	}
 
 	return &RootResolver{
-		ext: ResolverExtensions{
+		Ext: ResolverExtensions{
 			logger:   logger,
 			db:       c.DB,
 			storage:  c.S,
@@ -301,11 +301,6 @@ func NewResolverExtensions(c *ResolverConfig) ResolverExtensions {
 		recorder: c.Recorder,
 		verifier: c.Verifier,
 	}
-}
-
-// Extension return the extension and use it to create a sub resolver
-func (r *RootResolver) Extension() ResolverExtensions {
-	return r.ext
 }
 
 // BuildSchemaString build root schema string

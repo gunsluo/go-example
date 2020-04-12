@@ -295,6 +295,7 @@ func (s *PostgresStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, erro
 			return nil, err
 		}
 
+		a._exists = true
 		res = append(res, &a)
 	}
 
@@ -327,6 +328,7 @@ func (s *PostgresStorage) GetMostRecentChangedAccount(db XODB, n int) ([]*Accoun
 			return nil, err
 		}
 
+		a._exists = true
 		res = append(res, &a)
 	}
 
@@ -419,6 +421,7 @@ func (s *PostgresStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArgument
 			return nil, err
 		}
 
+		a._exists = true
 		res = append(res, &a)
 	}
 

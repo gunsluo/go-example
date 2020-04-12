@@ -294,6 +294,7 @@ func (s *MssqlStorage) GetMostRecentUser(db XODB, n int) ([]*User, error) {
 			return nil, err
 		}
 
+		u._exists = true
 		res = append(res, &u)
 	}
 
@@ -326,6 +327,7 @@ func (s *MssqlStorage) GetMostRecentChangedUser(db XODB, n int) ([]*User, error)
 			return nil, err
 		}
 
+		u._exists = true
 		res = append(res, &u)
 	}
 
@@ -402,6 +404,7 @@ func (s *MssqlStorage) GetAllUser(db XODB, queryArgs *UserQueryArguments) ([]*Us
 			return nil, err
 		}
 
+		u._exists = true
 		res = append(res, &u)
 	}
 
@@ -487,6 +490,7 @@ func (s *MssqlStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *User
 			return nil, err
 		}
 
+		u._exists = true
 		res = append(res, &u)
 	}
 

@@ -36,7 +36,7 @@ const (
 var dsns = map[string]string{
 	postgresMode: "postgres://postgres:password@localhost:5432/xo?sslmode=disable",
 	mssqlMode:    "sqlserver://SA:Tes9ting@localhost:1433/instance?database=xo&encrypt=disable",
-	oracleMode:   "oracle://c##admin/password@127.0.0.1:1521/ORCLCDB",
+	oracleMode:   "oracle://ac:password@127.0.0.1:1521/ORCLPDB1",
 }
 
 func main() {

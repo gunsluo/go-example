@@ -22,7 +22,7 @@ func (s *GodrorStorage) InsertUser(db XODB, u *User) error {
 	}
 
 	// sql insert query, primary key provided by sequence
-	const sqlstr = `INSERT INTO "C##ADMIN"."user" (` +
+	const sqlstr = `INSERT INTO "AC"."user" (` +
 		`"subject", "name", "created_date", "changed_date", "deleted_date"` +
 		`) VALUES (` +
 		`:1, :2, :3, :4, :5` +
@@ -97,7 +97,7 @@ func (s *GodrorStorage) InsertUserByFields(db XODB, u *User) error {
 		retFieldsPlaceHolders = append(retFieldsPlaceHolders, ":"+strconv.Itoa(len(fieldsPlaceHolders)+i+1))
 	}
 
-	sqlstr := `INSERT INTO "C##ADMIN"."user" (` +
+	sqlstr := `INSERT INTO "AC"."user" (` +
 		strings.Join(fields, ",") +
 		`) VALUES (` + strings.Join(fieldsPlaceHolders, ",") +
 		`) RETURNING ` + strings.Join(retFields, ",") +
@@ -131,7 +131,7 @@ func (s *GodrorStorage) UpdateUser(db XODB, u *User) error {
 	}
 
 	// sql query
-	const sqlstr = `UPDATE "C##ADMIN"."user" SET ` +
+	const sqlstr = `UPDATE "AC"."user" SET ` +
 		`"subject" = :1, "name" = :2, "created_date" = :3, "changed_date" = :4, "deleted_date" = :5` +
 		` WHERE "id" = :6`
 
@@ -155,14 +155,14 @@ func (s *GodrorStorage) UpdateUserByFields(db XODB, u *User, fields, retCols []s
 
 	params = append(params, u.ID)
 	idxvals = append(idxvals, len(params))
-	var sqlstr = fmt.Sprintf(`UPDATE "C##ADMIN"."user" SET `+
+	var sqlstr = fmt.Sprintf(`UPDATE "AC"."user" SET `+
 		setstr+` WHERE "id" = :%d`, idxvals...)
 	s.info(sqlstr, params)
 	if _, err := db.Exec(sqlstr, params...); err != nil {
 		return err
 	}
 
-	err := db.QueryRow(`SELECT `+strings.Join(retCols, ",")+` from "C##ADMIN"."user" WHERE "id" = :1`, u.ID).Scan(retVars...)
+	err := db.QueryRow(`SELECT `+strings.Join(retCols, ",")+` from "AC"."user" WHERE "id" = :1`, u.ID).Scan(retVars...)
 	if err != nil {
 		return err
 	}
@@ -185,7 +185,7 @@ func (s *GodrorStorage) UpsertUser(db XODB, u *User) error {
 
 	// sql query
 
-	const sqlstr = `MERGE INTO "C##ADMIN"."user" t ` +
+	const sqlstr = `MERGE INTO "AC"."user" t ` +
 		`USING (SELECT :1 AS "id", :2 AS "subject", :3 AS "name", :4 AS "created_date", :5 AS "changed_date", :6 AS "deleted_date" FROM dual) s ` +
 		`ON (t."id" = s."id") ` +
 		`WHEN MATCHED THEN UPDATE SET "subject" = s."subject", "name" = s."name", "created_date" = s."created_date", "changed_date" = s."changed_date", "deleted_date" = s."deleted_date" ` +
@@ -219,7 +219,7 @@ func (s *GodrorStorage) DeleteUser(db XODB, u *User) error {
 	}
 
 	// sql query
-	const sqlstr = `DELETE FROM "C##ADMIN"."user" WHERE "id" = :1`
+	const sqlstr = `DELETE FROM "AC"."user" WHERE "id" = :1`
 
 	// run query
 	s.info(sqlstr, u.ID)
@@ -253,7 +253,7 @@ func (s *GodrorStorage) DeleteUsers(db XODB, us []*User) error {
 	}
 
 	// sql query
-	var sqlstr = `DELETE FROM "C##ADMIN"."user" WHERE "id" in (` + placeholder + `)`
+	var sqlstr = `DELETE FROM "AC"."user" WHERE "id" in (` + placeholder + `)`
 
 	// run query
 	s.info(sqlstr, args)
@@ -275,7 +275,7 @@ func (s *GodrorStorage) DeleteUsers(db XODB, us []*User) error {
 func (s *GodrorStorage) GetMostRecentUser(db XODB, n int) ([]*User, error) {
 	const sqlstr = `SELECT ` +
 		`"id", "subject", "name", "created_date", "changed_date", "deleted_date" ` +
-		`FROM "C##ADMIN"."user" ` +
+		`FROM "AC"."user" ` +
 		`ORDER BY "created_date" DESC FETCH NEXT :1 ROWS ONLY`
 
 	s.info(sqlstr, n)
@@ -296,6 +296,7 @@ func (s *GodrorStorage) GetMostRecentUser(db XODB, n int) ([]*User, error) {
 			return nil, err
 		}
 
+		u._exists = true
 		res = append(res, &u)
 	}
 
@@ -307,7 +308,7 @@ func (s *GodrorStorage) GetMostRecentUser(db XODB, n int) ([]*User, error) {
 func (s *GodrorStorage) GetMostRecentChangedUser(db XODB, n int) ([]*User, error) {
 	const sqlstr = `SELECT ` +
 		`"id", "subject", "name", "created_date", "changed_date", "deleted_date" ` +
-		`FROM "C##ADMIN"."user" ` +
+		`FROM "AC"."user" ` +
 		`ORDER BY "changed_date" DESC FETCH NEXT :1 ROWS ONLY`
 
 	s.info(sqlstr, n)
@@ -328,6 +329,7 @@ func (s *GodrorStorage) GetMostRecentChangedUser(db XODB, n int) ([]*User, error
 			return nil, err
 		}
 
+		u._exists = true
 		res = append(res, &u)
 	}
 
@@ -378,7 +380,7 @@ func (s *GodrorStorage) GetAllUser(db XODB, queryArgs *UserQueryArguments) ([]*U
 
 	var sqlstr = fmt.Sprintf(`SELECT %s FROM %s WHERE %s "deleted_date" IS %s ORDER BY "%s" %s OFFSET :%d ROWS FETCH NEXT :%d ROWS ONLY`,
 		`"id", "subject", "name", "created_date", "changed_date", "deleted_date" `,
-		`"C##ADMIN"."user"`,
+		`"AC"."user"`,
 		placeHolders,
 		dead,
 		orderBy,
@@ -404,6 +406,7 @@ func (s *GodrorStorage) GetAllUser(db XODB, queryArgs *UserQueryArguments) ([]*U
 			return nil, err
 		}
 
+		u._exists = true
 		res = append(res, &u)
 	}
 
@@ -423,7 +426,7 @@ func (s *GodrorStorage) CountAllUser(db XODB, queryArgs *UserQueryArguments) (in
 	placeHolders := ""
 
 	var err error
-	var sqlstr = fmt.Sprintf(`SELECT count(*) from "C##ADMIN"."user" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
+	var sqlstr = fmt.Sprintf(`SELECT count(*) from "AC"."user" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
 	s.info(sqlstr)
 
 	var count int
@@ -434,7 +437,7 @@ func (s *GodrorStorage) CountAllUser(db XODB, queryArgs *UserQueryArguments) (in
 	return count, nil
 }
 
-// UsersBySubjectFK retrieves rows from "C##ADMIN"."user" by foreign key Subject.
+// UsersBySubjectFK retrieves rows from "AC"."user" by foreign key Subject.
 // Generated from foreign key Account.
 func (s *GodrorStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *UserQueryArguments) ([]*User, error) {
 	queryArgs = ApplyUserQueryArgsDefaults(queryArgs)
@@ -463,7 +466,7 @@ func (s *GodrorStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *Use
 	var sqlstr = fmt.Sprintf(
 		`SELECT %s FROM %s WHERE %s "deleted_date" IS %s ORDER BY "%s" %s OFFSET :%d ROWS FETCH NEXT :%d ROWS ONLY`,
 		`"id", "subject", "name", "created_date", "changed_date", "deleted_date" `,
-		`"C##ADMIN"."user"`,
+		`"AC"."user"`,
 		placeHolders,
 		dead,
 		"id",
@@ -489,13 +492,14 @@ func (s *GodrorStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *Use
 			return nil, err
 		}
 
+		u._exists = true
 		res = append(res, &u)
 	}
 
 	return res, nil
 }
 
-// CountUsersBySubjectFK count rows from "C##ADMIN"."user" by foreign key Subject.
+// CountUsersBySubjectFK count rows from "AC"."user" by foreign key Subject.
 // Generated from foreign key Account.
 func (s *GodrorStorage) CountUsersBySubjectFK(db XODB, subject string, queryArgs *UserQueryArguments) (int, error) {
 	queryArgs = ApplyUserQueryArgsDefaults(queryArgs)
@@ -511,7 +515,7 @@ func (s *GodrorStorage) CountUsersBySubjectFK(db XODB, subject string, queryArgs
 	placeHolders = fmt.Sprintf(`%s "subject" = :%d AND `, placeHolders, len(params))
 
 	var err error
-	var sqlstr = fmt.Sprintf(`SELECT count(*) from "C##ADMIN"."user" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
+	var sqlstr = fmt.Sprintf(`SELECT count(*) from "AC"."user" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
 	s.info(sqlstr)
 
 	var count int
@@ -529,7 +533,7 @@ func (s *GodrorStorage) AccountInUser(db XODB, u *User) (*Account, error) {
 	return s.AccountBySubject(db, u.Subject)
 }
 
-// UserByID retrieves a row from '"C##ADMIN"."user"' as a User.
+// UserByID retrieves a row from '"AC"."user"' as a User.
 //
 // Generated from index 'USER_PK'.
 func (s *GodrorStorage) UserByID(db XODB, id int) (*User, error) {
@@ -538,7 +542,7 @@ func (s *GodrorStorage) UserByID(db XODB, id int) (*User, error) {
 	// sql query
 	const sqlstr = `SELECT ` +
 		`"id", "subject", "name", "created_date", "changed_date", "deleted_date" ` +
-		`FROM "C##ADMIN"."user" ` +
+		`FROM "AC"."user" ` +
 		`WHERE "id" = :1`
 
 	// run query

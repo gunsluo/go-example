@@ -290,6 +290,7 @@ func (s *MssqlStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, error) 
 			return nil, err
 		}
 
+		a._exists = true
 		res = append(res, &a)
 	}
 
@@ -322,6 +323,7 @@ func (s *MssqlStorage) GetMostRecentChangedAccount(db XODB, n int) ([]*Account, 
 			return nil, err
 		}
 
+		a._exists = true
 		res = append(res, &a)
 	}
 
@@ -414,6 +416,7 @@ func (s *MssqlStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArguments) 
 			return nil, err
 		}
 
+		a._exists = true
 		res = append(res, &a)
 	}
 

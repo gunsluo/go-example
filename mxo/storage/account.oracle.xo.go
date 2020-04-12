@@ -22,7 +22,7 @@ func (s *GodrorStorage) InsertAccount(db XODB, a *Account) error {
 	}
 
 	// sql insert query, primary key provided by sequence
-	const sqlstr = `INSERT INTO "C##ADMIN"."account" (` +
+	const sqlstr = `INSERT INTO "AC"."account" (` +
 		`"subject", "email", "created_date", "changed_date", "deleted_date"` +
 		`) VALUES (` +
 		`:1, :2, :3, :4, :5` +
@@ -93,7 +93,7 @@ func (s *GodrorStorage) InsertAccountByFields(db XODB, a *Account) error {
 		retFieldsPlaceHolders = append(retFieldsPlaceHolders, ":"+strconv.Itoa(len(fieldsPlaceHolders)+i+1))
 	}
 
-	sqlstr := `INSERT INTO "C##ADMIN"."account" (` +
+	sqlstr := `INSERT INTO "AC"."account" (` +
 		strings.Join(fields, ",") +
 		`) VALUES (` + strings.Join(fieldsPlaceHolders, ",") +
 		`) RETURNING ` + strings.Join(retFields, ",") +
@@ -127,7 +127,7 @@ func (s *GodrorStorage) UpdateAccount(db XODB, a *Account) error {
 	}
 
 	// sql query
-	const sqlstr = `UPDATE "C##ADMIN"."account" SET ` +
+	const sqlstr = `UPDATE "AC"."account" SET ` +
 		`"subject" = :1, "email" = :2, "created_date" = :3, "changed_date" = :4, "deleted_date" = :5` +
 		` WHERE "id" = :6`
 
@@ -151,14 +151,14 @@ func (s *GodrorStorage) UpdateAccountByFields(db XODB, a *Account, fields, retCo
 
 	params = append(params, a.ID)
 	idxvals = append(idxvals, len(params))
-	var sqlstr = fmt.Sprintf(`UPDATE "C##ADMIN"."account" SET `+
+	var sqlstr = fmt.Sprintf(`UPDATE "AC"."account" SET `+
 		setstr+` WHERE "id" = :%d`, idxvals...)
 	s.info(sqlstr, params)
 	if _, err := db.Exec(sqlstr, params...); err != nil {
 		return err
 	}
 
-	err := db.QueryRow(`SELECT `+strings.Join(retCols, ",")+` from "C##ADMIN"."account" WHERE "id" = :1`, a.ID).Scan(retVars...)
+	err := db.QueryRow(`SELECT `+strings.Join(retCols, ",")+` from "AC"."account" WHERE "id" = :1`, a.ID).Scan(retVars...)
 	if err != nil {
 		return err
 	}
@@ -181,7 +181,7 @@ func (s *GodrorStorage) UpsertAccount(db XODB, a *Account) error {
 
 	// sql query
 
-	const sqlstr = `MERGE INTO "C##ADMIN"."account" t ` +
+	const sqlstr = `MERGE INTO "AC"."account" t ` +
 		`USING (SELECT :1 AS "id", :2 AS "subject", :3 AS "email", :4 AS "created_date", :5 AS "changed_date", :6 AS "deleted_date" FROM dual) s ` +
 		`ON (t."id" = s."id") ` +
 		`WHEN MATCHED THEN UPDATE SET "subject" = s."subject", "email" = s."email", "created_date" = s."created_date", "changed_date" = s."changed_date", "deleted_date" = s."deleted_date" ` +
@@ -215,7 +215,7 @@ func (s *GodrorStorage) DeleteAccount(db XODB, a *Account) error {
 	}
 
 	// sql query
-	const sqlstr = `DELETE FROM "C##ADMIN"."account" WHERE "id" = :1`
+	const sqlstr = `DELETE FROM "AC"."account" WHERE "id" = :1`
 
 	// run query
 	s.info(sqlstr, a.ID)
@@ -249,7 +249,7 @@ func (s *GodrorStorage) DeleteAccounts(db XODB, as []*Account) error {
 	}
 
 	// sql query
-	var sqlstr = `DELETE FROM "C##ADMIN"."account" WHERE "id" in (` + placeholder + `)`
+	var sqlstr = `DELETE FROM "AC"."account" WHERE "id" in (` + placeholder + `)`
 
 	// run query
 	s.info(sqlstr, args)
@@ -271,7 +271,7 @@ func (s *GodrorStorage) DeleteAccounts(db XODB, as []*Account) error {
 func (s *GodrorStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, error) {
 	const sqlstr = `SELECT ` +
 		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
-		`FROM "C##ADMIN"."account" ` +
+		`FROM "AC"."account" ` +
 		`ORDER BY "created_date" DESC FETCH NEXT :1 ROWS ONLY`
 
 	s.info(sqlstr, n)
@@ -292,6 +292,7 @@ func (s *GodrorStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, error)
 			return nil, err
 		}
 
+		a._exists = true
 		res = append(res, &a)
 	}
 
@@ -303,7 +304,7 @@ func (s *GodrorStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, error)
 func (s *GodrorStorage) GetMostRecentChangedAccount(db XODB, n int) ([]*Account, error) {
 	const sqlstr = `SELECT ` +
 		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
-		`FROM "C##ADMIN"."account" ` +
+		`FROM "AC"."account" ` +
 		`ORDER BY "changed_date" DESC FETCH NEXT :1 ROWS ONLY`
 
 	s.info(sqlstr, n)
@@ -324,6 +325,7 @@ func (s *GodrorStorage) GetMostRecentChangedAccount(db XODB, n int) ([]*Account,
 			return nil, err
 		}
 
+		a._exists = true
 		res = append(res, &a)
 	}
 
@@ -390,7 +392,7 @@ func (s *GodrorStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArguments)
 
 	var sqlstr = fmt.Sprintf(`SELECT %s FROM %s WHERE %s "deleted_date" IS %s ORDER BY "%s" %s OFFSET :%d ROWS FETCH NEXT :%d ROWS ONLY`,
 		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" `,
-		`"C##ADMIN"."account"`,
+		`"AC"."account"`,
 		placeHolders,
 		dead,
 		orderBy,
@@ -416,6 +418,7 @@ func (s *GodrorStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArguments)
 			return nil, err
 		}
 
+		a._exists = true
 		res = append(res, &a)
 	}
 
@@ -451,7 +454,7 @@ func (s *GodrorStorage) CountAllAccount(db XODB, queryArgs *AccountQueryArgument
 	}
 
 	var err error
-	var sqlstr = fmt.Sprintf(`SELECT count(*) from "C##ADMIN"."account" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
+	var sqlstr = fmt.Sprintf(`SELECT count(*) from "AC"."account" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
 	s.info(sqlstr)
 
 	var count int
@@ -462,7 +465,7 @@ func (s *GodrorStorage) CountAllAccount(db XODB, queryArgs *AccountQueryArgument
 	return count, nil
 }
 
-// AccountByID retrieves a row from '"C##ADMIN"."account"' as a Account.
+// AccountByID retrieves a row from '"AC"."account"' as a Account.
 //
 // Generated from index 'ACCOUNT_PK'.
 func (s *GodrorStorage) AccountByID(db XODB, id int) (*Account, error) {
@@ -471,7 +474,7 @@ func (s *GodrorStorage) AccountByID(db XODB, id int) (*Account, error) {
 	// sql query
 	const sqlstr = `SELECT ` +
 		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
-		`FROM "C##ADMIN"."account" ` +
+		`FROM "AC"."account" ` +
 		`WHERE "id" = :1`
 
 	// run query
@@ -488,7 +491,7 @@ func (s *GodrorStorage) AccountByID(db XODB, id int) (*Account, error) {
 	return &a, nil
 }
 
-// AccountBySubject retrieves a row from '"C##ADMIN"."account"' as a Account.
+// AccountBySubject retrieves a row from '"AC"."account"' as a Account.
 //
 // Generated from index 'ACCOUNT_SUBJECT_UNIQUE_INDEX'.
 func (s *GodrorStorage) AccountBySubject(db XODB, subject string) (*Account, error) {
@@ -497,7 +500,7 @@ func (s *GodrorStorage) AccountBySubject(db XODB, subject string) (*Account, err
 	// sql query
 	const sqlstr = `SELECT ` +
 		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
-		`FROM "C##ADMIN"."account" ` +
+		`FROM "AC"."account" ` +
 		`WHERE "subject" = :1`
 
 	// run query

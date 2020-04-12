@@ -204,13 +204,13 @@ func (r *RootResolver) GetAccountTypes() string {
 
 // AccountResolver defines the GraphQL resolver for 'Account'.
 type AccountResolver struct {
-	ext  ResolverExtensions
+	Ext  ResolverExtensions
 	node *Account
 }
 
 // AccountResolver defines a GraphQL resolver for Account
 func NewAccountResolver(node *Account, ext ResolverExtensions) *AccountResolver {
-	return &AccountResolver{ext: ext, node: node}
+	return &AccountResolver{Ext: ext, node: node}
 }
 
 // Node get node for AccountResolver
@@ -224,10 +224,10 @@ func (r AccountResolver) CreatedDate() *graphql.Time { return PointerGqlTime(r.n
 func (r AccountResolver) ChangedDate() *graphql.Time { return PointerGqlTime(r.node.ChangedDate) }
 func (r AccountResolver) DeletedDate() *graphql.Time { return PointerGqlTime(r.node.DeletedDate) }
 func (r AccountResolver) UsersSubject(ctx context.Context, queryArgs *UserQueryArguments) (*UserConnectionResolver, error) {
-	if r.ext.verifier == nil {
+	if r.Ext.verifier == nil {
 		return nil, errors.New("enable ac, please set verifier")
 	}
-	if err := r.ext.verifier.VerifyRefAC(ctx, "Accounts", "RefGet", r); err != nil {
+	if err := r.Ext.verifier.VerifyRefAC(ctx, "Accounts", "RefGet", r); err != nil {
 		return nil, errors.Wrap(err, "Accounts:RefGet")
 	}
 
@@ -239,18 +239,18 @@ func (r AccountResolver) UsersSubject(ctx context.Context, queryArgs *UserQueryA
 
 	subject := r.node.Subject
 
-	data, err := r.ext.storage.UsersBySubjectFK(r.ext.db, subject, queryArgs)
+	data, err := r.Ext.storage.UsersBySubjectFK(r.Ext.db, subject, queryArgs)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get Users")
 	}
 
-	count, err := r.ext.storage.CountUsersBySubjectFK(r.ext.db, subject, queryArgs)
+	count, err := r.Ext.storage.CountUsersBySubjectFK(r.Ext.db, subject, queryArgs)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get Users count")
 	}
 
 	return &UserConnectionResolver{
-		ext:   r.ext,
+		Ext:   r.Ext,
 		data:  data,
 		count: int32(count),
 	}, nil
@@ -260,19 +260,19 @@ func (r AccountResolver) UsersSubject(ctx context.Context, queryArgs *UserQueryA
 func (r *RootResolver) AccountByID(ctx context.Context, args struct {
 	ID graphql.ID
 }) (*AccountResolver, error) {
-	if r.ext.verifier == nil {
+	if r.Ext.verifier == nil {
 		return nil, errors.New("enable ac, please set verifier")
 	}
-	if err := r.ext.verifier.VerifyAC(ctx, "Accounts", "Get", args); err != nil {
+	if err := r.Ext.verifier.VerifyAC(ctx, "Accounts", "Get", args); err != nil {
 		return nil, errors.Wrap(err, "Accounts:Get")
 	}
 
 	res, err := r.innerAccountByIDGraphQL(ctx, args)
 
 	// event record
-	if r.ext.recorder != nil {
-		if err := r.ext.recorder.RecordEvent(ctx, "Accounts", "Get", res); err != nil {
-			r.ext.logger.Warnf("unable to record event, resource:Accounts, action:Get, err:%v", err)
+	if r.Ext.recorder != nil {
+		if err := r.Ext.recorder.RecordEvent(ctx, "Accounts", "Get", res); err != nil {
+			r.Ext.logger.Warnf("unable to record event, resource:Accounts, action:Get, err:%v", err)
 		}
 	}
 	return res, err
@@ -289,7 +289,7 @@ func (r *RootResolver) innerAccountByIDGraphQL(ctx context.Context, args struct 
 		return nil, errors.Wrap(err, `ID should be integer`)
 	}
 
-	data, err := r.ext.storage.AccountByID(r.ext.db, arg0)
+	data, err := r.Ext.storage.AccountByID(r.Ext.db, arg0)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.Errorf(`account [`+"%v"+`] not found`, arg0)
@@ -297,7 +297,7 @@ func (r *RootResolver) innerAccountByIDGraphQL(ctx context.Context, args struct 
 		return nil, errors.Wrap(err, `unable to get "public"."account"`)
 	}
 
-	return NewAccountResolver(data, r.ext), nil
+	return NewAccountResolver(data, r.Ext), nil
 
 }
 
@@ -305,19 +305,19 @@ func (r *RootResolver) innerAccountByIDGraphQL(ctx context.Context, args struct 
 func (r *RootResolver) AccountBySubject(ctx context.Context, args struct {
 	Subject string
 }) (*AccountResolver, error) {
-	if r.ext.verifier == nil {
+	if r.Ext.verifier == nil {
 		return nil, errors.New("enable ac, please set verifier")
 	}
-	if err := r.ext.verifier.VerifyAC(ctx, "Accounts.AccountBySubject", "NonPrimaryKeyGet", args); err != nil {
+	if err := r.Ext.verifier.VerifyAC(ctx, "Accounts.AccountBySubject", "NonPrimaryKeyGet", args); err != nil {
 		return nil, errors.Wrap(err, "Accounts.AccountBySubject:NonPrimaryKeyGet")
 	}
 
 	res, err := r.innerAccountBySubjectGraphQL(ctx, args)
 
 	// event record
-	if r.ext.recorder != nil {
-		if err := r.ext.recorder.RecordEvent(ctx, "Accounts.AccountBySubject", "NonPrimaryKeyGet", res); err != nil {
-			r.ext.logger.Warnf("unable to record event, resource:Accounts.AccountBySubject, action:NonPrimaryKeyGet, err:%v", err)
+	if r.Ext.recorder != nil {
+		if err := r.Ext.recorder.RecordEvent(ctx, "Accounts.AccountBySubject", "NonPrimaryKeyGet", res); err != nil {
+			r.Ext.logger.Warnf("unable to record event, resource:Accounts.AccountBySubject, action:NonPrimaryKeyGet, err:%v", err)
 		}
 	}
 	return res, err
@@ -331,7 +331,7 @@ func (r *RootResolver) innerAccountBySubjectGraphQL(ctx context.Context, args st
 
 	arg0 := args.Subject
 
-	data, err := r.ext.storage.AccountBySubject(r.ext.db, arg0)
+	data, err := r.Ext.storage.AccountBySubject(r.Ext.db, arg0)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.Errorf(`account [`+"%v"+`] not found`, arg0)
@@ -339,13 +339,13 @@ func (r *RootResolver) innerAccountBySubjectGraphQL(ctx context.Context, args st
 		return nil, errors.Wrap(err, `unable to get "public"."account"`)
 	}
 
-	return NewAccountResolver(data, r.ext), nil
+	return NewAccountResolver(data, r.Ext), nil
 
 }
 
 // AccountConnectionResolver defines a GraphQL resolver for AccountConnection
 type AccountConnectionResolver struct {
-	ext ResolverExtensions
+	Ext ResolverExtensions
 
 	data  []*Account
 	count int32
@@ -354,7 +354,7 @@ type AccountConnectionResolver struct {
 // NewAccountConnectionResolver return a GraphQL resolver for AccountConnection
 func NewAccountConnectionResolver(data []*Account, count int, ext ResolverExtensions) *AccountConnectionResolver {
 	return &AccountConnectionResolver{
-		ext:   ext,
+		Ext:   ext,
 		data:  data,
 		count: int32(count),
 	}
@@ -379,7 +379,7 @@ func (r AccountConnectionResolver) Edges() *[]*AccountEdgeResolver {
 	edges := make([]*AccountEdgeResolver, len(r.data))
 
 	for i := range r.data {
-		edges[i] = NewAccountEdgeResolver(r.data[i], r.ext)
+		edges[i] = NewAccountEdgeResolver(r.data[i], r.Ext)
 	}
 	return &edges
 }
@@ -393,28 +393,28 @@ func (r AccountConnectionResolver) TotalCount() *int32 {
 func (r AccountConnectionResolver) Accounts() *[]*AccountResolver {
 	data := make([]*AccountResolver, len(r.data))
 	for i := range r.data {
-		data[i] = NewAccountResolver(r.data[i], r.ext)
+		data[i] = NewAccountResolver(r.data[i], r.Ext)
 	}
 	return &data
 }
 
 // AccountEdgeResolver defines the Account edge
 type AccountEdgeResolver struct {
-	ext  ResolverExtensions
+	Ext  ResolverExtensions
 	node *Account
 }
 
 // NewAccountEdgeResolver return a GraphQL resolver for AccountEdgeResolver
 func NewAccountEdgeResolver(node *Account, ext ResolverExtensions) *AccountEdgeResolver {
 	return &AccountEdgeResolver{
-		ext:  ext,
+		Ext:  ext,
 		node: node,
 	}
 }
 
 // Node returns the Account node
 func (r AccountEdgeResolver) Node() *AccountResolver {
-	return NewAccountResolver(r.node, r.ext)
+	return NewAccountResolver(r.node, r.Ext)
 }
 
 // Cursor returns the cursor
@@ -449,19 +449,19 @@ type DeleteAccountInput struct {
 
 // AllAccounts is a graphQL endpoint of AllAccounts
 func (r *RootResolver) AllAccounts(ctx context.Context, args *AccountQueryArguments) (*AccountConnectionResolver, error) {
-	if r.ext.verifier == nil {
+	if r.Ext.verifier == nil {
 		return nil, errors.New("enable ac, please set verifier")
 	}
-	if err := r.ext.verifier.VerifyAC(ctx, "Accounts", "GetAll", args); err != nil {
+	if err := r.Ext.verifier.VerifyAC(ctx, "Accounts", "GetAll", args); err != nil {
 		return nil, errors.Wrap(err, "Accounts:GetAll")
 	}
 
 	res, err := r.allAccounts(ctx, args)
 
 	// event record
-	if r.ext.recorder != nil {
-		if err := r.ext.recorder.RecordEvent(ctx, "Accounts", "GetAll", res); err != nil {
-			r.ext.logger.Warnf("unable to record event, resource:Accounts, action:GetAll, err:%v", err)
+	if r.Ext.recorder != nil {
+		if err := r.Ext.recorder.RecordEvent(ctx, "Accounts", "GetAll", res); err != nil {
+			r.Ext.logger.Warnf("unable to record event, resource:Accounts, action:GetAll, err:%v", err)
 		}
 	}
 	return res, err
@@ -480,18 +480,18 @@ func (r *RootResolver) allAccounts(ctx context.Context, queryArgs *AccountQueryA
 	}
 	queryArgs.filterArgs = filterArgs
 
-	allAccount, err := r.ext.storage.GetAllAccount(r.ext.db, queryArgs)
+	allAccount, err := r.Ext.storage.GetAllAccount(r.Ext.db, queryArgs)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get Account")
 	}
 
-	count, err := r.ext.storage.CountAllAccount(r.ext.db, queryArgs)
+	count, err := r.Ext.storage.CountAllAccount(r.Ext.db, queryArgs)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get count")
 	}
 
 	return &AccountConnectionResolver{
-		ext:   r.ext,
+		Ext:   r.Ext,
 		data:  allAccount,
 		count: int32(count),
 	}, nil
@@ -499,19 +499,19 @@ func (r *RootResolver) allAccounts(ctx context.Context, queryArgs *AccountQueryA
 
 // InsertAccounts is a graphQL endpoint of InsertAccounts
 func (r *RootResolver) InsertAccounts(ctx context.Context, args struct{ Input []InsertAccountInput }) ([]AccountResolver, error) {
-	if r.ext.verifier == nil {
+	if r.Ext.verifier == nil {
 		return nil, errors.New("enable ac, please set verifier")
 	}
-	if err := r.ext.verifier.VerifyAC(ctx, "Accounts", "Insert", args); err != nil {
+	if err := r.Ext.verifier.VerifyAC(ctx, "Accounts", "Insert", args); err != nil {
 		return nil, errors.Wrap(err, "Accounts:Insert")
 	}
 
 	res, err := r.insertAccountGraphQL(ctx, args.Input)
 
 	// event record
-	if r.ext.recorder != nil {
-		if err := r.ext.recorder.RecordEvent(ctx, "Accounts", "Insert", res); err != nil {
-			r.ext.logger.Warnf("unable to record event, resource:Accounts, action:Insert, err:%v", err)
+	if r.Ext.recorder != nil {
+		if err := r.Ext.recorder.RecordEvent(ctx, "Accounts", "Insert", res); err != nil {
+			r.Ext.logger.Warnf("unable to record event, resource:Accounts, action:Insert, err:%v", err)
 		}
 	}
 	return res, err
@@ -534,29 +534,29 @@ func (r *RootResolver) insertAccountGraphQL(ctx context.Context, items []InsertA
 			ChangedDate: f4,
 			DeletedDate: f5,
 		}
-		if err := r.ext.storage.InsertAccountByFields(r.ext.db, node); err != nil {
+		if err := r.Ext.storage.InsertAccountByFields(r.Ext.db, node); err != nil {
 			return nil, errors.Wrap(err, "unable to insert Account")
 		}
-		results[i] = AccountResolver{ext: r.ext, node: node}
+		results[i] = AccountResolver{Ext: r.Ext, node: node}
 	}
 	return results, nil
 }
 
 // UpdateAccountGraphQL is the GraphQL end point for UpdateAccount
 func (r *RootResolver) UpdateAccounts(ctx context.Context, args struct{ Input []UpdateAccountInput }) ([]AccountResolver, error) {
-	if r.ext.verifier == nil {
+	if r.Ext.verifier == nil {
 		return nil, errors.New("enable ac, please set verifier")
 	}
-	if err := r.ext.verifier.VerifyAC(ctx, "Accounts", "Update", args); err != nil {
+	if err := r.Ext.verifier.VerifyAC(ctx, "Accounts", "Update", args); err != nil {
 		return nil, errors.Wrap(err, "Accounts:Update")
 	}
 
 	res, err := r.updateAccountGraphQL(ctx, args.Input)
 
 	// event record
-	if r.ext.recorder != nil {
-		if err := r.ext.recorder.RecordEvent(ctx, "Accounts", "Update", res); err != nil {
-			r.ext.logger.Warnf("unable to record event, resource:Accounts, action:Update, err:%v", err)
+	if r.Ext.recorder != nil {
+		if err := r.Ext.recorder.RecordEvent(ctx, "Accounts", "Update", res); err != nil {
+			r.Ext.logger.Warnf("unable to record event, resource:Accounts, action:Update, err:%v", err)
 		}
 	}
 	return res, err
@@ -643,33 +643,33 @@ func (r *RootResolver) updateAccountGraphQL(ctx context.Context, items []UpdateA
 			return nil, errors.New("all fields are empty, unable to update")
 		}
 
-		if err := r.ext.storage.UpdateAccountByFields(r.ext.db, node, fields, retCols, params, retVars); err != nil {
+		if err := r.Ext.storage.UpdateAccountByFields(r.Ext.db, node, fields, retCols, params, retVars); err != nil {
 			if err == sql.ErrNoRows {
 				return nil, errors.Errorf(`Account [%d] not found`, node.ID)
 			}
 			return nil, err
 		}
 
-		results[i] = AccountResolver{ext: r.ext, node: node}
+		results[i] = AccountResolver{Ext: r.Ext, node: node}
 	}
 	return results, nil
 }
 
 // DeleteAccountGraphQL is the GraphQL end point for DeleteAccount
 func (r *RootResolver) DeleteAccounts(ctx context.Context, args struct{ Input []DeleteAccountInput }) ([]graphql.ID, error) {
-	if r.ext.verifier == nil {
+	if r.Ext.verifier == nil {
 		return nil, errors.New("enable ac, please set verifier")
 	}
-	if err := r.ext.verifier.VerifyAC(ctx, "Accounts", "Delete", args); err != nil {
+	if err := r.Ext.verifier.VerifyAC(ctx, "Accounts", "Delete", args); err != nil {
 		return nil, errors.Wrap(err, "Accounts:Delete")
 	}
 
 	res, err := r.deleteAccountGraphQL(ctx, args.Input)
 
 	// event record
-	if r.ext.recorder != nil {
-		if err := r.ext.recorder.RecordEvent(ctx, "Accounts", "Delete", res); err != nil {
-			r.ext.logger.Warnf("unable to record event, resource:Accounts, action:Delete, err:%v", err)
+	if r.Ext.recorder != nil {
+		if err := r.Ext.recorder.RecordEvent(ctx, "Accounts", "Delete", res); err != nil {
+			r.Ext.logger.Warnf("unable to record event, resource:Accounts, action:Delete, err:%v", err)
 		}
 	}
 	return res, err
@@ -691,7 +691,7 @@ func (r *RootResolver) deleteAccountGraphQL(ctx context.Context, items []DeleteA
 		inputs[i] = &Account{ID: id}
 	}
 
-	err := r.ext.storage.DeleteAccounts(r.ext.db, inputs)
+	err := r.Ext.storage.DeleteAccounts(r.Ext.db, inputs)
 	if err != nil {
 		return nil, err
 	}

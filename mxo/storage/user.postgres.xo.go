@@ -299,6 +299,7 @@ func (s *PostgresStorage) GetMostRecentUser(db XODB, n int) ([]*User, error) {
 			return nil, err
 		}
 
+		u._exists = true
 		res = append(res, &u)
 	}
 
@@ -331,6 +332,7 @@ func (s *PostgresStorage) GetMostRecentChangedUser(db XODB, n int) ([]*User, err
 			return nil, err
 		}
 
+		u._exists = true
 		res = append(res, &u)
 	}
 
@@ -407,6 +409,7 @@ func (s *PostgresStorage) GetAllUser(db XODB, queryArgs *UserQueryArguments) ([]
 			return nil, err
 		}
 
+		u._exists = true
 		res = append(res, &u)
 	}
 
@@ -492,6 +495,7 @@ func (s *PostgresStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *U
 			return nil, err
 		}
 
+		u._exists = true
 		res = append(res, &u)
 	}
 
