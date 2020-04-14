@@ -135,6 +135,10 @@ func (s *PostgresStorage) UpdateAccount(db XODB, a *Account) error {
 
 // UpdateAccountByFields updates the Account in the database.
 func (s *PostgresStorage) UpdateAccountByFields(db XODB, a *Account, fields, retCols []string, params, retVars []interface{}) error {
+	if len(fields) == 0 {
+		return nil
+	}
+
 	var placeHolders []string
 	var idxvals []interface{}
 	for i := range params {
@@ -146,21 +150,30 @@ func (s *PostgresStorage) UpdateAccountByFields(db XODB, a *Account, fields, ret
 
 	var sqlstr string
 	if len(fields) == 1 {
-		sqlstr = fmt.Sprintf(`UPDATE "public"."account" SET `+
-			strings.Join(fields, ",")+
-			` = `+strings.Join(placeHolders, ",")+
-			` WHERE id = $%d`+
-			` RETURNING `+strings.Join(retCols, ", "), idxvals...)
+		sqlstr = `UPDATE "public"."account" SET ` +
+			strings.Join(fields, ",") +
+			` = ` + strings.Join(placeHolders, ",") +
+			` WHERE id = $%d`
 	} else {
-		sqlstr = fmt.Sprintf(`UPDATE "public"."account" SET (`+
-			strings.Join(fields, ",")+
-			`) = (`+strings.Join(placeHolders, ",")+
-			`) WHERE "id" = $%d`+
-			` RETURNING `+strings.Join(retCols, ", "), idxvals...)
+		sqlstr = `UPDATE "public"."account" SET (` +
+			strings.Join(fields, ",") +
+			`) = (` + strings.Join(placeHolders, ",") +
+			`) WHERE "id" = $%d`
 	}
-	s.info(sqlstr, params)
-	if err := db.QueryRow(sqlstr, params...).Scan(retVars...); err != nil {
-		return err
+
+	if len(retCols) > 0 {
+		sqlstr = " RETURNING " + strings.Join(retCols, ", ")
+		sqlstr = fmt.Sprintf(sqlstr, idxvals...)
+		s.info(sqlstr, params)
+		if err := db.QueryRow(sqlstr, params...).Scan(retVars...); err != nil {
+			return err
+		}
+	} else {
+		sqlstr = fmt.Sprintf(sqlstr, idxvals...)
+		s.info(sqlstr, params)
+		if _, err := db.Exec(sqlstr, params...); err != nil {
+			return err
+		}
 	}
 
 	return nil

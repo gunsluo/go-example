@@ -139,6 +139,10 @@ func (s *GodrorStorage) UpdateAccount(db XODB, a *Account) error {
 
 // UpdateAccountByFields updates the Account in the database.
 func (s *GodrorStorage) UpdateAccountByFields(db XODB, a *Account, fields, retCols []string, params, retVars []interface{}) error {
+	if len(fields) == 0 {
+		return nil
+	}
+
 	var setstr string
 	var idxvals []interface{}
 	for i, field := range fields {
@@ -158,9 +162,11 @@ func (s *GodrorStorage) UpdateAccountByFields(db XODB, a *Account, fields, retCo
 		return err
 	}
 
-	err := db.QueryRow(`SELECT `+strings.Join(retCols, ",")+` from "AC"."account" WHERE "id" = :1`, a.ID).Scan(retVars...)
-	if err != nil {
-		return err
+	if len(retCols) > 0 {
+		err := db.QueryRow(`SELECT `+strings.Join(retCols, ",")+` from "AC"."account" WHERE "id" = :1`, a.ID).Scan(retVars...)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

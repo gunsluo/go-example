@@ -133,6 +133,10 @@ func (s *MssqlStorage) UpdateAccount(db XODB, a *Account) error {
 
 // UpdateAccountByFields updates the Account in the database.
 func (s *MssqlStorage) UpdateAccountByFields(db XODB, a *Account, fields, retCols []string, params, retVars []interface{}) error {
+	if len(fields) == 0 {
+		return nil
+	}
+
 	var setstr string
 	var idxvals []interface{}
 	for i, field := range fields {

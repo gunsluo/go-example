@@ -78,26 +78,12 @@ func main() {
 		return
 	}
 
-	url, err := fixOralceDSN(dsn)
+	u, err := dburl.Parse(dsn)
 	if err != nil {
 		panic(err)
 	}
 
-	fn(url.Driver, url.DSN)
-}
-
-func fixOralceDSN(dsn string) (*dburl.URL, error) {
-	url, err := dburl.Parse(dsn)
-	if err != nil {
-		return nil, err
-	}
-
-	// fix oracle
-	if strings.HasPrefix(dsn, "oracle://") {
-		url.DSN = dsn[9:]
-	}
-
-	return url, nil
+	fn(u.Driver, u.DSN)
 }
 
 func testStoage(driver, dsn string) {
@@ -141,6 +127,27 @@ func testStoageAndDB(s storage.Storager, db *sqlx.DB) {
 
 	account.Subject = "luoji1"
 	err = s.UpsertAccount(db, account)
+	if err != nil {
+		panic(err)
+	}
+
+	account2 := &storage.Account{
+		Subject:     "luoji2",
+		Email:       "mock",
+		CreatedDate: sql.NullTime{Time: time.Now(), Valid: true},
+		ChangedDate: sql.NullTime{Time: time.Now(), Valid: true},
+		DeletedDate: sql.NullTime{Time: time.Now(), Valid: true},
+	}
+	err = s.InsertAccountByFields(db, account2)
+	if err != nil {
+		panic(err)
+	}
+
+	var fields = []string{`"email"`}
+	var retCols []string
+	var params = []interface{}{"luoji2@gamil.com"}
+	var retVars []interface{}
+	err = s.UpdateAccountByFields(db, account2, fields, retCols, params, retVars)
 	if err != nil {
 		panic(err)
 	}
@@ -237,6 +244,11 @@ func testStoageAndDB(s storage.Storager, db *sqlx.DB) {
 	fmt.Printf("delete user: %v\n", err)
 
 	err = s.DeleteAccount(db, account)
+	if err != nil {
+		panic(err)
+	}
+
+	err = s.DeleteAccount(db, account2)
 	if err != nil {
 		panic(err)
 	}

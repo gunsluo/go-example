@@ -137,6 +137,10 @@ func (s *MssqlStorage) UpdateUser(db XODB, u *User) error {
 
 // UpdateUserByFields updates the User in the database.
 func (s *MssqlStorage) UpdateUserByFields(db XODB, u *User, fields, retCols []string, params, retVars []interface{}) error {
+	if len(fields) == 0 {
+		return nil
+	}
+
 	var setstr string
 	var idxvals []interface{}
 	for i, field := range fields {
