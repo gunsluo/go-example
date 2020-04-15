@@ -28,9 +28,9 @@ func main() {
 		Email:   "luoji@gmail.com",
 		//Name:    "abc",
 		//Label:   sql.NullString{String: "bcd", Valid: true},
-		Name: "",
-		//Label: sql.NullString{String: "", Valid: true},
-		Label: sql.NullString{Valid: false},
+		Name:  "",
+		Label: sql.NullString{String: "", Valid: true},
+		//Label: sql.NullString{Valid: false},
 	}
 	err = InsertAccount(db, a)
 	//err = InsertAccountByFields(db, a)
@@ -177,24 +177,21 @@ func AccountByID(db *sql.DB, id int) (*Account, error) {
 	}
 
 	//var subject, email, name string
-	//var label sql.NullString
-
-	var subject, email, name OracleString
-	var label OracleNullString
-	err = db.QueryRow(sqlstr, id).Scan(&a.ID, &subject, &email, &name, &label, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
+	//var label OracleNullString
+	err = db.QueryRow(sqlstr, id).Scan(&a.ID, &a.Subject, &a.Email, &a.Name, &a.Label, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
 	if err != nil {
 		return nil, err
 	}
 
-	a.Subject = string(subject)
-	a.Email = string(email)
-	a.Name = string(name)
-	a.Label = label.NullString()
-	//a.Label.String, a.Label.Valid = label.String, label.Valid
+	fixOracleEmptyString(&a.Subject)
+	fixOracleEmptyString(&a.Email)
+	fixOracleEmptyString(&a.Name)
+	fixOracleNullString(&a.Label)
 
 	return &a, nil
 }
 
+/*
 type OracleString string
 
 func (s *OracleString) Scan(value interface{}) error {
@@ -211,28 +208,46 @@ func (s *OracleString) Scan(value interface{}) error {
 	return nil
 }
 
-type OracleNullString string
+type OracleNullString struct {
+	String string
+	Valid  bool
+}
 
-func (s *OracleNullString) Scan(value interface{}) error {
+func (ns *OracleNullString) Scan(value interface{}) error {
 	switch v := value.(type) {
 	case string:
-		*s = OracleNullString(v)
+		if v != "" {
+			ns.Valid = true
+			if v != ORALCE_EMPTY_STRING {
+				ns.String = v
+			}
+		}
 	default:
 	}
 
 	return nil
 }
+*/
 
-func (s OracleNullString) NullString() sql.NullString {
-	if s == "" {
-		return sql.NullString{}
+func fixOracleEmptyString(s *string) {
+	if *s == ORALCE_EMPTY_STRING {
+		*s = ""
+	}
+}
+
+func fixOracleNullString(ns *sql.NullString) {
+	if ns == nil || !ns.Valid {
+		return
 	}
 
-	if s == ORALCE_EMPTY_STRING {
-		return sql.NullString{Valid: true}
+	if ns.String == "" {
+		ns.Valid = false
+		return
 	}
 
-	return sql.NullString{String: string(s), Valid: true}
+	if ns.String == ORALCE_EMPTY_STRING {
+		ns.String = ""
+	}
 }
 
 func convertOracleEmptyString(s string) string {
