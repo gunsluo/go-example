@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# ca_certificate.pem
+# private/ca_private_key.pem
+# server/server_certificate.pem
+# server/private_key.pem
+# client/client_certificate.pem
+# client/private_key.pem
+
+mkdir testca certs private
+chmod 700 private
+echo 01 > serial
+touch index.txt
+
+export hostname=localhost
+echo "openssl req -new -key private_key.pem -out req.pem -outform PEM -subj /CN=$hostname/O=server/ -nodes"
+# ca
+echo "general ca cert..."
+openssl req -x509 -config openssl.cnf -newkey rsa:2048 -days 365 -out ca_certificate.pem -outform PEM -subj /CN=MyTestCA/ -nodes
+openssl x509 -in ca_certificate.pem -out ca_certificate.cer -outform DER
+
+# server cert
+echo "general server cert..."
+mkdir server
+cd server
+openssl genrsa -out private_key.pem 2048
+openssl req -new -key private_key.pem -out req.pem -outform PEM -subj /CN=$hostname/O=server/ -nodes
+cd ..
+openssl ca -config openssl.cnf -in ./server/req.pem -out ./server/server_certificate.pem -notext -batch -extensions server_ca_extensions
+cd server
+openssl pkcs12 -export -out server_certificate.p12 -in server_certificate.pem -inkey private_key.pem -passout pass:MySecretPassword
+cd ..
+
+# client cert
+echo "general client cert..."
+mkdir client
+cd client
+openssl genrsa -out private_key.pem 2048
+openssl req -new -key private_key.pem -out req.pem -outform PEM -subj /CN=$hostname/O=client/ -nodes
+cd ..
+openssl ca -config openssl.cnf -in ./client/req.pem -out ./client/client_certificate.pem -notext -batch -extensions client_ca_extensions
+cd client
+openssl pkcs12 -export -out client_certificate.p12 -in client_certificate.pem -inkey private_key.pem -passout pass:MySecretPassword

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+rm -f *.cer *.pem index.* serial*
+rm -rf testca certs private client server

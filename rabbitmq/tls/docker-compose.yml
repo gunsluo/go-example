@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+  rabbitmq:
+    image: itzg/rabbitmq-stomp
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_SSL_CACERTFILE: /rabbitmq/certs/ca_certificate.pem
+      RABBITMQ_SSL_CERTFILE: /rabbitmq/certs/server/server_certificate.pem
+      RABBITMQ_SSL_KEYFILE: /rabbitmq/certs/server/private_key.pem
+      RABBITMQ_SSL_FAIL_IF_NO_PEER_CERT: "true"
+      RABBITMQ_SSL_VERIFY: verify_peer
+    volumes:
+      - ./certs:/rabbitmq/certs
+    ports:
+      - 5671:5671
+      - 15671:15671
+      - 61613:61613
+
