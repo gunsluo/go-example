@@ -16,11 +16,6 @@ import (
 func (s *GodrorStorage) InsertUser(db XODB, u *User) error {
 	var err error
 
-	// if already exist, bail
-	if u._exists {
-		return errors.New("insert failed: already exists")
-	}
-
 	// sql insert query, primary key provided by sequence
 	const sqlstr = `INSERT INTO "AC"."user" (` +
 		`"subject", "name", "created_date", "changed_date", "deleted_date"` +
@@ -30,13 +25,10 @@ func (s *GodrorStorage) InsertUser(db XODB, u *User) error {
 
 	// run query
 	s.info(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate)
-	_, err = db.Exec(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate, sql.Out{Dest: &u.ID})
+	_, err = db.Exec(sqlstr, RealOracleEmptyString(u.Subject), RealOracleNullString(u.Name), u.CreatedDate, u.ChangedDate, u.DeletedDate, sql.Out{Dest: &u.ID})
 	if err != nil {
 		return err
 	}
-
-	// set existence
-	u._exists = true
 
 	return nil
 }
@@ -53,35 +45,45 @@ func (s *GodrorStorage) InsertUserByFields(db XODB, u *User) error {
 	retVars = append(retVars, sql.Out{Dest: &u.ID})
 
 	fields = append(fields, `"subject"`)
-	params = append(params, u.Subject)
+	params = append(params, RealOracleEmptyString(u.Subject))
+
 	if u.Name.Valid {
 		fields = append(fields, `"name"`)
-		params = append(params, u.Name)
+		params = append(params, RealOracleNullString(u.Name))
+
 	} else {
 		retFields = append(retFields, `"name"`)
-		retVars = append(retVars, sql.Out{Dest: &u.Name})
+		retVars = append(retVars, sql.Out{Dest: &u.Name.String})
+
 	}
 	if u.CreatedDate.Valid {
 		fields = append(fields, `"created_date"`)
 		params = append(params, u.CreatedDate)
+
 	} else {
 		retFields = append(retFields, `"created_date"`)
 		retVars = append(retVars, sql.Out{Dest: &u.CreatedDate})
+
 	}
 	if u.ChangedDate.Valid {
 		fields = append(fields, `"changed_date"`)
 		params = append(params, u.ChangedDate)
+
 	} else {
 		retFields = append(retFields, `"changed_date"`)
 		retVars = append(retVars, sql.Out{Dest: &u.ChangedDate})
+
 	}
 	if u.DeletedDate.Valid {
 		fields = append(fields, `"deleted_date"`)
 		params = append(params, u.DeletedDate)
+
 	} else {
 		retFields = append(retFields, `"deleted_date"`)
 		retVars = append(retVars, sql.Out{Dest: &u.DeletedDate})
+
 	}
+
 	if len(params) == 0 {
 		// FIXME(jackie): maybe we should allow this?
 		return errors.New("all fields are empty, unable to insert")
@@ -109,9 +111,11 @@ func (s *GodrorStorage) InsertUserByFields(db XODB, u *User) error {
 	if err != nil {
 		return err
 	}
+	FixRealOracleEmptyString(&u.Subject)
 
-	// set existence
-	u._exists = true
+	if !u.Name.Valid {
+		FixRealOracleNullString(&u.Name)
+	}
 
 	return nil
 }
@@ -120,16 +124,6 @@ func (s *GodrorStorage) InsertUserByFields(db XODB, u *User) error {
 func (s *GodrorStorage) UpdateUser(db XODB, u *User) error {
 	var err error
 
-	// if doesn't exist, bail
-	if !u._exists {
-		return errors.New("update failed: does not exist")
-	}
-
-	// if deleted, bail
-	if u._deleted {
-		return errors.New("update failed: marked for deletion")
-	}
-
 	// sql query
 	const sqlstr = `UPDATE "AC"."user" SET ` +
 		`"subject" = :1, "name" = :2, "created_date" = :3, "changed_date" = :4, "deleted_date" = :5` +
@@ -137,7 +131,7 @@ func (s *GodrorStorage) UpdateUser(db XODB, u *User) error {
 
 	// run query
 	s.info(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate, u.ID)
-	_, err = db.Exec(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate, u.ID)
+	_, err = db.Exec(sqlstr, RealOracleEmptyString(u.Subject), RealOracleNullString(u.Name), u.CreatedDate, u.ChangedDate, u.DeletedDate, u.ID)
 	return err
 }
 
@@ -147,29 +141,55 @@ func (s *GodrorStorage) UpdateUserByFields(db XODB, u *User, fields, retCols []s
 		return nil
 	}
 
+	if len(fields) != len(params) {
+		return errors.New("fields length is not equal params length")
+	}
+
+	if len(retCols) != len(retVars) {
+		return errors.New("retCols length is not equal retVars length")
+	}
+
 	var setstr string
 	var idxvals []interface{}
+	var oparams []interface{}
 	for i, field := range fields {
 		if i != 0 {
 			setstr += ", "
 		}
 		setstr += field + ` = :%d`
 		idxvals = append(idxvals, i+1)
-	}
+		switch v := (params[i]).(type) {
+		case string:
+			oparams = append(oparams, RealOracleEmptyString(v))
+		case sql.NullString:
+			oparams = append(oparams, RealOracleNullString(v))
+		default:
+			oparams = append(oparams, v)
+		}
 
-	params = append(params, u.ID)
-	idxvals = append(idxvals, len(params))
-	var sqlstr = fmt.Sprintf(`UPDATE "AC"."user" SET `+
-		setstr+` WHERE "id" = :%d`, idxvals...)
-	s.info(sqlstr, params)
-	if _, err := db.Exec(sqlstr, params...); err != nil {
+	}
+	id := u.ID
+
+	oparams = append(oparams, id)
+	idxvals = append(idxvals, len(oparams))
+	var sqlstr = fmt.Sprintf(`UPDATE "AC"."user" SET `+setstr+` WHERE "id" = :%d`, idxvals...)
+	s.info(sqlstr, params, id)
+	if _, err := db.Exec(sqlstr, oparams...); err != nil {
 		return err
 	}
 
 	if len(retCols) > 0 {
-		err := db.QueryRow(`SELECT `+strings.Join(retCols, ",")+` from "AC"."user" WHERE "id" = :1`, u.ID).Scan(retVars...)
+		err := db.QueryRow(`SELECT `+strings.Join(retCols, ",")+` from "AC"."user" WHERE "id" = :1`, id).Scan(retVars...)
 		if err != nil {
 			return err
+		}
+		for _, val := range retVars {
+			switch v := val.(type) {
+			case *string:
+				FixRealOracleEmptyString(v)
+			case *sql.NullString:
+				FixRealOracleNullString(v)
+			}
 		}
 	}
 
@@ -178,9 +198,6 @@ func (s *GodrorStorage) UpdateUserByFields(db XODB, u *User, fields, retCols []s
 
 // SaveUser saves the User to the database.
 func (s *GodrorStorage) SaveUser(db XODB, u *User) error {
-	if u.Exists() {
-		return s.UpdateUser(db, u)
-	}
 
 	return s.InsertUser(db, u)
 }
@@ -199,13 +216,10 @@ func (s *GodrorStorage) UpsertUser(db XODB, u *User) error {
 
 	// run query
 	s.info(sqlstr, u.ID, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate)
-	_, err = db.Exec(sqlstr, u.ID, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate)
+	_, err = db.Exec(sqlstr, u.ID, RealOracleEmptyString(u.Subject), RealOracleNullString(u.Name), u.CreatedDate, u.ChangedDate, u.DeletedDate)
 	if err != nil {
 		return err
 	}
-
-	// set existence
-	u._exists = true
 
 	return nil
 }
@@ -213,16 +227,6 @@ func (s *GodrorStorage) UpsertUser(db XODB, u *User) error {
 // DeleteUser deletes the User from the database.
 func (s *GodrorStorage) DeleteUser(db XODB, u *User) error {
 	var err error
-
-	// if doesn't exist, bail
-	if !u._exists {
-		return nil
-	}
-
-	// if deleted, bail
-	if u._deleted {
-		return nil
-	}
 
 	// sql query
 	const sqlstr = `DELETE FROM "AC"."user" WHERE "id" = :1`
@@ -233,9 +237,6 @@ func (s *GodrorStorage) DeleteUser(db XODB, u *User) error {
 	if err != nil {
 		return err
 	}
-
-	// set deleted
-	u._deleted = true
 
 	return nil
 }
@@ -268,11 +269,6 @@ func (s *GodrorStorage) DeleteUsers(db XODB, us []*User) error {
 		return err
 	}
 
-	// set deleted
-	for _, u := range us {
-		u._deleted = true
-	}
-
 	return nil
 }
 
@@ -301,8 +297,10 @@ func (s *GodrorStorage) GetMostRecentUser(db XODB, n int) ([]*User, error) {
 		if err != nil {
 			return nil, err
 		}
+		FixRealOracleEmptyString(&u.Subject)
 
-		u._exists = true
+		FixRealOracleNullString(&u.Name)
+
 		res = append(res, &u)
 	}
 
@@ -334,8 +332,10 @@ func (s *GodrorStorage) GetMostRecentChangedUser(db XODB, n int) ([]*User, error
 		if err != nil {
 			return nil, err
 		}
+		FixRealOracleEmptyString(&u.Subject)
 
-		u._exists = true
+		FixRealOracleNullString(&u.Name)
+
 		res = append(res, &u)
 	}
 
@@ -411,8 +411,10 @@ func (s *GodrorStorage) GetAllUser(db XODB, queryArgs *UserQueryArguments) ([]*U
 		if err != nil {
 			return nil, err
 		}
+		FixRealOracleEmptyString(&u.Subject)
 
-		u._exists = true
+		FixRealOracleNullString(&u.Name)
+
 		res = append(res, &u)
 	}
 
@@ -497,8 +499,10 @@ func (s *GodrorStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *Use
 		if err != nil {
 			return nil, err
 		}
+		FixRealOracleEmptyString(&u.Subject)
 
-		u._exists = true
+		FixRealOracleNullString(&u.Name)
+
 		res = append(res, &u)
 	}
 
@@ -553,14 +557,15 @@ func (s *GodrorStorage) UserByID(db XODB, id int) (*User, error) {
 
 	// run query
 	s.info(sqlstr, id)
-	u := User{
-		_exists: true,
-	}
+	u := User{}
 
 	err = db.QueryRow(sqlstr, id).Scan(&u.ID, &u.Subject, &u.Name, &u.CreatedDate, &u.ChangedDate, &u.DeletedDate)
 	if err != nil {
 		return nil, err
 	}
+	FixRealOracleEmptyString(&u.Subject)
+
+	FixRealOracleNullString(&u.Name)
 
 	return &u, nil
 }

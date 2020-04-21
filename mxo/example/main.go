@@ -108,6 +108,8 @@ func testStoageAndDB(s storage.Storager, db *sqlx.DB) {
 	account := &storage.Account{
 		Subject:     "luoji",
 		Email:       "mock",
+		Name:        "",
+		Label:       sql.NullString{},
 		CreatedDate: sql.NullTime{Time: time.Now(), Valid: true},
 		ChangedDate: sql.NullTime{Time: time.Now(), Valid: true},
 		//DeletedDate: time.Now(),
@@ -124,16 +126,20 @@ func testStoageAndDB(s storage.Storager, db *sqlx.DB) {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Printf("update account: id=%d, err=%v\n", account.ID, err)
 
 	account.Subject = "luoji1"
 	err = s.UpsertAccount(db, account)
 	if err != nil {
 		panic(err)
 	}
+	fmt.Printf("upsert account: id=%d, err=%v\n", account.ID, err)
 
 	account2 := &storage.Account{
 		Subject:     "luoji2",
 		Email:       "mock",
+		Name:        "",
+		Label:       sql.NullString{Valid: true},
 		CreatedDate: sql.NullTime{Time: time.Now(), Valid: true},
 		ChangedDate: sql.NullTime{Time: time.Now(), Valid: true},
 		DeletedDate: sql.NullTime{Time: time.Now(), Valid: true},
@@ -142,15 +148,17 @@ func testStoageAndDB(s storage.Storager, db *sqlx.DB) {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Printf("insert account by fields: id=%d, err=%v\n", account2.ID, err)
 
-	var fields = []string{`"email"`}
-	var retCols []string
-	var params = []interface{}{"luoji2@gamil.com"}
-	var retVars []interface{}
+	var fields = []string{`"email"`, `"name"`, `"label"`}
+	var retCols = []string{`"name"`, `"label"`}
+	var params = []interface{}{"luoji2@gamil.com", "", sql.NullString{}}
+	var retVars = []interface{}{&account2.Name, &account2.Label}
 	err = s.UpdateAccountByFields(db, account2, fields, retCols, params, retVars)
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("query account: ", account2.ID, account2.Name, account2.Label.String, account2.Label.Valid)
 
 	user := &storage.User{
 		Subject:     account.Subject,
@@ -181,7 +189,13 @@ func testStoageAndDB(s storage.Storager, db *sqlx.DB) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("query account: %v\n", a)
+	fmt.Println("query account: ", a.ID, a.Name, a.Label.String, a.Label.Valid, a.CreatedDate, a.ChangedDate, a.DeletedDate)
+
+	a, err = s.AccountByID(db, account2.ID)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("query account: ", a.ID, a.Name, a.Label.String, a.Label.Valid, a.CreatedDate, a.ChangedDate, a.DeletedDate)
 
 	a, err = s.AccountBySubject(db, account.Subject)
 	if err != nil {

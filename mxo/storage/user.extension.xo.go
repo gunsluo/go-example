@@ -145,14 +145,14 @@ func (r UserResolver) Node() *User {
 }
 func (r UserResolver) ID() graphql.ID { return graphql.ID(strconv.Itoa(r.node.ID)) }
 func (r UserResolver) Subject(ctx context.Context) (*AccountResolver, error) {
-	if r.Ext.verifier == nil {
+	if r.Ext.Verifier == nil {
 		return nil, errors.New("enable ac, please set verifier")
 	}
-	if err := r.Ext.verifier.VerifyRefAC(ctx, "Users", "RefGet", r); err != nil {
+	if err := r.Ext.Verifier.VerifyRefAC(ctx, "Users", "RefGet", r); err != nil {
 		return nil, errors.Wrap(err, "Users:RefGet")
 	}
 	subject := r.node.Subject
-	node, err := r.Ext.storage.AccountBySubject(r.Ext.db, subject)
+	node, err := r.Ext.Storage.AccountBySubject(r.Ext.DB, subject)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to retrieve Subject")
 	}
@@ -167,19 +167,19 @@ func (r UserResolver) DeletedDate() *graphql.Time { return PointerGqlTime(r.node
 func (r *RootResolver) UserByID(ctx context.Context, args struct {
 	ID graphql.ID
 }) (*UserResolver, error) {
-	if r.Ext.verifier == nil {
+	if r.Ext.Verifier == nil {
 		return nil, errors.New("enable ac, please set verifier")
 	}
-	if err := r.Ext.verifier.VerifyAC(ctx, "Users", "Get", args); err != nil {
+	if err := r.Ext.Verifier.VerifyAC(ctx, "Users", "Get", args); err != nil {
 		return nil, errors.Wrap(err, "Users:Get")
 	}
 
 	res, err := r.innerUserByIDGraphQL(ctx, args)
 
 	// event record
-	if r.Ext.recorder != nil {
-		if err := r.Ext.recorder.RecordEvent(ctx, "Users", "Get", res); err != nil {
-			r.Ext.logger.Warnf("unable to record event, resource:Users, action:Get, err:%v", err)
+	if r.Ext.Recorder != nil {
+		if err := r.Ext.Recorder.RecordEvent(ctx, "Users", "Get", res); err != nil {
+			r.Ext.Logger.Warnf("unable to record event, resource:Users, action:Get, err:%v", err)
 		}
 	}
 	return res, err
@@ -196,7 +196,7 @@ func (r *RootResolver) innerUserByIDGraphQL(ctx context.Context, args struct {
 		return nil, errors.Wrap(err, `ID should be integer`)
 	}
 
-	data, err := r.Ext.storage.UserByID(r.Ext.db, arg0)
+	data, err := r.Ext.Storage.UserByID(r.Ext.DB, arg0)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.Errorf(`user [`+"%v"+`] not found`, arg0)
@@ -314,19 +314,19 @@ type DeleteUserInput struct {
 
 // AllUsers is a graphQL endpoint of AllUsers
 func (r *RootResolver) AllUsers(ctx context.Context, args *UserQueryArguments) (*UserConnectionResolver, error) {
-	if r.Ext.verifier == nil {
+	if r.Ext.Verifier == nil {
 		return nil, errors.New("enable ac, please set verifier")
 	}
-	if err := r.Ext.verifier.VerifyAC(ctx, "Users", "GetAll", args); err != nil {
+	if err := r.Ext.Verifier.VerifyAC(ctx, "Users", "GetAll", args); err != nil {
 		return nil, errors.Wrap(err, "Users:GetAll")
 	}
 
 	res, err := r.allUsers(ctx, args)
 
 	// event record
-	if r.Ext.recorder != nil {
-		if err := r.Ext.recorder.RecordEvent(ctx, "Users", "GetAll", res); err != nil {
-			r.Ext.logger.Warnf("unable to record event, resource:Users, action:GetAll, err:%v", err)
+	if r.Ext.Recorder != nil {
+		if err := r.Ext.Recorder.RecordEvent(ctx, "Users", "GetAll", res); err != nil {
+			r.Ext.Logger.Warnf("unable to record event, resource:Users, action:GetAll, err:%v", err)
 		}
 	}
 	return res, err
@@ -339,12 +339,12 @@ func (r *RootResolver) allUsers(ctx context.Context, queryArgs *UserQueryArgumen
 
 	queryArgs = ApplyUserQueryArgsDefaults(queryArgs)
 
-	allUser, err := r.Ext.storage.GetAllUser(r.Ext.db, queryArgs)
+	allUser, err := r.Ext.Storage.GetAllUser(r.Ext.DB, queryArgs)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get User")
 	}
 
-	count, err := r.Ext.storage.CountAllUser(r.Ext.db, queryArgs)
+	count, err := r.Ext.Storage.CountAllUser(r.Ext.DB, queryArgs)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to get count")
 	}
@@ -358,19 +358,19 @@ func (r *RootResolver) allUsers(ctx context.Context, queryArgs *UserQueryArgumen
 
 // InsertUsers is a graphQL endpoint of InsertUsers
 func (r *RootResolver) InsertUsers(ctx context.Context, args struct{ Input []InsertUserInput }) ([]UserResolver, error) {
-	if r.Ext.verifier == nil {
+	if r.Ext.Verifier == nil {
 		return nil, errors.New("enable ac, please set verifier")
 	}
-	if err := r.Ext.verifier.VerifyAC(ctx, "Users", "Insert", args); err != nil {
+	if err := r.Ext.Verifier.VerifyAC(ctx, "Users", "Insert", args); err != nil {
 		return nil, errors.Wrap(err, "Users:Insert")
 	}
 
 	res, err := r.insertUserGraphQL(ctx, args.Input)
 
 	// event record
-	if r.Ext.recorder != nil {
-		if err := r.Ext.recorder.RecordEvent(ctx, "Users", "Insert", res); err != nil {
-			r.Ext.logger.Warnf("unable to record event, resource:Users, action:Insert, err:%v", err)
+	if r.Ext.Recorder != nil {
+		if err := r.Ext.Recorder.RecordEvent(ctx, "Users", "Insert", res); err != nil {
+			r.Ext.Logger.Warnf("unable to record event, resource:Users, action:Insert, err:%v", err)
 		}
 	}
 	return res, err
@@ -393,7 +393,7 @@ func (r *RootResolver) insertUserGraphQL(ctx context.Context, items []InsertUser
 			ChangedDate: f4,
 			DeletedDate: f5,
 		}
-		if err := r.Ext.storage.InsertUserByFields(r.Ext.db, node); err != nil {
+		if err := r.Ext.Storage.InsertUserByFields(r.Ext.DB, node); err != nil {
 			return nil, errors.Wrap(err, "unable to insert User")
 		}
 		results[i] = UserResolver{Ext: r.Ext, node: node}
@@ -403,19 +403,19 @@ func (r *RootResolver) insertUserGraphQL(ctx context.Context, items []InsertUser
 
 // UpdateUserGraphQL is the GraphQL end point for UpdateUser
 func (r *RootResolver) UpdateUsers(ctx context.Context, args struct{ Input []UpdateUserInput }) ([]UserResolver, error) {
-	if r.Ext.verifier == nil {
+	if r.Ext.Verifier == nil {
 		return nil, errors.New("enable ac, please set verifier")
 	}
-	if err := r.Ext.verifier.VerifyAC(ctx, "Users", "Update", args); err != nil {
+	if err := r.Ext.Verifier.VerifyAC(ctx, "Users", "Update", args); err != nil {
 		return nil, errors.Wrap(err, "Users:Update")
 	}
 
 	res, err := r.updateUserGraphQL(ctx, args.Input)
 
 	// event record
-	if r.Ext.recorder != nil {
-		if err := r.Ext.recorder.RecordEvent(ctx, "Users", "Update", res); err != nil {
-			r.Ext.logger.Warnf("unable to record event, resource:Users, action:Update, err:%v", err)
+	if r.Ext.Recorder != nil {
+		if err := r.Ext.Recorder.RecordEvent(ctx, "Users", "Update", res); err != nil {
+			r.Ext.Logger.Warnf("unable to record event, resource:Users, action:Update, err:%v", err)
 		}
 	}
 	return res, err
@@ -503,7 +503,7 @@ func (r *RootResolver) updateUserGraphQL(ctx context.Context, items []UpdateUser
 			return nil, errors.New("all fields are empty, unable to update")
 		}
 
-		if err := r.Ext.storage.UpdateUserByFields(r.Ext.db, node, fields, retCols, params, retVars); err != nil {
+		if err := r.Ext.Storage.UpdateUserByFields(r.Ext.DB, node, fields, retCols, params, retVars); err != nil {
 			if err == sql.ErrNoRows {
 				return nil, errors.Errorf(`User [%d] not found`, node.ID)
 			}
@@ -517,19 +517,19 @@ func (r *RootResolver) updateUserGraphQL(ctx context.Context, items []UpdateUser
 
 // DeleteUserGraphQL is the GraphQL end point for DeleteUser
 func (r *RootResolver) DeleteUsers(ctx context.Context, args struct{ Input []DeleteUserInput }) ([]graphql.ID, error) {
-	if r.Ext.verifier == nil {
+	if r.Ext.Verifier == nil {
 		return nil, errors.New("enable ac, please set verifier")
 	}
-	if err := r.Ext.verifier.VerifyAC(ctx, "Users", "Delete", args); err != nil {
+	if err := r.Ext.Verifier.VerifyAC(ctx, "Users", "Delete", args); err != nil {
 		return nil, errors.Wrap(err, "Users:Delete")
 	}
 
 	res, err := r.deleteUserGraphQL(ctx, args.Input)
 
 	// event record
-	if r.Ext.recorder != nil {
-		if err := r.Ext.recorder.RecordEvent(ctx, "Users", "Delete", res); err != nil {
-			r.Ext.logger.Warnf("unable to record event, resource:Users, action:Delete, err:%v", err)
+	if r.Ext.Recorder != nil {
+		if err := r.Ext.Recorder.RecordEvent(ctx, "Users", "Delete", res); err != nil {
+			r.Ext.Logger.Warnf("unable to record event, resource:Users, action:Delete, err:%v", err)
 		}
 	}
 	return res, err
@@ -551,7 +551,7 @@ func (r *RootResolver) deleteUserGraphQL(ctx context.Context, items []DeleteUser
 		inputs[i] = &User{ID: id}
 	}
 
-	err := r.Ext.storage.DeleteUsers(r.Ext.db, inputs)
+	err := r.Ext.Storage.DeleteUsers(r.Ext.DB, inputs)
 	if err != nil {
 		return nil, err
 	}

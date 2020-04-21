@@ -15,27 +15,19 @@ import (
 func (s *MssqlStorage) InsertAccount(db XODB, a *Account) error {
 	var err error
 
-	// if already exist, bail
-	if a._exists {
-		return errors.New("insert failed: already exists")
-	}
-
 	// sql insert query, primary key provided by identity
 	const sqlstr = `INSERT INTO "dbo"."account" (` +
-		`"subject", "email", "created_date", "changed_date", "deleted_date"` +
+		`"subject", "email", "name", "label", "created_date", "changed_date", "deleted_date"` +
 		`) OUTPUT INSERTED.ID VALUES (` +
-		`$1, $2, $3, $4, $5` +
+		`$1, $2, $3, $4, $5, $6, $7` +
 		`)`
 
 	// run query
-	s.info(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
-	err = db.QueryRow(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate).Scan(&a.ID)
+	s.info(sqlstr, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate)
+	err = db.QueryRow(sqlstr, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate).Scan(&a.ID)
 	if err != nil {
 		return err
 	}
-
-	// set primary key and existence
-	a._exists = true
 
 	return nil
 }
@@ -44,10 +36,10 @@ func (s *MssqlStorage) InsertAccount(db XODB, a *Account) error {
 func (s *MssqlStorage) InsertAccountByFields(db XODB, a *Account) error {
 	var err error
 
-	params := make([]interface{}, 0, 5)
-	fields := make([]string, 0, 5)
+	params := make([]interface{}, 0, 7)
+	fields := make([]string, 0, 7)
 	retCols := `INSERTED."id"`
-	retVars := make([]interface{}, 0, 5)
+	retVars := make([]interface{}, 0, 7)
 	retVars = append(retVars, &a.ID)
 
 	fields = append(fields, `"subject"`)
@@ -55,6 +47,16 @@ func (s *MssqlStorage) InsertAccountByFields(db XODB, a *Account) error {
 
 	fields = append(fields, `"email"`)
 	params = append(params, a.Email)
+
+	fields = append(fields, `"name"`)
+	params = append(params, a.Name)
+	if a.Label.Valid {
+		fields = append(fields, `"label"`)
+		params = append(params, a.Label)
+	} else {
+		retCols += `, INSERTED."label"`
+		retVars = append(retVars, &a.Label)
+	}
 	if a.CreatedDate.Valid {
 		fields = append(fields, `"created_date"`)
 		params = append(params, a.CreatedDate)
@@ -100,9 +102,6 @@ func (s *MssqlStorage) InsertAccountByFields(db XODB, a *Account) error {
 		return err
 	}
 
-	// set existence
-	a._exists = true
-
 	return nil
 }
 
@@ -110,24 +109,14 @@ func (s *MssqlStorage) InsertAccountByFields(db XODB, a *Account) error {
 func (s *MssqlStorage) UpdateAccount(db XODB, a *Account) error {
 	var err error
 
-	// if doesn't exist, bail
-	if !a._exists {
-		return errors.New("update failed: does not exist")
-	}
-
-	// if deleted, bail
-	if a._deleted {
-		return errors.New("update failed: marked for deletion")
-	}
-
 	// sql query
 	const sqlstr = `UPDATE "dbo"."account" SET ` +
-		`"subject" = $1, "email" = $2, "created_date" = $3, "changed_date" = $4, "deleted_date" = $5` +
-		` WHERE "id" = $6`
+		`"subject" = $1, "email" = $2, "name" = $3, "label" = $4, "created_date" = $5, "changed_date" = $6, "deleted_date" = $7` +
+		` WHERE "id" = $8`
 
 	// run query
-	s.info(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
-	_, err = db.Exec(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
+	s.info(sqlstr, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
+	_, err = db.Exec(sqlstr, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
 	return err
 }
 
@@ -170,9 +159,6 @@ func (s *MssqlStorage) UpdateAccountByFields(db XODB, a *Account, fields, retCol
 
 // SaveAccount saves the Account to the database.
 func (s *MssqlStorage) SaveAccount(db XODB, a *Account) error {
-	if a.Exists() {
-		return s.UpdateAccount(db, a)
-	}
 
 	return s.InsertAccount(db, a)
 }
@@ -184,20 +170,17 @@ func (s *MssqlStorage) UpsertAccount(db XODB, a *Account) error {
 	// sql query
 
 	const sqlstr = `MERGE "dbo"."account" AS t ` +
-		`USING (SELECT $1 AS "id", $2 AS "subject", $3 AS "email", $4 AS "created_date", $5 AS "changed_date", $6 AS "deleted_date") AS s ` +
+		`USING (SELECT $1 AS "id", $2 AS "subject", $3 AS "email", $4 AS "name", $5 AS "label", $6 AS "created_date", $7 AS "changed_date", $8 AS "deleted_date") AS s ` +
 		`ON t."id" = s."id" ` +
-		`WHEN MATCHED THEN UPDATE SET "subject" = s."subject", "email" = s."email", "created_date" = s."created_date", "changed_date" = s."changed_date", "deleted_date" = s."deleted_date" ` +
-		`WHEN NOT MATCHED THEN INSERT ("subject", "email", "created_date", "changed_date", "deleted_date") VALUES (s."subject", s."email", s."created_date", s."changed_date", s."deleted_date");`
+		`WHEN MATCHED THEN UPDATE SET "subject" = s."subject", "email" = s."email", "name" = s."name", "label" = s."label", "created_date" = s."created_date", "changed_date" = s."changed_date", "deleted_date" = s."deleted_date" ` +
+		`WHEN NOT MATCHED THEN INSERT ("subject", "email", "name", "label", "created_date", "changed_date", "deleted_date") VALUES (s."subject", s."email", s."name", s."label", s."created_date", s."changed_date", s."deleted_date");`
 
 	// run query
-	s.info(sqlstr, a.ID, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
-	_, err = db.Exec(sqlstr, a.ID, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
+	s.info(sqlstr, a.ID, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate)
+	_, err = db.Exec(sqlstr, a.ID, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate)
 	if err != nil {
 		return err
 	}
-
-	// set existence
-	a._exists = true
 
 	return nil
 }
@@ -205,16 +188,6 @@ func (s *MssqlStorage) UpsertAccount(db XODB, a *Account) error {
 // DeleteAccount deletes the Account from the database.
 func (s *MssqlStorage) DeleteAccount(db XODB, a *Account) error {
 	var err error
-
-	// if doesn't exist, bail
-	if !a._exists {
-		return nil
-	}
-
-	// if deleted, bail
-	if a._deleted {
-		return nil
-	}
 
 	// sql query
 	const sqlstr = `DELETE FROM "dbo"."account" WHERE "id" = $1`
@@ -225,9 +198,6 @@ func (s *MssqlStorage) DeleteAccount(db XODB, a *Account) error {
 	if err != nil {
 		return err
 	}
-
-	// set deleted
-	a._deleted = true
 
 	return nil
 }
@@ -260,11 +230,6 @@ func (s *MssqlStorage) DeleteAccounts(db XODB, as []*Account) error {
 		return err
 	}
 
-	// set deleted
-	for _, a := range as {
-		a._deleted = true
-	}
-
 	return nil
 }
 
@@ -272,7 +237,7 @@ func (s *MssqlStorage) DeleteAccounts(db XODB, as []*Account) error {
 // ordered by "created_date" in descending order.
 func (s *MssqlStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, error) {
 	var sqlstr = `SELECT TOP ` + strconv.Itoa(n) +
-		` "id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
+		` "id", "subject", "email", "name", "label", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "dbo"."account" ` +
 		`ORDER BY "created_date" DESC`
 
@@ -289,12 +254,11 @@ func (s *MssqlStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, error) 
 		a := Account{}
 
 		// scan
-		err = q.Scan(&a.ID, &a.Subject, &a.Email, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
+		err = q.Scan(&a.ID, &a.Subject, &a.Email, &a.Name, &a.Label, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
 		if err != nil {
 			return nil, err
 		}
 
-		a._exists = true
 		res = append(res, &a)
 	}
 
@@ -305,7 +269,7 @@ func (s *MssqlStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, error) 
 // ordered by "changed_date" in descending order.
 func (s *MssqlStorage) GetMostRecentChangedAccount(db XODB, n int) ([]*Account, error) {
 	var sqlstr = `SELECT TOP ` + strconv.Itoa(n) +
-		` "id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
+		` "id", "subject", "email", "name", "label", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "dbo"."account" ` +
 		`ORDER BY "changed_date" DESC`
 
@@ -322,12 +286,11 @@ func (s *MssqlStorage) GetMostRecentChangedAccount(db XODB, n int) ([]*Account, 
 		a := Account{}
 
 		// scan
-		err = q.Scan(&a.ID, &a.Subject, &a.Email, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
+		err = q.Scan(&a.ID, &a.Subject, &a.Email, &a.Name, &a.Label, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
 		if err != nil {
 			return nil, err
 		}
 
-		a._exists = true
 		res = append(res, &a)
 	}
 
@@ -362,6 +325,8 @@ func (s *MssqlStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArguments) 
 		"id":           true,
 		"subject":      true,
 		"email":        true,
+		"name":         true,
+		"label":        true,
 		"created_date": true,
 		"changed_date": true,
 		"deleted_date": true,
@@ -393,7 +358,7 @@ func (s *MssqlStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArguments) 
 	limitPos := len(params)
 
 	var sqlstr = fmt.Sprintf(`SELECT %s FROM %s WHERE %s "deleted_date" IS %s ORDER BY "%s"  %s OFFSET $%d ROWS FETCH NEXT $%d ROWS ONLY`,
-		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" `,
+		`"id", "subject", "email", "name", "label", "created_date", "changed_date", "deleted_date" `,
 		`"dbo"."account"`,
 		placeHolders,
 		dead,
@@ -415,12 +380,11 @@ func (s *MssqlStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArguments) 
 		a := Account{}
 
 		// scan
-		err = q.Scan(&a.ID, &a.Subject, &a.Email, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
+		err = q.Scan(&a.ID, &a.Subject, &a.Email, &a.Name, &a.Label, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
 		if err != nil {
 			return nil, err
 		}
 
-		a._exists = true
 		res = append(res, &a)
 	}
 
@@ -469,23 +433,21 @@ func (s *MssqlStorage) CountAllAccount(db XODB, queryArgs *AccountQueryArguments
 
 // AccountByID retrieves a row from '"dbo"."account"' as a Account.
 //
-// Generated from index 'PK__account__3213E83F3F2974E1'.
+// Generated from index 'PK__account__3213E83FF0C8F55E'.
 func (s *MssqlStorage) AccountByID(db XODB, id int) (*Account, error) {
 	var err error
 
 	// sql query
 	const sqlstr = `SELECT ` +
-		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
+		`"id", "subject", "email", "name", "label", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "dbo"."account" ` +
 		`WHERE "id" = $1`
 
 	// run query
 	s.info(sqlstr, id)
-	a := Account{
-		_exists: true,
-	}
+	a := Account{}
 
-	err = db.QueryRow(sqlstr, id).Scan(&a.ID, &a.Subject, &a.Email, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
+	err = db.QueryRow(sqlstr, id).Scan(&a.ID, &a.Subject, &a.Email, &a.Name, &a.Label, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
 	if err != nil {
 		return nil, err
 	}
@@ -501,17 +463,15 @@ func (s *MssqlStorage) AccountBySubject(db XODB, subject string) (*Account, erro
 
 	// sql query
 	const sqlstr = `SELECT ` +
-		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
+		`"id", "subject", "email", "name", "label", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "dbo"."account" ` +
 		`WHERE "subject" = $1`
 
 	// run query
 	s.info(sqlstr, subject)
-	a := Account{
-		_exists: true,
-	}
+	a := Account{}
 
-	err = db.QueryRow(sqlstr, subject).Scan(&a.ID, &a.Subject, &a.Email, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
+	err = db.QueryRow(sqlstr, subject).Scan(&a.ID, &a.Subject, &a.Email, &a.Name, &a.Label, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
 	if err != nil {
 		return nil, err
 	}

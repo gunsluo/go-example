@@ -37,7 +37,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	log.Println("ok:", a.ID, a.CreatedDate, a.ChangedDate, a.DeletedDate)
+	log.Println("ok:", a.ID, a.Name, a.Label.String, a.Label.Valid, a.CreatedDate, a.ChangedDate, a.DeletedDate)
 
 	na, err := AccountByID(db, a.ID)
 	if err != nil {
@@ -75,15 +75,19 @@ func InsertAccount(db *sql.DB, a *Account) error {
 		`"subject", "email", "name", "label", "created_date", "changed_date", "deleted_date"` +
 		`) VALUES (` +
 		`:1, :2, :3, :4, :5, :6, :7` +
-		`) RETURNING "id" INTO :8`
+		`) RETURNING "id", "name", "label" INTO :8, :9, :10`
 
 	// run query
 	log.Println(sqlstr, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate)
 	_, err = db.Exec(sqlstr, convertOracleEmptyString(a.Subject), convertOracleEmptyString(a.Email),
-		convertOracleEmptyString(a.Name), convertOracleNullString(a.Label), a.CreatedDate, a.ChangedDate, a.DeletedDate, sql.Out{Dest: &a.ID})
+		convertOracleEmptyString(a.Name), convertOracleNullString(a.Label), a.CreatedDate, a.ChangedDate, a.DeletedDate,
+		sql.Out{Dest: &a.ID}, sql.Out{Dest: &a.Name}, sql.Out{Dest: &a.Label.String})
 	if err != nil {
 		return err
 	}
+
+	fixOracleEmptyString(&a.Name)
+	fixOracleNullString(&a.Label)
 
 	// set existence
 	a._exists = true
@@ -103,10 +107,22 @@ func InsertAccountByFields(db *sql.DB, a *Account) error {
 	retVars = append(retVars, sql.Out{Dest: &a.ID})
 
 	fields = append(fields, `"subject"`)
-	params = append(params, a.Subject)
+	params = append(params, convertOracleEmptyString(a.Subject))
 
 	fields = append(fields, `"email"`)
-	params = append(params, a.Email)
+	params = append(params, convertOracleEmptyString(a.Email))
+
+	fields = append(fields, `"name"`)
+	params = append(params, convertOracleEmptyString(a.Name))
+
+	if a.Label.Valid {
+		fields = append(fields, `"label"`)
+		params = append(params, convertOracleNullString(a.Label))
+	} else {
+		retFields = append(retFields, `"label"`)
+		retVars = append(retVars, sql.Out{Dest: &a.Label.String})
+	}
+
 	if a.CreatedDate.Valid {
 		fields = append(fields, `"created_date"`)
 		params = append(params, a.CreatedDate)
@@ -153,6 +169,11 @@ func InsertAccountByFields(db *sql.DB, a *Account) error {
 	_, err = db.Exec(sqlstr, params...)
 	if err != nil {
 		return err
+	}
+
+	fixOracleEmptyString(&a.Name)
+	if !a.Label.Valid {
+		fixOracleNullString(&a.Label)
 	}
 
 	// set existence

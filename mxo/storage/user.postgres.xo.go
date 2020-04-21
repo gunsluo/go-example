@@ -14,11 +14,6 @@ import (
 func (s *PostgresStorage) InsertUser(db XODB, u *User) error {
 	var err error
 
-	// if already exist, bail
-	if u._exists {
-		return errors.New("insert failed: already exists")
-	}
-
 	// sql insert query, primary key provided by sequence
 	const sqlstr = `INSERT INTO "public"."user" (` +
 		`"subject", "name", "created_date", "changed_date", "deleted_date"` +
@@ -32,9 +27,6 @@ func (s *PostgresStorage) InsertUser(db XODB, u *User) error {
 	if err != nil {
 		return err
 	}
-
-	// set existence
-	u._exists = true
 
 	return nil
 }
@@ -103,25 +95,12 @@ func (s *PostgresStorage) InsertUserByFields(db XODB, u *User) error {
 		return err
 	}
 
-	// set existence
-	u._exists = true
-
 	return nil
 }
 
 // UpdateUser updates the User in the database.
 func (s *PostgresStorage) UpdateUser(db XODB, u *User) error {
 	var err error
-
-	// if doesn't exist, bail
-	if !u._exists {
-		return errors.New("update failed: does not exist")
-	}
-
-	// if deleted, bail
-	if u._deleted {
-		return errors.New("update failed: marked for deletion")
-	}
 
 	// sql query
 
@@ -185,9 +164,6 @@ func (s *PostgresStorage) UpdateUserByFields(db XODB, u *User, fields, retCols [
 
 // SaveUser saves the User to the database.
 func (s *PostgresStorage) SaveUser(db XODB, u *User) error {
-	if u.Exists() {
-		return s.UpdateUser(db, u)
-	}
 
 	return s.InsertUser(db, u)
 }
@@ -214,25 +190,12 @@ func (s *PostgresStorage) UpsertUser(db XODB, u *User) error {
 		return err
 	}
 
-	// set existence
-	u._exists = true
-
 	return nil
 }
 
 // DeleteUser deletes the User from the database.
 func (s *PostgresStorage) DeleteUser(db XODB, u *User) error {
 	var err error
-
-	// if doesn't exist, bail
-	if !u._exists {
-		return nil
-	}
-
-	// if deleted, bail
-	if u._deleted {
-		return nil
-	}
 
 	// sql query
 	const sqlstr = `DELETE FROM "public"."user" WHERE "id" = $1`
@@ -243,9 +206,6 @@ func (s *PostgresStorage) DeleteUser(db XODB, u *User) error {
 	if err != nil {
 		return err
 	}
-
-	// set deleted
-	u._deleted = true
 
 	return nil
 }
@@ -278,11 +238,6 @@ func (s *PostgresStorage) DeleteUsers(db XODB, us []*User) error {
 		return err
 	}
 
-	// set deleted
-	for _, u := range us {
-		u._deleted = true
-	}
-
 	return nil
 }
 
@@ -311,8 +266,6 @@ func (s *PostgresStorage) GetMostRecentUser(db XODB, n int) ([]*User, error) {
 		if err != nil {
 			return nil, err
 		}
-
-		u._exists = true
 		res = append(res, &u)
 	}
 
@@ -344,11 +297,8 @@ func (s *PostgresStorage) GetMostRecentChangedUser(db XODB, n int) ([]*User, err
 		if err != nil {
 			return nil, err
 		}
-
-		u._exists = true
 		res = append(res, &u)
 	}
-
 	return res, nil
 }
 
@@ -421,8 +371,6 @@ func (s *PostgresStorage) GetAllUser(db XODB, queryArgs *UserQueryArguments) ([]
 		if err != nil {
 			return nil, err
 		}
-
-		u._exists = true
 		res = append(res, &u)
 	}
 
@@ -507,11 +455,8 @@ func (s *PostgresStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *U
 		if err != nil {
 			return nil, err
 		}
-
-		u._exists = true
 		res = append(res, &u)
 	}
-
 	return res, nil
 }
 
@@ -563,9 +508,7 @@ func (s *PostgresStorage) UserByID(db XODB, id int) (*User, error) {
 
 	// run query
 	s.info(sqlstr, id)
-	u := User{
-		_exists: true,
-	}
+	u := User{}
 
 	err = db.QueryRow(sqlstr, id).Scan(&u.ID, &u.Subject, &u.Name, &u.CreatedDate, &u.ChangedDate, &u.DeletedDate)
 	if err != nil {

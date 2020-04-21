@@ -158,26 +158,17 @@ func New(driver string, c Config) (Storager, error) {
 
 // Account represents a row from '"public"."account"'.
 type Account struct {
-	ID          int          `db:"id" json:"id"`                     // id
-	Subject     string       `db:"subject" json:"subject"`           // subject
-	Email       string       `db:"email" json:"email"`               // email
-	CreatedDate sql.NullTime `db:"created_date" json:"created_date"` // created_date
-	ChangedDate sql.NullTime `db:"changed_date" json:"changed_date"` // changed_date
-	DeletedDate sql.NullTime `db:"deleted_date" json:"deleted_date"` // deleted_date
-
-	// xo fields
-	_exists, _deleted bool
+	ID          int            `db:"id" json:"id"`                     // id
+	Subject     string         `db:"subject" json:"subject"`           // subject
+	Email       string         `db:"email" json:"email"`               // email
+	Name        string         `db:"name" json:"name"`                 // name
+	Label       sql.NullString `db:"label" json:"label"`               // label
+	CreatedDate sql.NullTime   `db:"created_date" json:"created_date"` // created_date
+	ChangedDate sql.NullTime   `db:"changed_date" json:"changed_date"` // changed_date
+	DeletedDate sql.NullTime   `db:"deleted_date" json:"deleted_date"` // deleted_date
 }
 
-// Exists determines if the Account exists in the database.
-func (a *Account) Exists() bool {
-	return a._exists
-}
-
-// Deleted provides information if the Account has been deleted from the database.
-func (a *Account) Deleted() bool {
-	return a._deleted
-} // User represents a row from '"public"."user"'.
+// User represents a row from '"public"."user"'.
 type User struct {
 	ID          int            `db:"id" json:"id"`                     // id
 	Subject     string         `db:"subject" json:"subject"`           // subject
@@ -185,19 +176,6 @@ type User struct {
 	CreatedDate sql.NullTime   `db:"created_date" json:"created_date"` // created_date
 	ChangedDate sql.NullTime   `db:"changed_date" json:"changed_date"` // changed_date
 	DeletedDate sql.NullTime   `db:"deleted_date" json:"deleted_date"` // deleted_date
-
-	// xo fields
-	_exists, _deleted bool
-}
-
-// Exists determines if the User exists in the database.
-func (u *User) Exists() bool {
-	return u._exists
-}
-
-// Deleted provides information if the User has been deleted from the database.
-func (u *User) Deleted() bool {
-	return u._deleted
 }
 
 // extension block
@@ -257,11 +235,11 @@ type ResolverConfig struct {
 
 // ResolverExtensions it's passing between root resolver and  children resolver
 type ResolverExtensions struct {
-	logger   XOLogger
-	db       XODB
-	storage  Storager
-	recorder EventRecorder
-	verifier Verifier
+	Logger   XOLogger
+	DB       XODB
+	Storage  Storager
+	Recorder EventRecorder
+	Verifier Verifier
 }
 
 // RootResolver is a graphql root resolver
@@ -278,11 +256,11 @@ func NewRootResolver(c *ResolverConfig) *RootResolver {
 
 	return &RootResolver{
 		Ext: ResolverExtensions{
-			logger:   logger,
-			db:       c.DB,
-			storage:  c.S,
-			recorder: c.Recorder,
-			verifier: c.Verifier,
+			Logger:   logger,
+			DB:       c.DB,
+			Storage:  c.S,
+			Recorder: c.Recorder,
+			Verifier: c.Verifier,
 		},
 	}
 }
@@ -295,11 +273,11 @@ func NewResolverExtensions(c *ResolverConfig) ResolverExtensions {
 	}
 
 	return ResolverExtensions{
-		logger:   logger,
-		db:       c.DB,
-		storage:  c.S,
-		recorder: c.Recorder,
-		verifier: c.Verifier,
+		Logger:   logger,
+		DB:       c.DB,
+		Storage:  c.S,
+		Recorder: c.Recorder,
+		Verifier: c.Verifier,
 	}
 }
 
@@ -554,4 +532,53 @@ func (r *RootResolver) GetResolverResources(includes []GraphQLResource, excludes
 	}
 
 	return resources, nil
+}
+
+// specific for oracle
+var (
+	ORALCE_EMPTY_STRING = "__EMPTY__"
+)
+
+// RealOracleEmptyString is real value of empty string in oracle
+func RealOracleEmptyString(s string) string {
+	if s == "" {
+		return ORALCE_EMPTY_STRING
+	}
+	return s
+}
+
+// RealOracleNullString is real value of null string in oracle
+func RealOracleNullString(ns sql.NullString) sql.NullString {
+	if !ns.Valid {
+		return sql.NullString{}
+	}
+
+	if ns.String == "" {
+		return sql.NullString{String: ORALCE_EMPTY_STRING, Valid: true}
+	}
+
+	return sql.NullString{String: ns.String, Valid: true}
+}
+
+// FixRealOracleEmptyString fix the value from real value of empty string in oracle
+func FixRealOracleEmptyString(s *string) {
+	if *s == ORALCE_EMPTY_STRING {
+		*s = ""
+	}
+}
+
+// FixRealOracleNullString fix the value from real value of null string in oracle
+func FixRealOracleNullString(ns *sql.NullString) {
+	if ns == nil || !ns.Valid {
+		return
+	}
+
+	if ns.String == "" {
+		ns.Valid = false
+		return
+	}
+
+	if ns.String == ORALCE_EMPTY_STRING {
+		ns.String = ""
+	}
 }

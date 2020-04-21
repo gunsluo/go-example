@@ -16,27 +16,19 @@ import (
 func (s *GodrorStorage) InsertAccount(db XODB, a *Account) error {
 	var err error
 
-	// if already exist, bail
-	if a._exists {
-		return errors.New("insert failed: already exists")
-	}
-
 	// sql insert query, primary key provided by sequence
 	const sqlstr = `INSERT INTO "AC"."account" (` +
-		`"subject", "email", "created_date", "changed_date", "deleted_date"` +
+		`"subject", "email", "name", "label", "created_date", "changed_date", "deleted_date"` +
 		`) VALUES (` +
-		`:1, :2, :3, :4, :5` +
-		`) RETURNING "id" INTO :6`
+		`:1, :2, :3, :4, :5, :6, :7` +
+		`) RETURNING "id" INTO :8`
 
 	// run query
-	s.info(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
-	_, err = db.Exec(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate, sql.Out{Dest: &a.ID})
+	s.info(sqlstr, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate)
+	_, err = db.Exec(sqlstr, RealOracleEmptyString(a.Subject), RealOracleEmptyString(a.Email), RealOracleEmptyString(a.Name), RealOracleNullString(a.Label), a.CreatedDate, a.ChangedDate, a.DeletedDate, sql.Out{Dest: &a.ID})
 	if err != nil {
 		return err
 	}
-
-	// set existence
-	a._exists = true
 
 	return nil
 }
@@ -45,39 +37,59 @@ func (s *GodrorStorage) InsertAccount(db XODB, a *Account) error {
 func (s *GodrorStorage) InsertAccountByFields(db XODB, a *Account) error {
 	var err error
 
-	params := make([]interface{}, 0, 5)
-	fields := make([]string, 0, 5)
-	retFields := make([]string, 0, 5)
+	params := make([]interface{}, 0, 7)
+	fields := make([]string, 0, 7)
+	retFields := make([]string, 0, 7)
 	retFields = append(retFields, `"id"`)
-	retVars := make([]interface{}, 0, 5)
+	retVars := make([]interface{}, 0, 7)
 	retVars = append(retVars, sql.Out{Dest: &a.ID})
 
 	fields = append(fields, `"subject"`)
-	params = append(params, a.Subject)
+	params = append(params, RealOracleEmptyString(a.Subject))
 
 	fields = append(fields, `"email"`)
-	params = append(params, a.Email)
+	params = append(params, RealOracleEmptyString(a.Email))
+
+	fields = append(fields, `"name"`)
+	params = append(params, RealOracleEmptyString(a.Name))
+
+	if a.Label.Valid {
+		fields = append(fields, `"label"`)
+		params = append(params, RealOracleNullString(a.Label))
+
+	} else {
+		retFields = append(retFields, `"label"`)
+		retVars = append(retVars, sql.Out{Dest: &a.Label.String})
+
+	}
 	if a.CreatedDate.Valid {
 		fields = append(fields, `"created_date"`)
 		params = append(params, a.CreatedDate)
+
 	} else {
 		retFields = append(retFields, `"created_date"`)
 		retVars = append(retVars, sql.Out{Dest: &a.CreatedDate})
+
 	}
 	if a.ChangedDate.Valid {
 		fields = append(fields, `"changed_date"`)
 		params = append(params, a.ChangedDate)
+
 	} else {
 		retFields = append(retFields, `"changed_date"`)
 		retVars = append(retVars, sql.Out{Dest: &a.ChangedDate})
+
 	}
 	if a.DeletedDate.Valid {
 		fields = append(fields, `"deleted_date"`)
 		params = append(params, a.DeletedDate)
+
 	} else {
 		retFields = append(retFields, `"deleted_date"`)
 		retVars = append(retVars, sql.Out{Dest: &a.DeletedDate})
+
 	}
+
 	if len(params) == 0 {
 		// FIXME(jackie): maybe we should allow this?
 		return errors.New("all fields are empty, unable to insert")
@@ -105,9 +117,13 @@ func (s *GodrorStorage) InsertAccountByFields(db XODB, a *Account) error {
 	if err != nil {
 		return err
 	}
+	FixRealOracleEmptyString(&a.Subject)
+	FixRealOracleEmptyString(&a.Email)
+	FixRealOracleEmptyString(&a.Name)
 
-	// set existence
-	a._exists = true
+	if !a.Label.Valid {
+		FixRealOracleNullString(&a.Label)
+	}
 
 	return nil
 }
@@ -116,24 +132,14 @@ func (s *GodrorStorage) InsertAccountByFields(db XODB, a *Account) error {
 func (s *GodrorStorage) UpdateAccount(db XODB, a *Account) error {
 	var err error
 
-	// if doesn't exist, bail
-	if !a._exists {
-		return errors.New("update failed: does not exist")
-	}
-
-	// if deleted, bail
-	if a._deleted {
-		return errors.New("update failed: marked for deletion")
-	}
-
 	// sql query
 	const sqlstr = `UPDATE "AC"."account" SET ` +
-		`"subject" = :1, "email" = :2, "created_date" = :3, "changed_date" = :4, "deleted_date" = :5` +
-		` WHERE "id" = :6`
+		`"subject" = :1, "email" = :2, "name" = :3, "label" = :4, "created_date" = :5, "changed_date" = :6, "deleted_date" = :7` +
+		` WHERE "id" = :8`
 
 	// run query
-	s.info(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
-	_, err = db.Exec(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
+	s.info(sqlstr, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
+	_, err = db.Exec(sqlstr, RealOracleEmptyString(a.Subject), RealOracleEmptyString(a.Email), RealOracleEmptyString(a.Name), RealOracleNullString(a.Label), a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
 	return err
 }
 
@@ -143,29 +149,55 @@ func (s *GodrorStorage) UpdateAccountByFields(db XODB, a *Account, fields, retCo
 		return nil
 	}
 
+	if len(fields) != len(params) {
+		return errors.New("fields length is not equal params length")
+	}
+
+	if len(retCols) != len(retVars) {
+		return errors.New("retCols length is not equal retVars length")
+	}
+
 	var setstr string
 	var idxvals []interface{}
+	var oparams []interface{}
 	for i, field := range fields {
 		if i != 0 {
 			setstr += ", "
 		}
 		setstr += field + ` = :%d`
 		idxvals = append(idxvals, i+1)
-	}
+		switch v := (params[i]).(type) {
+		case string:
+			oparams = append(oparams, RealOracleEmptyString(v))
+		case sql.NullString:
+			oparams = append(oparams, RealOracleNullString(v))
+		default:
+			oparams = append(oparams, v)
+		}
 
-	params = append(params, a.ID)
-	idxvals = append(idxvals, len(params))
-	var sqlstr = fmt.Sprintf(`UPDATE "AC"."account" SET `+
-		setstr+` WHERE "id" = :%d`, idxvals...)
-	s.info(sqlstr, params)
-	if _, err := db.Exec(sqlstr, params...); err != nil {
+	}
+	id := a.ID
+
+	oparams = append(oparams, id)
+	idxvals = append(idxvals, len(oparams))
+	var sqlstr = fmt.Sprintf(`UPDATE "AC"."account" SET `+setstr+` WHERE "id" = :%d`, idxvals...)
+	s.info(sqlstr, params, id)
+	if _, err := db.Exec(sqlstr, oparams...); err != nil {
 		return err
 	}
 
 	if len(retCols) > 0 {
-		err := db.QueryRow(`SELECT `+strings.Join(retCols, ",")+` from "AC"."account" WHERE "id" = :1`, a.ID).Scan(retVars...)
+		err := db.QueryRow(`SELECT `+strings.Join(retCols, ",")+` from "AC"."account" WHERE "id" = :1`, id).Scan(retVars...)
 		if err != nil {
 			return err
+		}
+		for _, val := range retVars {
+			switch v := val.(type) {
+			case *string:
+				FixRealOracleEmptyString(v)
+			case *sql.NullString:
+				FixRealOracleNullString(v)
+			}
 		}
 	}
 
@@ -174,9 +206,6 @@ func (s *GodrorStorage) UpdateAccountByFields(db XODB, a *Account, fields, retCo
 
 // SaveAccount saves the Account to the database.
 func (s *GodrorStorage) SaveAccount(db XODB, a *Account) error {
-	if a.Exists() {
-		return s.UpdateAccount(db, a)
-	}
 
 	return s.InsertAccount(db, a)
 }
@@ -188,20 +217,17 @@ func (s *GodrorStorage) UpsertAccount(db XODB, a *Account) error {
 	// sql query
 
 	const sqlstr = `MERGE INTO "AC"."account" t ` +
-		`USING (SELECT :1 AS "id", :2 AS "subject", :3 AS "email", :4 AS "created_date", :5 AS "changed_date", :6 AS "deleted_date" FROM dual) s ` +
+		`USING (SELECT :1 AS "id", :2 AS "subject", :3 AS "email", :4 AS "name", :5 AS "label", :6 AS "created_date", :7 AS "changed_date", :8 AS "deleted_date" FROM dual) s ` +
 		`ON (t."id" = s."id") ` +
-		`WHEN MATCHED THEN UPDATE SET "subject" = s."subject", "email" = s."email", "created_date" = s."created_date", "changed_date" = s."changed_date", "deleted_date" = s."deleted_date" ` +
-		`WHEN NOT MATCHED THEN INSERT ("subject", "email", "created_date", "changed_date", "deleted_date") VALUES (s."subject", s."email", s."created_date", s."changed_date", s."deleted_date")`
+		`WHEN MATCHED THEN UPDATE SET "subject" = s."subject", "email" = s."email", "name" = s."name", "label" = s."label", "created_date" = s."created_date", "changed_date" = s."changed_date", "deleted_date" = s."deleted_date" ` +
+		`WHEN NOT MATCHED THEN INSERT ("subject", "email", "name", "label", "created_date", "changed_date", "deleted_date") VALUES (s."subject", s."email", s."name", s."label", s."created_date", s."changed_date", s."deleted_date")`
 
 	// run query
-	s.info(sqlstr, a.ID, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
-	_, err = db.Exec(sqlstr, a.ID, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
+	s.info(sqlstr, a.ID, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate)
+	_, err = db.Exec(sqlstr, a.ID, RealOracleEmptyString(a.Subject), RealOracleEmptyString(a.Email), RealOracleEmptyString(a.Name), RealOracleNullString(a.Label), a.CreatedDate, a.ChangedDate, a.DeletedDate)
 	if err != nil {
 		return err
 	}
-
-	// set existence
-	a._exists = true
 
 	return nil
 }
@@ -209,16 +235,6 @@ func (s *GodrorStorage) UpsertAccount(db XODB, a *Account) error {
 // DeleteAccount deletes the Account from the database.
 func (s *GodrorStorage) DeleteAccount(db XODB, a *Account) error {
 	var err error
-
-	// if doesn't exist, bail
-	if !a._exists {
-		return nil
-	}
-
-	// if deleted, bail
-	if a._deleted {
-		return nil
-	}
 
 	// sql query
 	const sqlstr = `DELETE FROM "AC"."account" WHERE "id" = :1`
@@ -229,9 +245,6 @@ func (s *GodrorStorage) DeleteAccount(db XODB, a *Account) error {
 	if err != nil {
 		return err
 	}
-
-	// set deleted
-	a._deleted = true
 
 	return nil
 }
@@ -264,11 +277,6 @@ func (s *GodrorStorage) DeleteAccounts(db XODB, as []*Account) error {
 		return err
 	}
 
-	// set deleted
-	for _, a := range as {
-		a._deleted = true
-	}
-
 	return nil
 }
 
@@ -276,7 +284,7 @@ func (s *GodrorStorage) DeleteAccounts(db XODB, as []*Account) error {
 // ordered by "created_date" in descending order.
 func (s *GodrorStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, error) {
 	const sqlstr = `SELECT ` +
-		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
+		`"id", "subject", "email", "name", "label", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "AC"."account" ` +
 		`ORDER BY "created_date" DESC FETCH NEXT :1 ROWS ONLY`
 
@@ -293,12 +301,16 @@ func (s *GodrorStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, error)
 		a := Account{}
 
 		// scan
-		err = q.Scan(&a.ID, &a.Subject, &a.Email, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
+		err = q.Scan(&a.ID, &a.Subject, &a.Email, &a.Name, &a.Label, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
 		if err != nil {
 			return nil, err
 		}
+		FixRealOracleEmptyString(&a.Subject)
+		FixRealOracleEmptyString(&a.Email)
+		FixRealOracleEmptyString(&a.Name)
 
-		a._exists = true
+		FixRealOracleNullString(&a.Label)
+
 		res = append(res, &a)
 	}
 
@@ -309,7 +321,7 @@ func (s *GodrorStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, error)
 // ordered by "changed_date" in descending order.
 func (s *GodrorStorage) GetMostRecentChangedAccount(db XODB, n int) ([]*Account, error) {
 	const sqlstr = `SELECT ` +
-		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
+		`"id", "subject", "email", "name", "label", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "AC"."account" ` +
 		`ORDER BY "changed_date" DESC FETCH NEXT :1 ROWS ONLY`
 
@@ -326,12 +338,16 @@ func (s *GodrorStorage) GetMostRecentChangedAccount(db XODB, n int) ([]*Account,
 		a := Account{}
 
 		// scan
-		err = q.Scan(&a.ID, &a.Subject, &a.Email, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
+		err = q.Scan(&a.ID, &a.Subject, &a.Email, &a.Name, &a.Label, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
 		if err != nil {
 			return nil, err
 		}
+		FixRealOracleEmptyString(&a.Subject)
+		FixRealOracleEmptyString(&a.Email)
+		FixRealOracleEmptyString(&a.Name)
 
-		a._exists = true
+		FixRealOracleNullString(&a.Label)
+
 		res = append(res, &a)
 	}
 
@@ -366,6 +382,8 @@ func (s *GodrorStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArguments)
 		"id":           true,
 		"subject":      true,
 		"email":        true,
+		"name":         true,
+		"label":        true,
 		"created_date": true,
 		"changed_date": true,
 		"deleted_date": true,
@@ -397,7 +415,7 @@ func (s *GodrorStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArguments)
 	limitPos := len(params)
 
 	var sqlstr = fmt.Sprintf(`SELECT %s FROM %s WHERE %s "deleted_date" IS %s ORDER BY "%s" %s OFFSET :%d ROWS FETCH NEXT :%d ROWS ONLY`,
-		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" `,
+		`"id", "subject", "email", "name", "label", "created_date", "changed_date", "deleted_date" `,
 		`"AC"."account"`,
 		placeHolders,
 		dead,
@@ -419,12 +437,16 @@ func (s *GodrorStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArguments)
 		a := Account{}
 
 		// scan
-		err = q.Scan(&a.ID, &a.Subject, &a.Email, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
+		err = q.Scan(&a.ID, &a.Subject, &a.Email, &a.Name, &a.Label, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
 		if err != nil {
 			return nil, err
 		}
+		FixRealOracleEmptyString(&a.Subject)
+		FixRealOracleEmptyString(&a.Email)
+		FixRealOracleEmptyString(&a.Name)
 
-		a._exists = true
+		FixRealOracleNullString(&a.Label)
+
 		res = append(res, &a)
 	}
 
@@ -479,20 +501,23 @@ func (s *GodrorStorage) AccountByID(db XODB, id int) (*Account, error) {
 
 	// sql query
 	const sqlstr = `SELECT ` +
-		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
+		`"id", "subject", "email", "name", "label", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "AC"."account" ` +
 		`WHERE "id" = :1`
 
 	// run query
 	s.info(sqlstr, id)
-	a := Account{
-		_exists: true,
-	}
+	a := Account{}
 
-	err = db.QueryRow(sqlstr, id).Scan(&a.ID, &a.Subject, &a.Email, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
+	err = db.QueryRow(sqlstr, id).Scan(&a.ID, &a.Subject, &a.Email, &a.Name, &a.Label, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
 	if err != nil {
 		return nil, err
 	}
+	FixRealOracleEmptyString(&a.Subject)
+	FixRealOracleEmptyString(&a.Email)
+	FixRealOracleEmptyString(&a.Name)
+
+	FixRealOracleNullString(&a.Label)
 
 	return &a, nil
 }
@@ -505,20 +530,23 @@ func (s *GodrorStorage) AccountBySubject(db XODB, subject string) (*Account, err
 
 	// sql query
 	const sqlstr = `SELECT ` +
-		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
+		`"id", "subject", "email", "name", "label", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "AC"."account" ` +
 		`WHERE "subject" = :1`
 
 	// run query
 	s.info(sqlstr, subject)
-	a := Account{
-		_exists: true,
-	}
+	a := Account{}
 
-	err = db.QueryRow(sqlstr, subject).Scan(&a.ID, &a.Subject, &a.Email, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
+	err = db.QueryRow(sqlstr, subject).Scan(&a.ID, &a.Subject, &a.Email, &a.Name, &a.Label, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
 	if err != nil {
 		return nil, err
 	}
+	FixRealOracleEmptyString(&a.Subject)
+	FixRealOracleEmptyString(&a.Email)
+	FixRealOracleEmptyString(&a.Name)
+
+	FixRealOracleNullString(&a.Label)
 
 	return &a, nil
 }

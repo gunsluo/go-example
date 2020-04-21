@@ -14,27 +14,19 @@ import (
 func (s *PostgresStorage) InsertAccount(db XODB, a *Account) error {
 	var err error
 
-	// if already exist, bail
-	if a._exists {
-		return errors.New("insert failed: already exists")
-	}
-
 	// sql insert query, primary key provided by sequence
 	const sqlstr = `INSERT INTO "public"."account" (` +
-		`"subject", "email", "created_date", "changed_date", "deleted_date"` +
+		`"subject", "email", "name", "label", "created_date", "changed_date", "deleted_date"` +
 		`) VALUES (` +
-		`$1, $2, $3, $4, $5` +
+		`$1, $2, $3, $4, $5, $6, $7` +
 		`) RETURNING "id"`
 
 	// run query
-	s.info(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
-	err = db.QueryRow(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate).Scan(&a.ID)
+	s.info(sqlstr, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate)
+	err = db.QueryRow(sqlstr, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate).Scan(&a.ID)
 	if err != nil {
 		return err
 	}
-
-	// set existence
-	a._exists = true
 
 	return nil
 }
@@ -43,10 +35,10 @@ func (s *PostgresStorage) InsertAccount(db XODB, a *Account) error {
 func (s *PostgresStorage) InsertAccountByFields(db XODB, a *Account) error {
 	var err error
 
-	params := make([]interface{}, 0, 5)
-	fields := make([]string, 0, 5)
+	params := make([]interface{}, 0, 7)
+	fields := make([]string, 0, 7)
 	retCols := `"id"`
-	retVars := make([]interface{}, 0, 5)
+	retVars := make([]interface{}, 0, 7)
 	retVars = append(retVars, &a.ID)
 
 	fields = append(fields, `"subject"`)
@@ -54,6 +46,16 @@ func (s *PostgresStorage) InsertAccountByFields(db XODB, a *Account) error {
 
 	fields = append(fields, `"email"`)
 	params = append(params, a.Email)
+
+	fields = append(fields, `"name"`)
+	params = append(params, a.Name)
+	if a.Label.Valid {
+		fields = append(fields, `"label"`)
+		params = append(params, a.Label)
+	} else {
+		retCols += `, "label"`
+		retVars = append(retVars, &a.Label)
+	}
 	if a.CreatedDate.Valid {
 		fields = append(fields, `"created_date"`)
 		params = append(params, a.CreatedDate)
@@ -99,9 +101,6 @@ func (s *PostgresStorage) InsertAccountByFields(db XODB, a *Account) error {
 		return err
 	}
 
-	// set existence
-	a._exists = true
-
 	return nil
 }
 
@@ -109,27 +108,17 @@ func (s *PostgresStorage) InsertAccountByFields(db XODB, a *Account) error {
 func (s *PostgresStorage) UpdateAccount(db XODB, a *Account) error {
 	var err error
 
-	// if doesn't exist, bail
-	if !a._exists {
-		return errors.New("update failed: does not exist")
-	}
-
-	// if deleted, bail
-	if a._deleted {
-		return errors.New("update failed: marked for deletion")
-	}
-
 	// sql query
 
 	const sqlstr = `UPDATE "public"."account" SET (` +
-		`"subject", "email", "created_date", "changed_date", "deleted_date"` +
+		`"subject", "email", "name", "label", "created_date", "changed_date", "deleted_date"` +
 		`) = ( ` +
-		`$1, $2, $3, $4, $5` +
-		`) WHERE "id" = $6`
+		`$1, $2, $3, $4, $5, $6, $7` +
+		`) WHERE "id" = $8`
 
 	// run query
-	s.info(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
-	_, err = db.Exec(sqlstr, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
+	s.info(sqlstr, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
+	_, err = db.Exec(sqlstr, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
 	return err
 }
 
@@ -181,9 +170,6 @@ func (s *PostgresStorage) UpdateAccountByFields(db XODB, a *Account, fields, ret
 
 // SaveAccount saves the Account to the database.
 func (s *PostgresStorage) SaveAccount(db XODB, a *Account) error {
-	if a.Exists() {
-		return s.UpdateAccount(db, a)
-	}
 
 	return s.InsertAccount(db, a)
 }
@@ -194,24 +180,21 @@ func (s *PostgresStorage) UpsertAccount(db XODB, a *Account) error {
 
 	// sql query
 	const sqlstr = `INSERT INTO "public"."account" (` +
-		`"id", "subject", "email", "created_date", "changed_date", "deleted_date"` +
+		`"id", "subject", "email", "name", "label", "created_date", "changed_date", "deleted_date"` +
 		`) VALUES (` +
-		`$1, $2, $3, $4, $5, $6` +
+		`$1, $2, $3, $4, $5, $6, $7, $8` +
 		`) ON CONFLICT ("id") DO UPDATE SET (` +
-		`"id", "subject", "email", "created_date", "changed_date", "deleted_date"` +
+		`"id", "subject", "email", "name", "label", "created_date", "changed_date", "deleted_date"` +
 		`) = (` +
-		`EXCLUDED."id", EXCLUDED."subject", EXCLUDED."email", EXCLUDED."created_date", EXCLUDED."changed_date", EXCLUDED."deleted_date"` +
+		`EXCLUDED."id", EXCLUDED."subject", EXCLUDED."email", EXCLUDED."name", EXCLUDED."label", EXCLUDED."created_date", EXCLUDED."changed_date", EXCLUDED."deleted_date"` +
 		`)`
 
 	// run query
-	s.info(sqlstr, a.ID, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
-	_, err = db.Exec(sqlstr, a.ID, a.Subject, a.Email, a.CreatedDate, a.ChangedDate, a.DeletedDate)
+	s.info(sqlstr, a.ID, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate)
+	_, err = db.Exec(sqlstr, a.ID, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate)
 	if err != nil {
 		return err
 	}
-
-	// set existence
-	a._exists = true
 
 	return nil
 }
@@ -219,16 +202,6 @@ func (s *PostgresStorage) UpsertAccount(db XODB, a *Account) error {
 // DeleteAccount deletes the Account from the database.
 func (s *PostgresStorage) DeleteAccount(db XODB, a *Account) error {
 	var err error
-
-	// if doesn't exist, bail
-	if !a._exists {
-		return nil
-	}
-
-	// if deleted, bail
-	if a._deleted {
-		return nil
-	}
 
 	// sql query
 	const sqlstr = `DELETE FROM "public"."account" WHERE "id" = $1`
@@ -239,9 +212,6 @@ func (s *PostgresStorage) DeleteAccount(db XODB, a *Account) error {
 	if err != nil {
 		return err
 	}
-
-	// set deleted
-	a._deleted = true
 
 	return nil
 }
@@ -274,11 +244,6 @@ func (s *PostgresStorage) DeleteAccounts(db XODB, as []*Account) error {
 		return err
 	}
 
-	// set deleted
-	for _, a := range as {
-		a._deleted = true
-	}
-
 	return nil
 }
 
@@ -286,7 +251,7 @@ func (s *PostgresStorage) DeleteAccounts(db XODB, as []*Account) error {
 // ordered by "created_date" in descending order.
 func (s *PostgresStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, error) {
 	const sqlstr = `SELECT ` +
-		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
+		`"id", "subject", "email", "name", "label", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "public"."account" ` +
 		`ORDER BY "created_date" DESC LIMIT $1`
 
@@ -303,12 +268,10 @@ func (s *PostgresStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, erro
 		a := Account{}
 
 		// scan
-		err = q.Scan(&a.ID, &a.Subject, &a.Email, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
+		err = q.Scan(&a.ID, &a.Subject, &a.Email, &a.Name, &a.Label, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
 		if err != nil {
 			return nil, err
 		}
-
-		a._exists = true
 		res = append(res, &a)
 	}
 
@@ -319,7 +282,7 @@ func (s *PostgresStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, erro
 // ordered by "changed_date" in descending order.
 func (s *PostgresStorage) GetMostRecentChangedAccount(db XODB, n int) ([]*Account, error) {
 	const sqlstr = `SELECT ` +
-		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
+		`"id", "subject", "email", "name", "label", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "public"."account" ` +
 		`ORDER BY "changed_date" DESC LIMIT $1`
 
@@ -336,15 +299,12 @@ func (s *PostgresStorage) GetMostRecentChangedAccount(db XODB, n int) ([]*Accoun
 		a := Account{}
 
 		// scan
-		err = q.Scan(&a.ID, &a.Subject, &a.Email, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
+		err = q.Scan(&a.ID, &a.Subject, &a.Email, &a.Name, &a.Label, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
 		if err != nil {
 			return nil, err
 		}
-
-		a._exists = true
 		res = append(res, &a)
 	}
-
 	return res, nil
 }
 
@@ -376,6 +336,8 @@ func (s *PostgresStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArgument
 		"id":           true,
 		"subject":      true,
 		"email":        true,
+		"name":         true,
+		"label":        true,
 		"created_date": true,
 		"changed_date": true,
 		"deleted_date": true,
@@ -407,7 +369,7 @@ func (s *PostgresStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArgument
 	limitPos := len(params)
 
 	var sqlstr = fmt.Sprintf(`SELECT %s FROM %s WHERE %s "deleted_date" IS %s ORDER BY "%s" %s OFFSET $%d LIMIT $%d`,
-		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" `,
+		`"id", "subject", "email", "name", "label", "created_date", "changed_date", "deleted_date" `,
 		`"public"."account"`,
 		placeHolders,
 		dead,
@@ -429,12 +391,10 @@ func (s *PostgresStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArgument
 		a := Account{}
 
 		// scan
-		err = q.Scan(&a.ID, &a.Subject, &a.Email, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
+		err = q.Scan(&a.ID, &a.Subject, &a.Email, &a.Name, &a.Label, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
 		if err != nil {
 			return nil, err
 		}
-
-		a._exists = true
 		res = append(res, &a)
 	}
 
@@ -489,17 +449,15 @@ func (s *PostgresStorage) AccountByID(db XODB, id int) (*Account, error) {
 
 	// sql query
 	const sqlstr = `SELECT ` +
-		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
+		`"id", "subject", "email", "name", "label", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "public"."account" ` +
 		`WHERE "id" = $1`
 
 	// run query
 	s.info(sqlstr, id)
-	a := Account{
-		_exists: true,
-	}
+	a := Account{}
 
-	err = db.QueryRow(sqlstr, id).Scan(&a.ID, &a.Subject, &a.Email, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
+	err = db.QueryRow(sqlstr, id).Scan(&a.ID, &a.Subject, &a.Email, &a.Name, &a.Label, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
 	if err != nil {
 		return nil, err
 	}
@@ -515,17 +473,15 @@ func (s *PostgresStorage) AccountBySubject(db XODB, subject string) (*Account, e
 
 	// sql query
 	const sqlstr = `SELECT ` +
-		`"id", "subject", "email", "created_date", "changed_date", "deleted_date" ` +
+		`"id", "subject", "email", "name", "label", "created_date", "changed_date", "deleted_date" ` +
 		`FROM "public"."account" ` +
 		`WHERE "subject" = $1`
 
 	// run query
 	s.info(sqlstr, subject)
-	a := Account{
-		_exists: true,
-	}
+	a := Account{}
 
-	err = db.QueryRow(sqlstr, subject).Scan(&a.ID, &a.Subject, &a.Email, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
+	err = db.QueryRow(sqlstr, subject).Scan(&a.ID, &a.Subject, &a.Email, &a.Name, &a.Label, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
 	if err != nil {
 		return nil, err
 	}

@@ -3,6 +3,8 @@ CREATE TABLE IF NOT EXISTS "account"
     id                 serial                              NOT NULL,
     subject            varchar(256)                        NOT NULL,
     email              varchar(256)                        NOT NULL,
+    name               varchar(256)                        NOT NULL,
+    label              varchar(256)                        NULL,
 
     -- timestamps
     created_date            timestamp                      DEFAULT now(),
