@@ -5,11 +5,10 @@ package storage
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 // InsertAccount inserts the Account to the database.
@@ -361,7 +360,7 @@ func (s *GodrorStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArguments)
 	if queryArgs.filterArgs == nil {
 		filterArgs, err := getAccountFilter(queryArgs.Where)
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to get Account filter")
+			return nil, fmt.Errorf("unable to get Account filter, %w", err)
 		}
 		queryArgs.filterArgs = filterArgs
 	}
@@ -459,7 +458,7 @@ func (s *GodrorStorage) CountAllAccount(db XODB, queryArgs *AccountQueryArgument
 	if queryArgs.filterArgs == nil {
 		filterArgs, err := getAccountFilter(queryArgs.Where)
 		if err != nil {
-			return 0, errors.Wrap(err, "unable to get Account filter")
+			return 0, fmt.Errorf("unable to get Account filter, %w", err)
 		}
 		queryArgs.filterArgs = filterArgs
 	}

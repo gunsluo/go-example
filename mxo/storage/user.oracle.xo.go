@@ -5,11 +5,10 @@ package storage
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 // InsertUser inserts the User to the database.

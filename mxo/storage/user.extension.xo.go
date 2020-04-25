@@ -6,11 +6,11 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strconv"
 
 	"github.com/graph-gophers/graphql-go"
-	"github.com/pkg/errors"
 )
 
 // UserQueryArguments composed by Cursor, UserFilter and sql filter string
@@ -150,12 +150,12 @@ func (r UserResolver) Subject(ctx context.Context) (*AccountResolver, error) {
 		return nil, errors.New("enable ac, please set verifier")
 	}
 	if err := r.Ext.Verifier.VerifyRefAC(ctx, "Users", "RefGet", r); err != nil {
-		return nil, errors.Wrap(err, "Users:RefGet")
+		return nil, fmt.Errorf("Users:RefGet, %w", err)
 	}
 	subject := r.node.Subject
 	node, err := r.Ext.Storage.AccountBySubject(r.Ext.DB, subject)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to retrieve Subject")
+		return nil, fmt.Errorf("unable to retrieve Subject, %w", err)
 	}
 	return NewAccountResolver(node, r.Ext), nil
 }
@@ -172,7 +172,7 @@ func (r *RootResolver) UserByID(ctx context.Context, args struct {
 		return nil, errors.New("enable ac, please set verifier")
 	}
 	if err := r.Ext.Verifier.VerifyAC(ctx, "Users", "Get", args); err != nil {
-		return nil, errors.Wrap(err, "Users:Get")
+		return nil, fmt.Errorf("Users:Get, %w", err)
 	}
 
 	res, err := r.innerUserByIDGraphQL(ctx, args)
@@ -194,15 +194,15 @@ func (r *RootResolver) innerUserByIDGraphQL(ctx context.Context, args struct {
 
 	arg0, err := strconv.Atoi(string(args.ID))
 	if err != nil {
-		return nil, errors.Wrap(err, `ID should be integer`)
+		return nil, fmt.Errorf(`ID should be integer, %w`, err)
 	}
 
 	data, err := r.Ext.Storage.UserByID(r.Ext.DB, arg0)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.Errorf(`user [`+"%v"+`] not found`, arg0)
+			return nil, fmt.Errorf(`user [`+"%v"+`] not found`, arg0)
 		}
-		return nil, errors.Wrap(err, `unable to get "public"."user"`)
+		return nil, fmt.Errorf(`unable to get "public"."user", %w`, err)
 	}
 
 	return NewUserResolver(data, r.Ext), nil
@@ -450,7 +450,7 @@ func (r *RootResolver) AllUsers(ctx context.Context, args *UserQueryArguments) (
 		return nil, errors.New("enable ac, please set verifier")
 	}
 	if err := r.Ext.Verifier.VerifyAC(ctx, "Users", "GetAll", args); err != nil {
-		return nil, errors.Wrap(err, "Users:GetAll")
+		return nil, fmt.Errorf("Users:GetAll, %w", err)
 	}
 
 	res, err := r.allUsers(ctx, args)
@@ -473,12 +473,12 @@ func (r *RootResolver) allUsers(ctx context.Context, queryArgs *UserQueryArgumen
 
 	allUser, err := r.Ext.Storage.GetAllUser(r.Ext.DB, queryArgs)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to get User")
+		return nil, fmt.Errorf("unable to get User, %w", err)
 	}
 
 	count, err := r.Ext.Storage.CountAllUser(r.Ext.DB, queryArgs)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to get count")
+		return nil, fmt.Errorf("unable to get count, %w", err)
 	}
 
 	return &UserConnectionResolver{
@@ -494,12 +494,12 @@ func (r *RootResolver) InsertUsers(ctx context.Context, args struct{ Input []Ins
 		return nil, errors.New("enable ac, please set verifier")
 	}
 	if err := r.Ext.Verifier.VerifyAC(ctx, "Users", "Insert", args); err != nil {
-		return nil, errors.Wrap(err, "Users:Insert")
+		return nil, fmt.Errorf("Users:Insert, %w", err)
 	}
 
 	tx, err := r.Ext.DB.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to begin transcation")
+		return nil, fmt.Errorf("unable to begin transcation, %w", err)
 	}
 
 	results := make([]UserResolver, len(args.Input))
@@ -512,13 +512,13 @@ func (r *RootResolver) InsertUsers(ctx context.Context, args struct{ Input []Ins
 
 		if err := r.Ext.Storage.InsertUserByFields(tx, node); err != nil {
 			tx.Rollback()
-			return nil, errors.Wrap(err, "unable to insert User")
+			return nil, fmt.Errorf("unable to insert User, %w", err)
 		}
 		results[i] = UserResolver{Ext: r.Ext, node: node}
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, errors.Wrap(err, "unable to commit")
+		return nil, fmt.Errorf("unable to commit, %w", err)
 	}
 
 	// event record
@@ -536,12 +536,12 @@ func (r *RootResolver) UpdateUsers(ctx context.Context, args struct{ Input []Upd
 		return nil, errors.New("enable ac, please set verifier")
 	}
 	if err := r.Ext.Verifier.VerifyAC(ctx, "Users", "Update", args); err != nil {
-		return nil, errors.Wrap(err, "Users:Update")
+		return nil, fmt.Errorf("Users:Update, %w", err)
 	}
 
 	tx, err := r.Ext.DB.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to begin transcation")
+		return nil, fmt.Errorf("unable to begin transcation, %w", err)
 	}
 
 	results := make([]UserResolver, len(args.Input))
@@ -555,7 +555,7 @@ func (r *RootResolver) UpdateUsers(ctx context.Context, args struct{ Input []Upd
 		if err := r.Ext.Storage.UpdateUserByFields(tx, node, fields, retCols, params, retVars); err != nil {
 			tx.Rollback()
 			if err == sql.ErrNoRows {
-				return nil, errors.Errorf(`User [%d] not found`, node.ID)
+				return nil, fmt.Errorf(`User [%d] not found`, node.ID)
 			}
 			return nil, err
 		}
@@ -564,7 +564,7 @@ func (r *RootResolver) UpdateUsers(ctx context.Context, args struct{ Input []Upd
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, errors.Wrap(err, "unable to commit")
+		return nil, fmt.Errorf("unable to commit, %w", err)
 	}
 
 	// event record
@@ -583,12 +583,12 @@ func (r *RootResolver) DeleteUsers(ctx context.Context, args struct{ Input []Del
 		return nil, errors.New("enable ac, please set verifier")
 	}
 	if err := r.Ext.Verifier.VerifyAC(ctx, "Users", "Delete", args); err != nil {
-		return nil, errors.Wrap(err, "Users:Delete")
+		return nil, fmt.Errorf("Users:Delete, %w", err)
 	}
 
 	nodes, ids, err := ConvertDeleteUserInputs(args.Input)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid input in the request")
+		return nil, fmt.Errorf("invalid input in the request, %w", err)
 	}
 
 	err = r.Ext.Storage.DeleteUsers(r.Ext.DB, nodes)

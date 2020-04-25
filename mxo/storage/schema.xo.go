@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/graph-gophers/graphql-go"
 	"github.com/jmoiron/sqlx"
-	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 )
@@ -502,14 +502,14 @@ func (r *RootResolver) GetResolverResources(includes []GraphQLResource, excludes
 	uniqueResources := make(map[string]GraphQLResource)
 	for _, r := range r.getAccountGraphQLResources() {
 		if v, ok := uniqueResources[r.Name]; ok {
-			return nil, errors.Errorf("duplicate resource %s", v.Name)
+			return nil, fmt.Errorf("duplicate resource %s", v.Name)
 		} else {
 			uniqueResources[v.Name] = v
 		}
 	}
 	for _, r := range r.getUserGraphQLResources() {
 		if v, ok := uniqueResources[r.Name]; ok {
-			return nil, errors.Errorf("duplicate resource %s", v.Name)
+			return nil, fmt.Errorf("duplicate resource %s", v.Name)
 		} else {
 			uniqueResources[v.Name] = v
 		}
@@ -517,7 +517,7 @@ func (r *RootResolver) GetResolverResources(includes []GraphQLResource, excludes
 
 	for _, r := range includes {
 		if v, ok := uniqueResources[r.Name]; ok {
-			return nil, errors.Errorf("duplicate resource %s", v.Name)
+			return nil, fmt.Errorf("duplicate resource %s", v.Name)
 		} else {
 			uniqueResources[v.Name] = v
 		}

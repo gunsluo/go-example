@@ -7,12 +7,12 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/graph-gophers/graphql-go"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
