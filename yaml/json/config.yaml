@@ -1,0 +1,29 @@
+
+issuer: http://127.0.0.1:5556/dex
+
+storage:
+  type: sqlite3
+  config:
+    file: examples/dex.db
+
+regions:
+  syncAddr: "amqp://guest:guest@rabbitmq:5672/"
+  # syncAddr: "amqps://rabbitmq-tls:5671/"
+  # serverName: "localhost"
+  # tlsCA: "/certs/ca_cert.pem"
+  # tlsCert: "/certs/client/client_cert.pem"
+  # tlsKey: "/certs/client/client_key.pem"  
+  regions: [
+    {
+      "name": "default",
+      "defaultRedirectURI": "",
+      "profile": {
+        "enable": true,
+        "enableLoginSync": true,
+        "allowedConnectorIds": [
+          "*"
+        ]
+      }
+    }
+  ]
+

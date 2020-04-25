@@ -151,7 +151,7 @@ func (s *PostgresStorage) UpdateAccountByFields(db XODB, a *Account, fields, ret
 	}
 
 	if len(retCols) > 0 {
-		sqlstr = " RETURNING " + strings.Join(retCols, ", ")
+		sqlstr += " RETURNING " + strings.Join(retCols, ", ")
 		sqlstr = fmt.Sprintf(sqlstr, idxvals...)
 		s.info(sqlstr, params)
 		if err := db.QueryRow(sqlstr, params...).Scan(retVars...); err != nil {

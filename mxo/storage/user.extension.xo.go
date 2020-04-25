@@ -6,6 +6,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"strconv"
 
 	"github.com/graph-gophers/graphql-go"
@@ -312,6 +313,137 @@ type DeleteUserInput struct {
 	ID graphql.ID
 }
 
+// ConvertInsertUserInput convert InsertUserInput to User
+func ConvertInsertUserInput(input InsertUserInput) (*User, error) {
+
+	f1 := input.Subject
+	f2 := StringPointer(input.Name)
+	f3 := TimeGqlPointer(input.CreatedDate)
+	f4 := TimeGqlPointer(input.ChangedDate)
+	f5 := TimeGqlPointer(input.DeletedDate)
+	node := &User{
+		Subject:     f1,
+		Name:        f2,
+		CreatedDate: f3,
+		ChangedDate: f4,
+		DeletedDate: f5,
+	}
+
+	return node, nil
+}
+
+// ConvertUpdateUserInput convert UpdateUserInput to User
+func ConvertUpdateUserInput(input UpdateUserInput) (*User, []string, []string, []interface{}, []interface{}, error) {
+	id, err := strconv.Atoi(string(input.ID))
+	if err != nil {
+		return nil, nil, nil, nil, nil, errors.New("ID must be an integer")
+	}
+
+	node := &User{ID: id}
+	fields := make([]string, 0, 5)
+	params := make([]interface{}, 0, 5)
+	retCols := make([]string, 0, 5)
+	retVars := make([]interface{}, 0, 5)
+
+	if isDeletionFields(input.Deletions, "subject") {
+		return nil, nil, nil, nil, nil, errors.New("couldn't set subject to null")
+	}
+	if input.Subject != nil {
+		fields = append(fields, `"subject"`)
+		params = append(params, *input.Subject)
+		node.Subject = *input.Subject
+	} else {
+		retCols = append(retCols, `"subject"`)
+		retVars = append(retVars, &node.Subject)
+	}
+
+	if isDeletionFields(input.Deletions, "name") {
+		fields = append(fields, `"name"`)
+		params = append(params, sql.NullString{})
+		node.Name = sql.NullString{}
+	} else if input.Name != nil {
+		fields = append(fields, `"name"`)
+		params = append(params, *input.Name)
+		node.Name = sql.NullString{String: *input.Name, Valid: true}
+	} else {
+		retCols = append(retCols, `"name"`)
+		retVars = append(retVars, &node.Name)
+	}
+
+	if isDeletionFields(input.Deletions, "createdDate") {
+		fields = append(fields, `"created_date"`)
+		params = append(params, sql.NullTime{})
+		node.CreatedDate = sql.NullTime{}
+	} else if input.CreatedDate != nil {
+		fields = append(fields, `"created_date"`)
+		params = append(params, input.CreatedDate.Time)
+		node.CreatedDate = sql.NullTime{Time: input.CreatedDate.Time, Valid: true}
+	} else {
+		retCols = append(retCols, `"created_date"`)
+		retVars = append(retVars, &node.CreatedDate)
+	}
+
+	if isDeletionFields(input.Deletions, "changedDate") {
+		fields = append(fields, `"changed_date"`)
+		params = append(params, sql.NullTime{})
+		node.ChangedDate = sql.NullTime{}
+	} else if input.ChangedDate != nil {
+		fields = append(fields, `"changed_date"`)
+		params = append(params, input.ChangedDate.Time)
+		node.ChangedDate = sql.NullTime{Time: input.ChangedDate.Time, Valid: true}
+	} else {
+		retCols = append(retCols, `"changed_date"`)
+		retVars = append(retVars, &node.ChangedDate)
+	}
+
+	if isDeletionFields(input.Deletions, "deletedDate") {
+		fields = append(fields, `"deleted_date"`)
+		params = append(params, sql.NullTime{})
+		node.DeletedDate = sql.NullTime{}
+	} else if input.DeletedDate != nil {
+		fields = append(fields, `"deleted_date"`)
+		params = append(params, input.DeletedDate.Time)
+		node.DeletedDate = sql.NullTime{Time: input.DeletedDate.Time, Valid: true}
+	} else {
+		retCols = append(retCols, `"deleted_date"`)
+		retVars = append(retVars, &node.DeletedDate)
+	}
+	if len(params) == 0 {
+		return nil, nil, nil, nil, nil, errors.New("all fields are empty, unable to update")
+	}
+
+	return node, fields, retCols, params, retVars, nil
+}
+
+// ConvertDeleteUserInput convert DeleteUserInput to User
+func ConvertDeleteUserInput(input DeleteUserInput) (*User, error) {
+
+	id, err := strconv.Atoi(string(input.ID))
+	if err != nil {
+		return nil, errors.New("ID must be an integer")
+	}
+
+	return &User{ID: id}, nil
+}
+
+// ConvertDeleteUserInputs convert DeleteUserInput to User
+func ConvertDeleteUserInputs(inputs []DeleteUserInput) ([]*User, []graphql.ID, error) {
+	ids := make([]graphql.ID, len(inputs))
+	nodes := make([]*User, len(inputs))
+
+	for i := range inputs {
+		node, err := ConvertDeleteUserInput(inputs[i])
+		if err != nil {
+			return nil, nil, err
+		}
+
+		nodes[i] = node
+		ids[i] = inputs[i].ID
+	}
+
+	return nodes, ids, nil
+}
+
 // AllUsers is a graphQL endpoint of AllUsers
 func (r *RootResolver) AllUsers(ctx context.Context, args *UserQueryArguments) (*UserConnectionResolver, error) {
 	if r.Ext.Verifier == nil {
@@ -365,40 +497,37 @@ func (r *RootResolver) InsertUsers(ctx context.Context, args struct{ Input []Ins
 		return nil, errors.Wrap(err, "Users:Insert")
 	}
 
-	res, err := r.insertUserGraphQL(ctx, args.Input)
-
-	// event record
-	if r.Ext.Recorder != nil {
-		if err := r.Ext.Recorder.RecordEvent(ctx, "Users", "Insert", res); err != nil {
-			r.Ext.Logger.Warnf("unable to record event, resource:Users, action:Insert, err:%v", err)
-		}
+	tx, err := r.Ext.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to begin transcation")
 	}
-	return res, err
-}
 
-func (r *RootResolver) insertUserGraphQL(ctx context.Context, items []InsertUserInput) ([]UserResolver, error) {
-	results := make([]UserResolver, len(items))
-	for i := range items {
-		input := items[i]
-
-		f1 := input.Subject
-		f2 := StringPointer(input.Name)
-		f3 := TimeGqlPointer(input.CreatedDate)
-		f4 := TimeGqlPointer(input.ChangedDate)
-		f5 := TimeGqlPointer(input.DeletedDate)
-		node := &User{
-			Subject:     f1,
-			Name:        f2,
-			CreatedDate: f3,
-			ChangedDate: f4,
-			DeletedDate: f5,
+	results := make([]UserResolver, len(args.Input))
+	for i, input := range args.Input {
+		node, err := ConvertInsertUserInput(input)
+		if err != nil {
+			tx.Rollback()
+			return nil, fmt.Errorf("invalid input in the request, %v %w", input, err)
 		}
-		if err := r.Ext.Storage.InsertUserByFields(r.Ext.DB, node); err != nil {
+
+		if err := r.Ext.Storage.InsertUserByFields(tx, node); err != nil {
+			tx.Rollback()
 			return nil, errors.Wrap(err, "unable to insert User")
 		}
 		results[i] = UserResolver{Ext: r.Ext, node: node}
 	}
-	return results, nil
+
+	if err := tx.Commit(); err != nil {
+		return nil, errors.Wrap(err, "unable to commit")
+	}
+
+	// event record
+	if r.Ext.Recorder != nil {
+		if err := r.Ext.Recorder.RecordEvent(ctx, "Users", "Insert", results); err != nil {
+			r.Ext.Logger.Warnf("unable to record event, resource:Users, action:Insert, err:%v", err)
+		}
+	}
+	return results, err
 }
 
 // UpdateUserGraphQL is the GraphQL end point for UpdateUser
@@ -410,100 +539,21 @@ func (r *RootResolver) UpdateUsers(ctx context.Context, args struct{ Input []Upd
 		return nil, errors.Wrap(err, "Users:Update")
 	}
 
-	res, err := r.updateUserGraphQL(ctx, args.Input)
-
-	// event record
-	if r.Ext.Recorder != nil {
-		if err := r.Ext.Recorder.RecordEvent(ctx, "Users", "Update", res); err != nil {
-			r.Ext.Logger.Warnf("unable to record event, resource:Users, action:Update, err:%v", err)
-		}
+	tx, err := r.Ext.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to begin transcation")
 	}
-	return res, err
-}
 
-func (r *RootResolver) updateUserGraphQL(ctx context.Context, items []UpdateUserInput) ([]UserResolver, error) {
-	results := make([]UserResolver, len(items))
-	for i := range items {
-		input := items[i]
-		id, err := strconv.Atoi(string(input.ID))
+	results := make([]UserResolver, len(args.Input))
+	for i, input := range args.Input {
+		node, fields, retCols, params, retVars, err := ConvertUpdateUserInput(input)
 		if err != nil {
-			return nil, errors.New("ID must be an integer")
+			tx.Rollback()
+			return nil, fmt.Errorf("invalid input in the request, %v %w", input, err)
 		}
 
-		node := &User{ID: id}
-		fields := make([]string, 0, 5)
-		params := make([]interface{}, 0, 5)
-		retCols := make([]string, 0, 5)
-		retVars := make([]interface{}, 0, 5)
-
-		if isDeletionFields(input.Deletions, "subject") {
-			return nil, errors.New("couldn't set subject to null")
-		}
-		if input.Subject != nil {
-			fields = append(fields, `"subject"`)
-			params = append(params, *input.Subject)
-			node.Subject = *input.Subject
-		} else {
-			retCols = append(retCols, `"subject"`)
-			retVars = append(retVars, &node.Subject)
-		}
-
-		if isDeletionFields(input.Deletions, "name") {
-			fields = append(fields, `"name"`)
-			params = append(params, sql.NullString{})
-			node.Name = sql.NullString{}
-		} else if input.Name != nil {
-			fields = append(fields, `"name"`)
-			params = append(params, *input.Name)
-			node.Name = sql.NullString{String: *input.Name, Valid: true}
-		} else {
-			retCols = append(retCols, `"name"`)
-			retVars = append(retVars, &node.Name)
-		}
-
-		if isDeletionFields(input.Deletions, "createdDate") {
-			fields = append(fields, `"created_date"`)
-			params = append(params, sql.NullTime{})
-			node.CreatedDate = sql.NullTime{}
-		} else if input.CreatedDate != nil {
-			fields = append(fields, `"created_date"`)
-			params = append(params, input.CreatedDate.Time)
-			node.CreatedDate = sql.NullTime{Time: input.CreatedDate.Time, Valid: true}
-		} else {
-			retCols = append(retCols, `"created_date"`)
-			retVars = append(retVars, &node.CreatedDate)
-		}
-
-		if isDeletionFields(input.Deletions, "changedDate") {
-			fields = append(fields, `"changed_date"`)
-			params = append(params, sql.NullTime{})
-			node.ChangedDate = sql.NullTime{}
-		} else if input.ChangedDate != nil {
-			fields = append(fields, `"changed_date"`)
-			params = append(params, input.ChangedDate.Time)
-			node.ChangedDate = sql.NullTime{Time: input.ChangedDate.Time, Valid: true}
-		} else {
-			retCols = append(retCols, `"changed_date"`)
-			retVars = append(retVars, &node.ChangedDate)
-		}
-
-		if isDeletionFields(input.Deletions, "deletedDate") {
-			fields = append(fields, `"deleted_date"`)
-			params = append(params, sql.NullTime{})
-			node.DeletedDate = sql.NullTime{}
-		} else if input.DeletedDate != nil {
-			fields = append(fields, `"deleted_date"`)
-			params = append(params, input.DeletedDate.Time)
-			node.DeletedDate = sql.NullTime{Time: input.DeletedDate.Time, Valid: true}
-		} else {
-			retCols = append(retCols, `"deleted_date"`)
-			retVars = append(retVars, &node.DeletedDate)
-		}
-		if len(params) == 0 {
-			return nil, errors.New("all fields are empty, unable to update")
-		}
-
-		if err := r.Ext.Storage.UpdateUserByFields(r.Ext.DB, node, fields, retCols, params, retVars); err != nil {
+		if err := r.Ext.Storage.UpdateUserByFields(tx, node, fields, retCols, params, retVars); err != nil {
+			tx.Rollback()
 			if err == sql.ErrNoRows {
 				return nil, errors.Errorf(`User [%d] not found`, node.ID)
 			}
@@ -512,7 +562,19 @@ func (r *RootResolver) updateUserGraphQL(ctx context.Context, items []UpdateUser
 
 		results[i] = UserResolver{Ext: r.Ext, node: node}
 	}
-	return results, nil
+
+	if err := tx.Commit(); err != nil {
+		return nil, errors.Wrap(err, "unable to commit")
+	}
+
+	// event record
+	if r.Ext.Recorder != nil {
+		if err := r.Ext.Recorder.RecordEvent(ctx, "Users", "Update", results); err != nil {
+			r.Ext.Logger.Warnf("unable to record event, resource:Users, action:Update, err: %v", err)
+		}
+	}
+
+	return results, err
 }
 
 // DeleteUserGraphQL is the GraphQL end point for DeleteUser
@@ -524,39 +586,23 @@ func (r *RootResolver) DeleteUsers(ctx context.Context, args struct{ Input []Del
 		return nil, errors.Wrap(err, "Users:Delete")
 	}
 
-	res, err := r.deleteUserGraphQL(ctx, args.Input)
-
-	// event record
-	if r.Ext.Recorder != nil {
-		if err := r.Ext.Recorder.RecordEvent(ctx, "Users", "Delete", res); err != nil {
-			r.Ext.Logger.Warnf("unable to record event, resource:Users, action:Delete, err:%v", err)
-		}
-	}
-	return res, err
-}
-
-func (r *RootResolver) deleteUserGraphQL(ctx context.Context, items []DeleteUserInput) ([]graphql.ID, error) {
-	results := make([]graphql.ID, len(items))
-	inputs := make([]*User, len(items))
-
-	for i := range items {
-		input := items[i]
-
-		id, err := strconv.Atoi(string(input.ID))
-		if err != nil {
-			return nil, errors.New("ID must be an integer")
-		}
-
-		results[i] = input.ID
-		inputs[i] = &User{ID: id}
+	nodes, ids, err := ConvertDeleteUserInputs(args.Input)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid input in the request")
 	}
 
-	err := r.Ext.Storage.DeleteUsers(r.Ext.DB, inputs)
+	err = r.Ext.Storage.DeleteUsers(r.Ext.DB, nodes)
 	if err != nil {
 		return nil, err
 	}
 
-	return results, nil
+	// event record
+	if r.Ext.Recorder != nil {
+		if err := r.Ext.Recorder.RecordEvent(ctx, "Users", "Delete", ids); err != nil {
+			r.Ext.Logger.Warnf("unable to record event, resource:Users, action:Delete, err:%v", err)
+		}
+	}
+	return ids, err
 }
 
 func (r *RootResolver) getUserGraphQLResources() []GraphQLResource {

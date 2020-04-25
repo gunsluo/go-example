@@ -7,7 +7,7 @@ require (
 	github.com/gin-gonic/gin v1.6.2 // indirect
 	github.com/godror/godror v0.13.2 // indirect
 	github.com/graph-gophers/graphql-go v0.0.0-20200309224638-dae41bde9ef9
-	github.com/jmoiron/sqlx v1.2.0 // indirect
+	github.com/jmoiron/sqlx v1.2.0
 	github.com/lib/pq v1.3.0 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/rubenv/sql-migrate v0.0.0-20200212082348-64f95ea68aa3 // indirect

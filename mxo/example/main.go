@@ -279,7 +279,7 @@ type gqlServer struct {
 }
 
 // NewGQLServer is graphql server
-func NewGQLServer(address string, logger *logrus.Logger, db storage.XODB, s storage.Storager) (*gqlServer, error) {
+func NewGQLServer(address string, logger *logrus.Logger, db *sqlx.DB, s storage.Storager) (*gqlServer, error) {
 
 	// graphql API
 	rootResolver := storage.NewRootResolver(&storage.ResolverConfig{Logger: logger, DB: db, S: s, Verifier: &Verifier{}})

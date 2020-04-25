@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/graph-gophers/graphql-go"
+	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
@@ -227,7 +228,7 @@ func (r *PageInfoResolver) HasPreviousPage() bool {
 // ResolverConfig is a config for Resolver
 type ResolverConfig struct {
 	Logger   XOLogger
-	DB       XODB
+	DB       *sqlx.DB
 	S        Storager
 	Recorder EventRecorder
 	Verifier Verifier
@@ -236,7 +237,7 @@ type ResolverConfig struct {
 // ResolverExtensions it's passing between root resolver and  children resolver
 type ResolverExtensions struct {
 	Logger   XOLogger
-	DB       XODB
+	DB       *sqlx.DB
 	Storage  Storager
 	Recorder EventRecorder
 	Verifier Verifier
