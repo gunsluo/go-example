@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -21,17 +22,27 @@ func failOnError(err error, msg string) {
 // go run receive.go -url amqps://localhost:5671/ -ca-crt=certs/ca_certificate.pem -client-crt=certs/client/client_certificate.pem -client-key=certs/client/private_key.pem
 // go run receive.go -url amqps://guest:guest@localhost:5671/ -ca-crt=certs2/ca.crt -client-crt=certs2/client/client.crt -client-key=certs2/client/client.key
 func newConn(url, caPath, clientCrt, clientKey string) (*amqp.Connection, error) {
-	if clientCrt == "" || caPath == "" || clientKey == "" {
+	if clientCrt == "" && caPath == "" && clientKey == "" {
 		return amqp.Dial(url)
 	}
 
 	cPool := x509.NewCertPool()
-	caCert, err := ioutil.ReadFile(caPath)
-	if err != nil {
-		return nil, fmt.Errorf("invalid CA crt file: %s", caPath)
+	if caPath != "" {
+		caCert, err := ioutil.ReadFile(caPath)
+		if err != nil {
+			return nil, fmt.Errorf("invalid CA crt file: %s", caPath)
+		}
+		if cPool.AppendCertsFromPEM(caCert) != true {
+			panic(errors.New("failed to append CA crt"))
+		}
 	}
-	if cPool.AppendCertsFromPEM(caCert) != true {
-		return nil, fmt.Errorf("failed to parse CA crt")
+
+	if clientCrt == "" && clientKey == "" {
+		clientTLSConfig := &tls.Config{
+			//InsecureSkipVerify: true,
+			RootCAs: cPool,
+		}
+		return amqp.DialTLS(url, clientTLSConfig)
 	}
 
 	clientCert, err := tls.LoadX509KeyPair(clientCrt, clientKey)
@@ -40,11 +51,13 @@ func newConn(url, caPath, clientCrt, clientKey string) (*amqp.Connection, error)
 	}
 
 	clientTLSConfig := &tls.Config{
+		//InsecureSkipVerify: true,
 		RootCAs:      cPool,
 		Certificates: []tls.Certificate{clientCert},
-		ServerName:   "localhost",
+		//ServerName:   *serverName,
 	}
 
+	fmt.Println("set certificate")
 	return amqp.DialTLS(url, clientTLSConfig)
 }
 
