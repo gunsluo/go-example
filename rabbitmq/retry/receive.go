@@ -9,6 +9,13 @@ import (
 	"github.com/streadway/amqp"
 )
 
+// Consumer is a message queue consumer
+type Consumer interface {
+	Deliver(do func(amqp.Delivery)) Consumer
+	Begin() error
+	End() error
+}
+
 type rabbitmqConsumer struct {
 	open     func(bool) (*amqp.Connection, error)
 	current  *amqp.Connection
@@ -171,36 +178,3 @@ func main() {
 
 	select {}
 }
-
-/*
-func define(ch *amqp.Channel) {
-	err := ch.ExchangeDeclare(
-		exchange, // name
-		amqp.ExchangeTopic,
-		true,  // durable
-		false, // auto-deleted
-		false, // internal
-		false, // no-wait
-		nil,   // arguments
-	)
-	failOnError(err, "Failed to declare an exchange")
-
-	q, err := ch.QueueDeclare(
-		qname, // name
-		true,  // durable
-		false, // delete when unused
-		false, // exclusive
-		false, // no-wait
-		nil,   // arguments
-	)
-	failOnError(err, "Failed to declare a queue")
-
-	err = ch.QueueBind(
-		q.Name,     // queue name
-		bindingKey, // routing key
-		exchange,   // exchange
-		false,
-		nil)
-	failOnError(err, "Failed to bind a queue")
-}
-*/
