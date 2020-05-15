@@ -1,0 +1,141 @@
+basePath: /api
+consumes:
+- application/json
+definitions:
+  organizationInfo:
+    properties:
+      id:
+        format: int64
+        type: integer
+        x-go-name: Id
+      name:
+        type: string
+        x-go-name: Name
+    type: object
+    x-go-package: github.com/gunsluo/go-example/swagger/gin
+  regionInfo:
+    properties:
+      label:
+        type: string
+        x-go-name: Label
+      name:
+        type: string
+        x-go-name: Name
+      redirectUrl:
+        type: string
+        x-go-name: RedirectURL
+    type: object
+    x-go-package: github.com/gunsluo/go-example/swagger/gin
+  regionWithOrganizationInfo:
+    properties:
+      label:
+        type: string
+        x-go-name: Label
+      name:
+        type: string
+        x-go-name: Name
+      organization:
+        items:
+          $ref: '#/definitions/organizationInfo'
+        type: array
+        x-go-name: Organizations
+      redirectUrl:
+        type: string
+        x-go-name: RedirectURL
+    type: object
+    x-go-package: github.com/gunsluo/go-example/swagger/gin
+host: 127.0.0.1:9000
+info:
+  description: Documentation of Global Region API.
+  title: Global Region.
+  version: 1.0.0
+paths:
+  /regions:
+    get:
+      operationId: allRegions
+      responses:
+        "200":
+          $ref: '#/responses/regionsResponse'
+      summary: query all regions from the server.
+      tags:
+      - region
+  /user/{subject}/organizations:
+    get:
+      operationId: userOrganizations
+      parameters:
+      - description: subject is required, it is unique id of the user.
+        in: path
+        name: subject
+        required: true
+        type: string
+        x-go-name: Subject
+      responses:
+        "200":
+          $ref: '#/responses/userOrganizationsResponse'
+      summary: query organizations of the user's subject in regions from the server.
+      tags:
+      - region
+  /user/{subject}/regions:
+    get:
+      operationId: userRegions
+      parameters:
+      - description: subject is required, it is unique id of the user.
+        in: path
+        name: subject
+        required: true
+        type: string
+        x-go-name: Subject
+      responses:
+        "200":
+          $ref: '#/responses/userRegionsResponse'
+      summary: query regions with the user's subject from the server.
+      tags:
+      - region
+produces:
+- application/json
+responses:
+  regionsResponse:
+    description: This is regions response body.
+    schema:
+      properties:
+        regions:
+          items:
+            $ref: '#/definitions/regionInfo'
+          type: array
+          x-go-name: Regions
+      type: object
+  userOrganizationsResponse:
+    description: This is user's organization in regions response body.
+    schema:
+      properties:
+        regions:
+          items:
+            $ref: '#/definitions/regionWithOrganizationInfo'
+          type: array
+          x-go-name: Regions
+      type: object
+  userRegionsResponse:
+    description: This is user's regions response body.
+    schema:
+      properties:
+        regions:
+          items:
+            $ref: '#/definitions/regionInfo'
+          type: array
+          x-go-name: Regions
+      type: object
+schemes:
+- http
+security:
+- type:
+  - oauth2
+- flow:
+  - accessCode
+- authorizationUrl:
+  - '''http://sso-dex:5556/auth'''
+- tokenUrl:
+  - '''http://sso-dex:5556/token'''
+- scopes: []
+- user:
+  - openid
+swagger: "2.0"

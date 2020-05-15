@@ -19,4 +19,4 @@ type foobarParamsWrapper struct {
 	// This text will appear as description of your request body.
 	// in:body
 	Body api.FooBarRequest
-}
+} // swagger:response foobarResponse
