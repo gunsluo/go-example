@@ -34,8 +34,8 @@ services:
     ports:
       - 6379:6379
     environment:
-      - ALLOW_EMPTY_PASSWORD=yes
-    #  - REDIS_PASSWORD=password
+      - REDIS_PASSWORD=password
+     # - ALLOW_EMPTY_PASSWORD=yes
     volumes:
       - redis-data:/bitnami/redis/data
     networks:
@@ -49,10 +49,12 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: password
     ports:
       - 27017:27017
+    volumes:
+      - mongodb-data:/data/db
+      - mongodb-cfg-data:/data/configdb
+      #- ./data:/tmp/data
     networks:
       target:
-    volumes:
-      - ./data:/tmp/data
 
   rabbitmq:
     image: itzg/rabbitmq-stomp
@@ -61,6 +63,8 @@ services:
       - 5672:5672
       - 15672:15672
       - 61613:61613
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
     networks:
       target:
 
@@ -72,6 +76,8 @@ services:
       - 8500:8500
       - 8502:8502
       - 8600:8600
+    volumes:
+      - consul-data:/consul/data
     networks:
       target:
 
@@ -113,8 +119,19 @@ services:
 
 volumes:
   postgres-data:
+    name: postgres-data
   oracle-data:
+    name: oracle-data
   redis-data:
+    name: redis-data
+  rabbitmq-data:
+    name: rabbitmq-data
+  mongodb-data:
+    name: mongodb-data
+  mongodb-cfg-data:
+    name: mongodb-cfg-data
+  consul-data:
+    name: consul-data
 
 networks:
   target:
