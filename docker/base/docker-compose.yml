@@ -1,0 +1,121 @@
+version: "3.7"
+services:
+
+  postgres:
+    image: postgres:11.1-alpine
+    container_name: postgres 
+    restart: on-failure
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      PGDATA: /var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      target:
+
+  oracle:
+    image: maxnilz/oracle-ee:12.2.0.1
+    container_name: oracle
+    ports:
+      - 1521:1521
+      - 5500:5500
+    restart: on-failure
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    networks:
+      target:
+
+  redis:
+    image: 'bitnami/redis:5.0.5'
+    container_name: redis
+    ports:
+      - 6379:6379
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    #  - REDIS_PASSWORD=password
+    volumes:
+      - redis-data:/bitnami/redis/data
+    networks:
+      target:
+
+  mongodb:
+    image: mongo:4.1.5
+    container_name: mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+    ports:
+      - 27017:27017
+    networks:
+      target:
+    volumes:
+      - ./data:/tmp/data
+
+  rabbitmq:
+    image: itzg/rabbitmq-stomp
+    container_name: rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+      - 61613:61613
+    networks:
+      target:
+
+  consul:
+    image: consul
+    container_name: consul
+    command: consul agent -client=0.0.0.0 -dev
+    ports:
+      - 8500:8500
+      - 8502:8502
+      - 8600:8600
+    networks:
+      target:
+
+  envs:
+    image: registry.tespkg.in/library/envs:alpine3.10
+    container_name: envs
+    command: >
+      /usr/local/envs/bin/envs
+      --address :9112
+      --dsn http://consul:8500/envs
+      --asset-dir /usr/local/envs/static
+    ports:
+      - 9112:9112
+    depends_on:
+      - consul
+    networks:
+      target:
+
+  envc:
+    image: registry.gitlab.com/target-digital-transformation/environment-client
+    container_name: envc
+    command: >
+      /usr/local/bin/environment-client -a :30000
+    ports:
+      - 30000:30000
+    depends_on:
+      - envs
+    environment:
+      ENVS_HTTP_ADDR: http://envs:9112
+      ENVA_PUBLISH: >
+          pguser=postgres,
+          pgpassword=password,
+          pgdsn=postgres://postgres:password@postgres:5432,
+          oradsn=oracle://ac:password@oracle:1521/ORCLPDB1,
+          redispassword=password,
+          rabbitmqdsn=amqp://guest:guest@rabbitmq:5672/
+    networks:
+      target:
+
+volumes:
+  postgres-data:
+  oracle-data:
+  redis-data:
+
+networks:
+  target:
+    name: target
