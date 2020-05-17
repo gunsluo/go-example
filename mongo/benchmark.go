@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gunsluo/go-example/mongo/db"
-	"github.com/mongodb/mongo-go-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func main() {

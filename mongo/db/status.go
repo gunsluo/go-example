@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/mongodb/mongo-go-driver/bson"
-	"github.com/mongodb/mongo-go-driver/bson/primitive"
-	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/mongodb/mongo-go-driver/mongo/options"
-	"github.com/mongodb/mongo-go-driver/x/bsonx"
 	"github.com/pkg/errors"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/x/bsonx"
 )
 
 const (
@@ -59,7 +59,7 @@ func (doc *EmailDocument) Insert(ctx context.Context, db *mongo.Database) error 
 	}
 	coll := db.Collection(doc.Collection())
 
-	total, err := coll.Count(ctx,
+	total, err := coll.CountDocuments(ctx,
 		bson.D{{"eid", doc.EID}},
 	)
 	if err != nil {
@@ -237,7 +237,7 @@ func CountEmailDocumentByWhere(ctx context.Context, db *mongo.Database, where Em
 		condition = append(condition, bson.E{"sendDate", whereDoc})
 	}
 
-	total, err := coll.Count(ctx, condition)
+	total, err := coll.CountDocuments(ctx, condition)
 	if err != nil {
 		return 0, err
 	}

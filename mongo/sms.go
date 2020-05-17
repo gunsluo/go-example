@@ -6,13 +6,15 @@ import (
 	"time"
 
 	"github.com/gunsluo/go-example/mongo/db"
-	"github.com/mongodb/mongo-go-driver/bson/primitive"
-	"github.com/mongodb/mongo-go-driver/mongo"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func main() {
 	ctx := context.Background()
-	client, err := mongo.Connect(ctx, "mongodb://root:password@localhost:27017", nil)
+	mongoURL := "mongodb://root:password@127.0.0.1:27017/"
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(mongoURL))
 	if err != nil {
 		panic(err)
 	}

@@ -3,12 +3,12 @@ package db
 import (
 	"context"
 
-	"github.com/mongodb/mongo-go-driver/bson"
-	"github.com/mongodb/mongo-go-driver/bson/primitive"
-	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/mongodb/mongo-go-driver/mongo/options"
-	"github.com/mongodb/mongo-go-driver/x/bsonx"
 	"github.com/pkg/errors"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/x/bsonx"
 )
 
 const (
@@ -33,7 +33,8 @@ func (doc *EmailRelationDocument) Insert(ctx context.Context, db *mongo.Database
 	}
 	coll := db.Collection(doc.Collection())
 
-	total, err := coll.Count(ctx,
+	//coll.CountDocuments(ctx context.Context, filter interface{}, opts ...*options.CountOptions)
+	total, err := coll.CountDocuments(ctx,
 		bson.D{{"eid", doc.EID}, {"to", doc.To}},
 	)
 	if err != nil {

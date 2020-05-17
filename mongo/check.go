@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/mongodb/mongo-go-driver/bson"
-	"github.com/mongodb/mongo-go-driver/mongo"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 const (
@@ -14,7 +15,11 @@ const (
 
 func main() {
 	ctx := context.Background()
-	client, err := mongo.Connect(ctx, mongoURL, nil)
+
+	//mongoURL := "mongodb://127.0.0.1:27017"
+	//client, err := mongo.NewClient(options.Client().ApplyURI(mongoURL).
+	//	SetAuth(options.Credential{AuthMechanism: "PLAIN", AuthSource: "amdin", Username: "root", Password: "password"}))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(mongoURL))
 	if err != nil {
 		panic(err)
 	}
