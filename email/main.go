@@ -11,4 +11,6 @@ func main() {
 
 	// Validate a single address
 	log.Println(v.Verify("gunsluo@gmail.com"))
+	//"ji.luo@target-energysolutions.com"
+	log.Println(v.Verify("ji.luo@target-energysolutions.com"))
 }

@@ -16,14 +16,21 @@ type Consumer interface {
 	End() error
 }
 
+func NewRabbitmqConsumer(qname string, open func(bool) (*amqp.Connection, error), before func(ch *amqp.Channel) error) (Consumer, error) {
+	c := &rabbitmqConsumer{qname: qname, open: open, before: before, logger: logrus.New()}
+
+	return c, nil
+}
+
 type rabbitmqConsumer struct {
+	qname    string
 	open     func(bool) (*amqp.Connection, error)
+	before   func(ch *amqp.Channel) error
 	current  *amqp.Connection
 	channel  *amqp.Channel
 	delivery <-chan amqp.Delivery
 
 	logger logrus.FieldLogger
-	qname  string
 	do     func(amqp.Delivery)
 
 	shutdown    chan struct{}
@@ -31,7 +38,7 @@ type rabbitmqConsumer struct {
 }
 
 // Deliver set a deliver func
-func (r *rabbitmqConsumer) Deliver(do func(amqp.Delivery)) *rabbitmqConsumer {
+func (r *rabbitmqConsumer) Deliver(do func(amqp.Delivery)) Consumer {
 	r.do = do
 	return r
 }
@@ -42,6 +49,12 @@ func (r *rabbitmqConsumer) Begin() error {
 	}
 	r.shutdown = make(chan struct{})
 	r.maxInterval = time.Minute
+
+	if r.before != nil {
+		if err := r.before(r.channel); err != nil {
+			return err
+		}
+	}
 
 	delivery, err := r.channel.Consume(
 		r.qname, // queue
@@ -167,8 +180,13 @@ func main() {
 	}
 
 	log.Printf(" [*] Waiting for logs. To exit press CTRL+C")
-	c := rabbitmqConsumer{open: open, logger: logrus.New(), qname: qname}
-	err := c.Deliver(func(msg amqp.Delivery) {
+	//c := rabbitmqConsumer{open: open, logger: logrus.New(), qname: qname}
+	strategy := NewDefaultRabbitMQStrategy(exchange, bindingKey, qname)
+	c, err := NewRabbitmqConsumer(qname, open, strategy)
+	if err != nil {
+		panic(err)
+	}
+	err = c.Deliver(func(msg amqp.Delivery) {
 		log.Printf(" [x] %s", msg.Body)
 		msg.Ack(false)
 	}).Begin()
@@ -177,4 +195,40 @@ func main() {
 	}
 
 	select {}
+}
+
+func NewDefaultRabbitMQStrategy(exchange, bindingKey, qname string) func(ch *amqp.Channel) error {
+	return func(ch *amqp.Channel) error {
+		err := ch.ExchangeDeclare(
+			exchange, // name
+			amqp.ExchangeTopic,
+			true,  // durable
+			false, // auto-deleted
+			false, // internal
+			false, // no-wait
+			nil,   // arguments
+		)
+		if err != nil {
+			return err
+		}
+
+		q, err := ch.QueueDeclare(
+			qname, // name
+			true,  // durable
+			false, // delete when unused
+			false, // exclusive
+			false, // no-wait
+			nil,   // arguments
+		)
+		if err != nil {
+			return err
+		}
+
+		return ch.QueueBind(
+			q.Name,     // queue name
+			bindingKey, // routing key
+			exchange,   // exchange
+			false,
+			nil)
+	}
 }
