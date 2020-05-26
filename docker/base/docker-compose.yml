@@ -113,7 +113,8 @@ services:
           pgdsn=postgres://postgres:password@postgres:5432,
           oradsn=oracle://ac:password@oracle:1521/ORCLPDB1,
           redispassword=password,
-          rabbitmqdsn=amqp://guest:guest@rabbitmq:5672/
+          rabbitmqdsn=amqp://guest:guest@rabbitmq:5672/,
+          mongodsn=mongodb://root:password@mongodb:27017
     networks:
       target:
 
