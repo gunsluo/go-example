@@ -43,28 +43,34 @@ func main() {
 	 */
 
 	ctx := context.Background()
-	thunk := loader.Load(ctx, ValueKey{K: "key", V: 100}) // ValueKey is a convenience method that make wraps string to implement `Key` interface
-	result, err := thunk()
-	if err != nil {
-		panic(err)
-	}
-	log.Printf("value: %#v", result)
+	go func() {
+		thunk := loader.Load(ctx, ValueKey{K: "key", V: 100}) // ValueKey is a convenience method that make wraps string to implement `Key` interface
+		result, err := thunk()
+		if err != nil {
+			panic(err)
+		}
+		log.Printf("value: %#v", result)
+	}()
 
-	thunk = loader.Load(ctx, ValueKey{K: "key", V: 200}) // ValueKey is a convenience method that make wraps string to implement `Key` interface
-	result, err = thunk()
-	if err != nil {
-		panic(err)
-	}
+	go func() {
+		thunk := loader.Load(ctx, ValueKey{K: "key", V: 200}) // ValueKey is a convenience method that make wraps string to implement `Key` interface
+		result, err := thunk()
+		if err != nil {
+			panic(err)
+		}
+		log.Printf("value: %#v", result)
+	}()
 
-	log.Printf("value: %#v", result)
+	go func() {
+		thunk := loader.Load(ctx, ValueKey{K: "key", V: 100}) // ValueKey is a convenience method that make wraps string to implement `Key` interface
+		result, err := thunk()
+		if err != nil {
+			panic(err)
+		}
+		log.Printf("value: %#v", result)
+	}()
 
-	thunk = loader.Load(ctx, ValueKey{K: "key", V: 100}) // ValueKey is a convenience method that make wraps string to implement `Key` interface
-	result, err = thunk()
-	if err != nil {
-		panic(err)
-	}
-
-	log.Printf("value: %#v", result)
+	select {}
 }
 
 // ValueKey implements the Key interface for a string
