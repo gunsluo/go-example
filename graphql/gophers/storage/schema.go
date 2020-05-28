@@ -9,7 +9,7 @@ const (
     type Query {
 	  # Get a thing by it's ID.
 	  user(id: ID!): User
-	  users(): [User]!
+	  users(limit: Int!, offset: Int!): [User]!
 	}
 
 	# Thing is pretty simple.

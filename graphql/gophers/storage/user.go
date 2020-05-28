@@ -49,7 +49,12 @@ func (r *UserResolver) Firends(ctx context.Context) ([]*FirendResolver, error) {
 		return nil, errors.New("unable to find the custom context")
 	}
 
-	thunk := c.Loader.Load(ctx, ValueKey{K: "getFirendsByUserId", V: r.node.id})
+	loader, err := c.Loaders.Key("getFirendsByUserId")
+	if err != nil {
+		return nil, err
+	}
+
+	thunk := loader.Load(ctx, GetFirendsByUserIdKey{UserId: r.node.id})
 	data, err := thunk()
 	if err != nil {
 		return nil, fmt.Errorf("getFirendsByUserId: %v", err)

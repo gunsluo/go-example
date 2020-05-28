@@ -33,7 +33,12 @@ func (r *RootResolver) User(ctx context.Context, args *UserArgs) (*UserResolver,
 	fmt.Println("root resolver:", r.G.Logger, r.G.DB, "customkey:", c.Value("customkey"))
 
 	id := string(args.ID)
-	thunk := c.Loader.Load(ctx, ValueKey{K: "getUserById", V: id})
+	loader, err := c.Loaders.Key("getUserById")
+	if err != nil {
+		return nil, err
+	}
+
+	thunk := loader.Load(ctx, GetUserByIdKey{Id: id})
 	data, err := thunk()
 	if err != nil {
 		return nil, fmt.Errorf("getUserById: %v", err)
@@ -48,13 +53,26 @@ func (r *RootResolver) User(ctx context.Context, args *UserArgs) (*UserResolver,
 }
 
 // User resolves the query `thing`.
-func (r *RootResolver) Users(ctx context.Context) ([]*UserResolver, error) {
+func (r *RootResolver) Users(ctx context.Context, args struct {
+	Limit  int32
+	Offset int32
+}) ([]*UserResolver, error) {
 	c, found := ctx.Value(GraphqlContextKey).(*Context)
 	if !found {
 		return nil, errors.New("unable to find the custom context")
 	}
 
-	thunk := c.Loader.Load(ctx, ValueKey{K: "getUsers"})
+	if args.Limit == 0 {
+		args.Limit = 50
+	}
+
+	loader, err := c.Loaders.Key("getUsers")
+	if err != nil {
+		return nil, err
+	}
+	thunk := loader.Load(ctx, GetUsersKey{
+		Limit:  int(args.Limit),
+		Offset: int(args.Offset)})
 	data, err := thunk()
 	if err != nil {
 		return nil, fmt.Errorf("getUsers: %v", err)
@@ -73,16 +91,42 @@ func (r *RootResolver) Users(ctx context.Context) ([]*UserResolver, error) {
 }
 
 var CallTimes int
+var OriginTimes int
 
 func getUserById(id string) *User {
 	CallTimes++
-	return &User{id: id, name: "luo", fullname: "luoji"}
+	for _, u := range mockUsers {
+		if u.id == id {
+			return u
+		}
+	}
+	return nil
 }
 
-func getUsers() []*User {
+func getUserByIds(ids []string) []*User {
 	CallTimes++
-	return []*User{
-		&User{id: "1", name: "luo", fullname: "luoji"},
-		&User{id: "2", name: "jerry", fullname: "jerry ti"},
+	var users []*User
+	for _, id := range ids {
+		for _, u := range mockUsers {
+			if u.id == id {
+				users = append(users, u)
+				break
+			}
+		}
 	}
+
+	return users
+}
+
+func getUsers(limit, offset int) []*User {
+	CallTimes++
+	return mockUsers
+}
+
+var mockUsers = []*User{
+	&User{id: "1", name: "luoji", fullname: "luoji"},
+	&User{id: "2", name: "jerry", fullname: "jerry"},
+	&User{id: "3", name: "mary", fullname: "mary"},
+	&User{id: "4", name: "lili", fullname: "lili"},
+	&User{id: "5", name: "mark", fullname: "mark"},
 }

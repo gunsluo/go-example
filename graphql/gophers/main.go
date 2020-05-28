@@ -23,14 +23,16 @@ func main() {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("set dataloader for each request")
 			times := storage.CallTimes
-			loader := storage.DefaultLoaderFactory.NewLoader()
-			c := &storage.Context{Values: make(map[string]interface{}), Loader: loader}
+			otimes := storage.OriginTimes
+
+			dls := storage.DefaultLoaderFactory.NewDataLoaders()
+			c := &storage.Context{Values: make(map[string]interface{}), Loaders: dls}
 
 			ctx := r.Context()
 			ctx = context.WithValue(ctx, storage.GraphqlContextKey, c)
 			h.ServeHTTP(w, r.WithContext(ctx))
 
-			fmt.Println("call times:", storage.CallTimes-times)
+			fmt.Println("origin times", storage.OriginTimes-otimes, "call times:", storage.CallTimes-times)
 		})
 	}
 
