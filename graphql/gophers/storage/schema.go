@@ -17,17 +17,12 @@ const (
 	  id: ID
 	  name: String
 	  fullname: String
-	  firends(): [Firend]!
+	  friends(): [Friend]!
 	}
 
-	type Firend {
-	  firendId: String
+	type Friend {
+	  friendId: String
 	  user(): User
 	}
 `
 )
-
-//firends(): String
-//
-//type Firend {
-//}

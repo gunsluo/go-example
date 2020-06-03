@@ -54,7 +54,7 @@ func (dls DataLoaders) Key(key string) (*dataloader.Loader, error) {
 var defaultLoaders = map[string]Loader{
 	"getUserById":        &getUserByIdLoader{},
 	"getUsers":           &getUsersLoader{},
-	"getFirendsByUserId": &getFirendsByUserIdLoader{},
+	"getFriendsByUserId": &getFriendsByUserIdLoader{},
 }
 
 var DefaultLoaderFactory = LoaderFactory{loaders: defaultLoaders}
@@ -135,54 +135,54 @@ func (l *getUsersLoader) Key() string {
 }
 
 // GetUserByIdKey implements the Key interface for a int
-type GetFirendsByUserIdKey struct {
+type GetFriendsByUserIdKey struct {
 	UserId string
 }
 
-func (k GetFirendsByUserIdKey) String() string { return "" }
+func (k GetFriendsByUserIdKey) String() string { return "" }
 
-func (k GetFirendsByUserIdKey) Raw() interface{} { return k.UserId }
+func (k GetFriendsByUserIdKey) Raw() interface{} { return k.UserId }
 
-// getFirendsByUserId loader
-type getFirendsByUserIdLoader struct {
+// getFriendsByUserId loader
+type getFriendsByUserIdLoader struct {
 }
 
-func (l *getFirendsByUserIdLoader) Batch(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
+func (l *getFriendsByUserIdLoader) Batch(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 	OriginTimes += len(keys)
 
 	var ids []string
 	for _, key := range keys {
 		//id, ok := key.Raw().(string)
-		k, ok := key.(GetFirendsByUserIdKey)
+		k, ok := key.(GetFriendsByUserIdKey)
 		if ok {
 			ids = append(ids, k.UserId)
 		}
 	}
 
-	firends := getFirendsByUserIds(ids)
+	friends := getFriendsByUserIds(ids)
 
 	// sort
-	sortFirends := map[string][]*Firend{}
-	for _, f := range firends {
-		if v, ok := sortFirends[f.userId]; ok {
-			sortFirends[f.userId] = append(v, f)
+	sortFriends := map[string][]*Friend{}
+	for _, f := range friends {
+		if v, ok := sortFriends[f.userId]; ok {
+			sortFriends[f.userId] = append(v, f)
 		} else {
-			sortFirends[f.userId] = []*Firend{f}
+			sortFriends[f.userId] = []*Friend{f}
 		}
 	}
 
 	var results []*dataloader.Result
 	for _, id := range ids {
-		if v, ok := sortFirends[id]; ok {
+		if v, ok := sortFriends[id]; ok {
 			results = append(results, &dataloader.Result{Data: v})
 		} else {
-			results = append(results, &dataloader.Result{Data: []*Firend{}})
+			results = append(results, &dataloader.Result{Data: []*Friend{}})
 		}
 	}
 
 	return results
 }
 
-func (l *getFirendsByUserIdLoader) Key() string {
-	return "getFirendsByUserId"
+func (l *getFriendsByUserIdLoader) Key() string {
+	return "getFriendsByUserId"
 }

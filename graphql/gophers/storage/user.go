@@ -43,31 +43,31 @@ func (r *UserResolver) Fullname(ctx context.Context) (*string, error) {
 	return &r.node.fullname, nil
 }
 
-func (r *UserResolver) Firends(ctx context.Context) ([]*FirendResolver, error) {
+func (r *UserResolver) Friends(ctx context.Context) ([]*FriendResolver, error) {
 	c, found := ctx.Value(GraphqlContextKey).(*Context)
 	if !found {
 		return nil, errors.New("unable to find the custom context")
 	}
 
-	loader, err := c.Loaders.Key("getFirendsByUserId")
+	loader, err := c.Loaders.Key("getFriendsByUserId")
 	if err != nil {
 		return nil, err
 	}
 
-	thunk := loader.Load(ctx, GetFirendsByUserIdKey{UserId: r.node.id})
+	thunk := loader.Load(ctx, GetFriendsByUserIdKey{UserId: r.node.id})
 	data, err := thunk()
 	if err != nil {
-		return nil, fmt.Errorf("getFirendsByUserId: %v", err)
+		return nil, fmt.Errorf("getFriendsByUserId: %v", err)
 	}
-	firends, ok := data.([]*Firend)
+	friends, ok := data.([]*Friend)
 	if !ok {
-		return nil, fmt.Errorf("Firends: loaded the wrong type of data: %#v", data)
+		return nil, fmt.Errorf("Friends: loaded the wrong type of data: %#v", data)
 	}
 
-	//firends := getFirendsByUserId(r.node.id)
-	var resolvers []*FirendResolver
-	for _, firend := range firends {
-		resolvers = append(resolvers, &FirendResolver{node: firend, root: r.root})
+	//friends := getFriendsByUserId(r.node.id)
+	var resolvers []*FriendResolver
+	for _, friend := range friends {
+		resolvers = append(resolvers, &FriendResolver{node: friend, root: r.root})
 	}
 	return resolvers, nil
 }
