@@ -1,0 +1,85 @@
+# setup multiple JVB
+
+### prosody
+1. prosody/config/conf.d/jitsi-meet.cfg.lua
+
+**VirtualHost "meet.jitsi"**
+```
+admins = {
+    "jvb.meet.jitsi",
+    "jvb2.meet.jitsi",
+}
+```
+
+2. prosody/config/prosody.cfg.lua
+
+```
+component_ports = { 5347 }
+component_interface = { "*" }
+```
+
+
+
+3. prosody/config/conf.d/jitsi-meet.cfg.lua
+
+```
+Component "jvb.meet.jitsi"
+    component_secret = "jvbapassword"
+
+Component "jvb2.meet.jitsi"
+    component_secret = "jvbapassword"
+```
+
+
+### jicofo
+1. jicofo/sip-communicator.properties
+
+```
+org.jitsi.focus.pubsub.ADDRESS=meet.jitsi
+org.jitsi.focus.STATS_PUBSUB_NODE=sharedStatsNode
+```
+
+
+
+### jvb
+
+1. modify envorment variable JVB_ENABLE_APIS=rest,xmpp to .env
+
+2. add envorment variable JVB_SUBDOMAIN=jvb2 to docker compose
+
+3. modify startup script and set `JVB_HOST`
+```
+
+#!/usr/bin/with-contenv bash
+
+JAVA_SYS_PROPS="-Dnet.java.sip.communicator.SC_HOME_DIR_LOCATION=/ -Dnet.java.sip.communicator.SC_HOME_DIR_NAME=config -Djava.util.logging.config.file=/config/logging.properties"
+
+if [[ ! -z "$DOCKER_HOST_ADDRESS" ]]; then
+    LOCAL_ADDRESS=$(hostname -I | cut -d " " -f1)
+    JAVA_SYS_PROPS="$JAVA_SYS_PROPS -Dorg.ice4j.ice.harvest.NAT_HARVESTER_LOCAL_ADDRESS=$LOCAL_ADDRESS -Dorg.ice4j.ice.harvest.NAT_HARVESTER_PUBLIC_ADDRESS=$DOCKER_HOST_ADDRESS"
+fi
+
+DAEMON=/usr/share/jitsi-videobridge/jvb.sh
+DEFAULT_DAEMON_OPTS="none"
+
+DAEMON_OPTS=${JVB_ENABLE_APIS:=$DEFAULT_DAEMON_OPTS}
+
+DEFAULT_SUBDOMAIN=""
+SUBDOMAIN_OPT=${JVB_SUBDOMAIN:=DEFAULT_SUBDOMAIN}
+
+
+echo "jvb command line:   exec $DAEMON --apis=${DAEMON_OPTS} --subdomain=${SUBDOMAIN_OPT} --domain=${XMPP_DOMAIN} -host=${XMPP_SERVER} --port=5347 --secret=jvbapassword"
+exec s6-setuidgid jvb /bin/bash -c "JAVA_SYS_PROPS=\"$JAVA_SYS_PROPS\" exec $DAEMON --apis=${DAEMON_OPTS} --subdomain=${SUBDOMAIN_OPT} --domain=${XMPP_DOMAIN} -host=${XMPP_SERVER} --port=5347 --secret=jvbapassword"
+```
+
+
+4. jvb/sip-communicator.properties
+
+```
+org.jitsi.videobridge.ENABLE_STATISTICS=true
+org.jitsi.videobridge.STATISTICS_TRANSPORT=muc
+org.jitsi.videobridge.PUBSUB_SERVICE=meet.jitsi
+org.jitsi.videobridge.PUBSUB_NODE=sharedStatsNode
+```
+
+

@@ -49,8 +49,8 @@ services:
         restart: ${RESTART_POLICY}
         expose:
             - '5222'
-            - '5347'
             - '5280'
+            - '5347'
         volumes:
             - ${CONFIG}/prosody/config:/config:Z
             - ${CONFIG}/prosody/prosody-plugins-custom:/prosody-plugins-custom:Z
@@ -145,6 +145,7 @@ services:
             - '${JVB_TCP_MAPPED_PORT}:${JVB_TCP_PORT}'
         volumes:
             - ${CONFIG}/jvb:/config:Z
+            - ./rootfs/etc/services.d/jvb/run:/etc/services.d/jvb/run:Z
         environment:
             - DOCKER_HOST_ADDRESS
             - XMPP_AUTH_DOMAIN
@@ -159,10 +160,45 @@ services:
             - JVB_STUN_SERVERS
             - JVB_ENABLE_APIS
             - TZ
+            - JVB_SUBDOMAIN=jvb
+            - XMPP_DOMAIN
         depends_on:
             - prosody
         networks:
             meet.jitsi:
+
+
+    # Video bridge node 2
+    jvb2:
+        image: jitsi/jvb:latest
+        restart: ${RESTART_POLICY}
+        ports:
+            - '10001:10001/udp'
+            - '4444:4444'
+        volumes:
+            - ${CONFIG}/jvb2:/config:Z
+            - ./rootfs/etc/services.d/jvb/run:/etc/services.d/jvb/run:Z
+        environment:
+            - DOCKER_HOST_ADDRESS
+            - XMPP_AUTH_DOMAIN
+            - XMPP_INTERNAL_MUC_DOMAIN
+            - XMPP_SERVER
+            - JVB_AUTH_USER
+            - JVB_AUTH_PASSWORD
+            - JVB_BREWERY_MUC
+            - JVB_PORT=10001
+            - JVB_TCP_HARVESTER_DISABLED
+            - JVB_TCP_PORT=4444
+            - JVB_STUN_SERVERS
+            - JVB_ENABLE_APIS
+            - TZ
+            - JVB_SUBDOMAIN=jvb2
+            - XMPP_DOMAIN
+        depends_on:
+            - prosody
+        networks:
+            meet.jitsi:
+
 
 # Custom network so all services can communicate using a FQDN
 networks:
