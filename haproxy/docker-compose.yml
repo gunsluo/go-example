@@ -1,0 +1,50 @@
+version: '3'
+
+services:
+    # ha proxy
+    haproxy:
+        image: haproxy:2.1.5-alpine
+        container_name: haproxy
+        restart: ${RESTART_POLICY}
+        ports:
+            - '8080:80'
+            - '8443:443'
+        volumes:
+            - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+        networks:
+            meet.jitsi:
+
+    webapp:
+        image: gunsluo/webapp
+        container_name: webapp
+        command: >
+            /usr/local/bin/room-srv -a :54321
+        ports:
+            - '54321:54321'
+        networks:
+            meet.jitsi:
+
+    webapp1:
+        image: gunsluo/webapp
+        container_name: webapp1
+        command: >
+            /usr/local/bin/room-srv -a :54321
+        ports:
+            - '54322:54321'
+        networks:
+            meet.jitsi:
+  
+    webapp2:
+        image: gunsluo/webapp
+        container_name: webapp2
+        command: >
+            /usr/local/bin/room-srv -a :54321
+        ports:
+            - '54323:54321'
+        networks:
+            meet.jitsi:
+  
+
+# Custom network so all services can communicate using a FQDN
+networks:
+    meet.jitsi:
