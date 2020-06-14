@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package tes.identity;
+
+option go_package = "identitypb";
+option java_generic_services = true;
+option java_multiple_files = true;
+option java_outer_classname = "IdentityProto";
+option java_package = "com.tes.identity";
+
+
+// The identity service definition.
+service Idm {
+  // get user identity
+  rpc UserIdentity(UserIdentityRequest) returns (UserIdentityReply) {}
+}
+
+// group is a collection of multiple members.
+message Identity {
+  string id = 1;
+  string name = 2;
+  string cert_id = 3;
+}
+
+// The request message containing the user's id.
+message UserIdentityRequest { string id = 1; }
+
+// The response message containing user's identity
+message UserIdentityReply { Identity identity = 1; }
+
