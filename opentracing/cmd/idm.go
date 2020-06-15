@@ -18,7 +18,6 @@ var idmCmd = &cobra.Command{
 		server := idm.NewServer(
 			options,
 			logger,
-			//tracing.Init("frontend", metricsFactory, logger),
 		)
 
 		server.Run()

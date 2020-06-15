@@ -18,7 +18,6 @@ var accountCmd = &cobra.Command{
 		server := account.NewServer(
 			options,
 			logger,
-			//tracing.Init("frontend", metricsFactory, logger),
 		)
 
 		server.Run()

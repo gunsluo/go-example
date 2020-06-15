@@ -5,14 +5,16 @@ import (
 	"net/http"
 
 	"github.com/gunsluo/go-example/opentracing/pkg/storage"
+	"github.com/gunsluo/go-example/opentracing/pkg/trace"
+	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 )
 
 // Server implements jaeger-demo-frontend service
 type Server struct {
 	address string
-	//tracer   opentracing.Tracer
-	logger logrus.FieldLogger
+	tracer  opentracing.Tracer
+	logger  logrus.FieldLogger
 
 	database *storage.Database
 }
@@ -25,11 +27,12 @@ type ConfigOptions struct {
 
 // NewServer creates a new frontend.Server
 func NewServer(options ConfigOptions, logger logrus.FieldLogger) *Server {
+	tracer := trace.Init("account", logger, nil)
 	return &Server{
 		address:  options.Address,
 		logger:   logger,
 		database: storage.NewDatabase(logger),
-		//tracer:   tracer,
+		tracer:   tracer,
 	}
 }
 
@@ -42,8 +45,8 @@ func (s *Server) Run() error {
 
 func (s *Server) createServeMux() http.Handler {
 	mux := http.NewServeMux()
-	//mux := tracing.NewServeMux(s.tracer)
-	mux.HandleFunc("/account", s.account)
+	traceMiddleware := trace.NewHttpMiddleware(s.tracer, trace.WithHttpComponentName("Account Server"))
+	mux.HandleFunc("/account", traceMiddleware.Handle(s.account))
 	return mux
 }
 

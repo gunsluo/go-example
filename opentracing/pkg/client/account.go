@@ -9,6 +9,8 @@ import (
 	"net/http"
 
 	"github.com/gunsluo/go-example/opentracing/pkg/internal"
+	"github.com/gunsluo/go-example/opentracing/pkg/trace"
+	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 )
 
@@ -22,11 +24,12 @@ type AccountClient struct {
 }
 
 // NewAccountClient creates a new customer.AccountClient
-func NewAccountClient(logger logrus.FieldLogger, accountURL string) *AccountClient {
+func NewAccountClient(tracer opentracing.Tracer, logger logrus.FieldLogger, accountURL string) *AccountClient {
 	return &AccountClient{
-		//tracer: tracer,
-		logger:     logger,
-		client:     &http.Client{},
+		logger: logger,
+		client: &http.Client{
+			Transport: trace.NewTransport(tracer,
+				trace.TransportComponentName("Customer Client"))},
 		accountURL: accountURL,
 	}
 }
@@ -40,7 +43,8 @@ func (c *AccountClient) GetAccount(ctx context.Context, id string) (*internal.Ac
 	if err != nil {
 		return nil, err
 	}
-	//req = req.WithContext(ctx)
+	// important
+	req = req.WithContext(ctx)
 
 	res, err := c.client.Do(req)
 	if err != nil {

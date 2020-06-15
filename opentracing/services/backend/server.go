@@ -9,7 +9,6 @@ import (
 	"github.com/gunsluo/go-example/opentracing/pkg/trace"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
-	"github.com/uber/jaeger-lib/metrics/expvar"
 	"google.golang.org/grpc"
 )
 
@@ -33,13 +32,13 @@ type ConfigOptions struct {
 
 // NewServer creates a new frontend.Server
 func NewServer(options ConfigOptions, logger logrus.FieldLogger) *Server {
-	metricsFactory := expvar.NewFactory(10) // 10 buckets for histograms
+	tracer := trace.Init("backend", logger, nil)
 	return &Server{
 		address:       options.Address,
 		idmAddress:    options.IdmAddress,
 		logger:        logger,
-		accountClient: client.NewAccountClient(logger, options.AccountURL),
-		tracer:        trace.Init("backend", metricsFactory, logger),
+		accountClient: client.NewAccountClient(tracer, logger, options.AccountURL),
+		tracer:        tracer,
 	}
 }
 
@@ -58,7 +57,7 @@ func (s *Server) Run() error {
 
 func (s *Server) createServeMux() http.Handler {
 	mux := http.NewServeMux()
-	traceMiddleware := trace.NewHttpMiddleware(s.tracer)
+	traceMiddleware := trace.NewHttpMiddleware(s.tracer, trace.WithHttpComponentName("Backend Server"))
 	mux.HandleFunc("/profile", traceMiddleware.Handle(s.profile))
 	return mux
 }

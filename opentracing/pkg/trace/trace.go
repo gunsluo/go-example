@@ -7,12 +7,19 @@ import (
 	"github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-client-go/rpcmetrics"
 	"github.com/uber/jaeger-lib/metrics"
+	"github.com/uber/jaeger-lib/metrics/expvar"
 )
 
-func Init(serviceName string, metricsFactory metrics.Factory, logger logrus.FieldLogger) opentracing.Tracer {
+var defaultMetricsFactory = expvar.NewFactory(10)
+
+func Init(serviceName string, logger logrus.FieldLogger, metricsFactory metrics.Factory) opentracing.Tracer {
 	cfg, err := config.FromEnv()
 	if err != nil {
 		logger.Fatal("cannot parse Jaeger env vars", err)
+	}
+
+	if metricsFactory == nil {
+		metricsFactory = defaultMetricsFactory
 	}
 
 	cfg.ServiceName = serviceName

@@ -25,15 +25,15 @@ func (o *fnHttpOption) apply(opts *httpOptions) {
 	o.fn(opts)
 }
 
-// WithHttpDisable disable to collect trace
-func WithHttpDisable() HttpOption {
+// WithHttpEnable disable to collect trace
+func WithHttpEnable(enable bool) HttpOption {
 	return &fnHttpOption{fn: func(opts *httpOptions) {
-		opts.enable = false
+		opts.enable = enable
 	}}
 }
 
-// WithComponentName set component name
-func WithComponentName(componentName string) HttpOption {
+// WithHttpComponentName set component name
+func WithHttpComponentName(componentName string) HttpOption {
 	return &fnHttpOption{fn: func(opts *httpOptions) {
 		opts.componentName = componentName
 	}}

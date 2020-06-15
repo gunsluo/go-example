@@ -6,6 +6,8 @@ import (
 
 	identitypb "github.com/gunsluo/go-example/opentracing/pkg/proto/identity"
 	"github.com/gunsluo/go-example/opentracing/pkg/storage"
+	"github.com/gunsluo/go-example/opentracing/pkg/trace"
+	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -15,8 +17,8 @@ import (
 // Server implements jaeger-demo-frontend service
 type Server struct {
 	address string
-	//tracer   opentracing.Tracer
-	logger logrus.FieldLogger
+	tracer  opentracing.Tracer
+	logger  logrus.FieldLogger
 
 	database *storage.Database
 }
@@ -29,11 +31,12 @@ type ConfigOptions struct {
 
 // NewServer creates a new frontend.Server
 func NewServer(options ConfigOptions, logger logrus.FieldLogger) *Server {
+	tracer := trace.Init("idm", logger, nil)
 	return &Server{
 		address:  options.Address,
 		logger:   logger,
 		database: storage.NewDatabase(logger),
-		//tracer:   tracer,
+		tracer:   tracer,
 	}
 }
 
