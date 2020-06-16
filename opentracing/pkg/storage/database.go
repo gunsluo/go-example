@@ -20,12 +20,12 @@ import (
 // Database simulates Customer repository implemented on top of an SQL Database
 type Database struct {
 	tracer     opentracing.Tracer
-	logger     logrus.FieldLogger
+	logger     *logrus.Logger
 	accounts   map[string]*internal.Account
 	identities map[string]*identitypb.Identity
 }
 
-func NewDatabase(logger logrus.FieldLogger) *Database {
+func NewDatabase(logger *logrus.Logger) *Database {
 	tracer := trace.Init("postgres", logger, nil)
 	return &Database{
 		tracer: tracer,

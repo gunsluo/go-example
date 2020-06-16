@@ -1,11 +1,11 @@
 package trace
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
+	"github.com/sirupsen/logrus"
 )
 
 type HttpMiddleware struct {
@@ -39,16 +39,24 @@ func WithHttpComponentName(componentName string) HttpOption {
 	}}
 }
 
-// WithOpNameFunc set function to get operation name for span
-func WithOpNameFunc(fn func(r *http.Request) string) HttpOption {
+// WithHttpOpNameFunc set function to get operation name for span
+func WithHttpOpNameFunc(fn func(r *http.Request) string) HttpOption {
 	return &fnHttpOption{fn: func(opts *httpOptions) {
 		opts.opNameFunc = fn
+	}}
+}
+
+// WithHttpLogger set logger
+func WithHttpLogger(logger logrus.FieldLogger) HttpOption {
+	return &fnHttpOption{fn: func(opts *httpOptions) {
+		opts.logger = logger
 	}}
 }
 
 type httpOptions struct {
 	enable        bool
 	componentName string
+	logger        logrus.FieldLogger
 	opNameFunc    func(r *http.Request) string
 }
 
@@ -57,6 +65,7 @@ const defaultComponentName = "net/http"
 func defaultHttpOptions() httpOptions {
 	return httpOptions{
 		enable:     true,
+		logger:     logrus.New(),
 		opNameFunc: defaultOpNameFunc}
 }
 
@@ -80,10 +89,8 @@ func (m *HttpMiddleware) Handle(h http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		ctx, err := m.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-		fmt.Println("--->", ctx, err)
-
-		//if span := opentracing.SpanFromContext(ctx); span != nil {
+		// ignore error, the context cannot be retrieved from http header when the service is the first service
+		ctx, _ := m.tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
 
 		sp := m.tracer.StartSpan(m.opts.opNameFunc(r), ext.RPCServerOption(ctx))
 		ext.HTTPMethod.Set(sp, r.Method)

@@ -14,7 +14,7 @@ import (
 type Server struct {
 	address string
 	tracer  opentracing.Tracer
-	logger  logrus.FieldLogger
+	logger  *logrus.Logger
 
 	database *storage.Database
 }
@@ -26,7 +26,7 @@ type ConfigOptions struct {
 }
 
 // NewServer creates a new frontend.Server
-func NewServer(options ConfigOptions, logger logrus.FieldLogger) *Server {
+func NewServer(options ConfigOptions, logger *logrus.Logger) *Server {
 	tracer := trace.Init("account", logger, nil)
 	return &Server{
 		address:  options.Address,

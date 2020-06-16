@@ -16,7 +16,7 @@ import (
 type Server struct {
 	address        string
 	idmAddress     string
-	logger         logrus.FieldLogger
+	logger         *logrus.Logger
 	accountClient  *client.AccountClient
 	identityClient identitypb.IdmClient
 	tracer         opentracing.Tracer
@@ -31,7 +31,7 @@ type ConfigOptions struct {
 }
 
 // NewServer creates a new frontend.Server
-func NewServer(options ConfigOptions, logger logrus.FieldLogger) *Server {
+func NewServer(options ConfigOptions, logger *logrus.Logger) *Server {
 	tracer := trace.Init("backend", logger, nil)
 	return &Server{
 		address:       options.Address,
@@ -57,7 +57,9 @@ func (s *Server) Run() error {
 
 func (s *Server) createServeMux() http.Handler {
 	mux := http.NewServeMux()
-	traceMiddleware := trace.NewHttpMiddleware(s.tracer, trace.WithHttpComponentName("Backend Server"))
+	traceMiddleware := trace.NewHttpMiddleware(s.tracer,
+		trace.WithHttpComponentName("Backend Server"),
+		trace.WithHttpLogger(s.logger))
 	mux.HandleFunc("/profile", traceMiddleware.Handle(s.profile))
 	return mux
 }
@@ -71,6 +73,7 @@ func (s *Server) profile(w http.ResponseWriter, r *http.Request) {
 
 	// query user from account server
 	ctx := r.Context()
+	s.logger.WithContext(ctx).Info("this is a test")
 	account, err := s.accountClient.GetAccount(ctx, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

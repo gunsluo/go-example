@@ -12,7 +12,7 @@ import (
 
 var defaultMetricsFactory = expvar.NewFactory(10)
 
-func Init(serviceName string, logger logrus.FieldLogger, metricsFactory metrics.Factory) opentracing.Tracer {
+func Init(serviceName string, logger *logrus.Logger, metricsFactory metrics.Factory) opentracing.Tracer {
 	cfg, err := config.FromEnv()
 	if err != nil {
 		logger.Fatal("cannot parse Jaeger env vars", err)

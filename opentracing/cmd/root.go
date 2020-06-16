@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/gunsluo/go-example/opentracing/pkg/trace"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -24,12 +25,18 @@ func init() {
 	cobra.OnInitialize(onInitialize)
 }
 
-var logger logrus.FieldLogger
+var logger *logrus.Logger
 
 // onInitialize is called before the command is executed.
 func onInitialize() {
 	log := logrus.New()
+	log.Formatter = &logrus.TextFormatter{
+		TimestampFormat: "2006-01-02 15:04:05.000",
+		FullTimestamp:   true,
+		//DisableColors:   true,
+	}
 	log.SetLevel(logrus.DebugLevel)
+	log.Hooks.Add(&trace.InjectHook{trace.DefaultInjectHookFunc})
 	logger = log
 }
 
