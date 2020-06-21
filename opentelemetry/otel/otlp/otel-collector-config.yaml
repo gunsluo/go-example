@@ -1,0 +1,33 @@
+extensions:
+  health_check:
+
+receivers:
+  otlp:
+    endpoint: 0.0.0.0:55680
+
+processors:
+  batch:
+  queued_retry:
+
+exporters:
+  logging:
+      loglevel: debug
+
+  jaeger:
+      endpoint: jaeger-all-in-one:14250
+      insecure: true
+
+service:
+
+  pipelines:
+
+    traces:
+      receivers: [otlp]
+      processors: [batch, queued_retry]
+      exporters: [logging, jaeger]
+
+    metrics:
+      receivers: [otlp]
+      exporters: [logging]
+
+  extensions: [health_check]
