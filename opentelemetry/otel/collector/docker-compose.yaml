@@ -1,0 +1,27 @@
+version: "2"
+services:
+
+  # Jaeger
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    ports:
+      - "16686:16686"
+      - "14268"
+      - "14250"
+
+  # Collector
+  otel-collector:
+    image: otel/opentelemetry-collector-dev:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "1888:1888"   # pprof extension
+      - "8888:8888"   # Prometheus metrics exposed by the collector
+      - "13133:13133" # health_check extension
+      - "55680:55680" # receiver
+    depends_on:
+      - jaeger
+
