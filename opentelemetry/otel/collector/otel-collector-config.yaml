@@ -1,8 +1,6 @@
 receivers:
-  # Make sure to add the otlp receiver. 
-  # This will open up the receiver on port 55680
   otlp:
-    endpoint: 0.0.0.0:55680
+    endpoint: 0.0.0.0:55679
 
 processors:
   batch:
