@@ -33,8 +33,8 @@ func onInitialize() {
 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 	core := zapcore.NewCore(
-		zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
-		//zapcore.NewConsoleEncoder(encoderConfig),
+		//zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
+		zapcore.NewConsoleEncoder(encoderConfig),
 		zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout)),
 		zapcore.DebugLevel)
 	logger = zap.New(core)

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/internal"
 	"go.uber.org/zap"
@@ -37,8 +38,6 @@ func NewAccountClient(logger *zap.Logger, accountURL string) *AccountClient {
 
 // Get implements customer.Interface#Get as an RPC
 func (c *AccountClient) GetAccount(ctx context.Context, id string) (*internal.Account, error) {
-	c.logger.With("account id", id).Info("Getting customer")
-
 	url := fmt.Sprintf(c.accountURL+"/account?id=%s", id)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -58,7 +57,7 @@ func (c *AccountClient) GetAccount(ctx context.Context, id string) (*internal.Ac
 		if err != nil {
 			return nil, err
 		}
-		return nil, errors.New(string(body))
+		return nil, errors.New(strings.TrimSpace((string(body))))
 	}
 
 	var a internal.Account

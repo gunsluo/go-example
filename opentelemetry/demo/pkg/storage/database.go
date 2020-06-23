@@ -75,8 +75,6 @@ func NewDatabase(logger *zap.Logger) *Database {
 }
 
 func (d *Database) GetAccount(ctx context.Context, id string) (*internal.Account, error) {
-	d.logger.With("account id", id).Info("Loading account")
-
 	sqlstr := "SELECT * FROM account WHERE id=?"
 	out := &internal.Account{}
 	if err := d.invokeQuery(ctx, sqlstr, id, out); err != nil {
@@ -87,8 +85,6 @@ func (d *Database) GetAccount(ctx context.Context, id string) (*internal.Account
 }
 
 func (d *Database) GetIdentity(ctx context.Context, id string) (*identitypb.Identity, error) {
-	d.logger.With("user id", id).Info("Loading identity")
-
 	sqlstr := "SELECT * FROM identity WHERE id=?"
 	out := &identitypb.Identity{}
 	if err := d.invokeQuery(ctx, sqlstr, id, out); err != nil {

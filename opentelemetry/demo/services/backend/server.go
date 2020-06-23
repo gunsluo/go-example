@@ -31,6 +31,7 @@ type ConfigOptions struct {
 // NewServer creates a new frontend.Server
 func NewServer(options ConfigOptions, logger *zap.Logger) *Server {
 	//tracer := trace.Init("backend", logger, nil)
+	logger = logger.Named("backend")
 	return &Server{
 		address:       options.Address,
 		idmAddress:    options.IdmAddress,
@@ -74,16 +75,19 @@ func (s *Server) profile(w http.ResponseWriter, r *http.Request) {
 
 	// query user from account server
 	ctx := r.Context()
-	s.logger.Info("this is a test")
+	s.logger.With("accountId", userID).Info("query account by user id from account")
 	account, err := s.accountClient.GetAccount(ctx, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		s.logger.With(zap.Error(err)).With("accountId", userID).Warn("failed to query account")
 		return
 	}
 
+	s.logger.With("userId", userID).Info("query user by user id from identity")
 	reply, err := s.identityClient.UserIdentity(ctx, &identitypb.UserIdentityRequest{Id: userID})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		s.logger.With(zap.Error(err)).With("userId", userID).Warn("failed to query user")
 		return
 	}
 

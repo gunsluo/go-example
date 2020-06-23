@@ -30,6 +30,7 @@ type ConfigOptions struct {
 // NewServer creates a new frontend.Server
 func NewServer(options ConfigOptions, logger *zap.Logger) *Server {
 	//tracer := trace.Init("idm", logger, nil)
+	logger = logger.Named("idm")
 	return &Server{
 		address:  options.Address,
 		logger:   logger.Sugar(),
@@ -57,8 +58,10 @@ func (s *Server) UserIdentity(ctx context.Context, req *identitypb.UserIdentityR
 	}
 
 	// query user from account server
+	s.logger.With("userId", req.Id).Info("loading identity from database")
 	identity, err := s.database.GetIdentity(ctx, req.Id)
 	if err != nil {
+		s.logger.With(zap.Error(err), "userId", req.Id).Warn("failed to loading identity from database")
 		return nil, err
 	}
 

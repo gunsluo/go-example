@@ -26,6 +26,7 @@ type ConfigOptions struct {
 // NewServer creates a new frontend.Server
 func NewServer(options ConfigOptions, logger *zap.Logger) *Server {
 	//tracer := trace.Init("account", logger, nil)
+	logger = logger.Named("account")
 	return &Server{
 		address:  options.Address,
 		logger:   logger.Sugar(),
@@ -60,9 +61,11 @@ func (s *Server) account(w http.ResponseWriter, r *http.Request) {
 
 	// query user from account server
 	ctx := r.Context()
+	s.logger.With("accountId", userID).Info("loading account from database")
 	account, err := s.database.GetAccount(ctx, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		s.logger.With(zap.Error(err), "accountId", userID).Warn("failed to loading account from database")
 		return
 	}
 
