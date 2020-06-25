@@ -3,13 +3,13 @@
 ### sql
 ```
 CREATE TABLE account (
-  id char(256) PRIMARY KEY,
+  id varchar(256) PRIMARY KEY,
   name text NOT NULL DEFAULT '',
   email text NOT NULL DEFAULT ''
 );
 
 CREATE TABLE identity (
-  id char(256) PRIMARY KEY,
+  id varchar(256) PRIMARY KEY,
   name text NOT NULL DEFAULT '',
   cert_id text NOT NULL DEFAULT ''
 );

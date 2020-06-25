@@ -6,6 +6,7 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/jmoiron/sqlx v1.2.1-0.20190826204134-d7d95172beb5
 	github.com/lib/pq v1.2.0
+	github.com/luna-duclos/instrumentedsql v1.1.2
 	github.com/spf13/cobra v1.0.0
 	github.com/xo/dburl v0.0.0-20200124232849-e9ec94f52bc3
 	go.opentelemetry.io/collector v0.4.0

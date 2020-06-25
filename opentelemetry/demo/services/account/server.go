@@ -7,8 +7,6 @@ import (
 
 	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/otlp/trace"
 	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/storage"
-	"github.com/jmoiron/sqlx"
-	"github.com/xo/dburl"
 	"go.uber.org/zap"
 )
 
@@ -45,11 +43,7 @@ func NewServer(options ConfigOptions, logger *zap.Logger) (*Server, error) {
 	traceConfig.ServiceName = "account"
 	s.traceConfig = traceConfig
 
-	u, err := dburl.Parse(options.DSN)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't parse database address, %w", err)
-	}
-	db, err := sqlx.Open(u.Driver, u.DSN)
+	db, err := traceConfig.NewDB(options.DSN)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect db, %w", err)
 	}

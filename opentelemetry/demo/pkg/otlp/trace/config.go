@@ -7,6 +7,7 @@ import (
 	"time"
 
 	sotlp "github.com/gunsluo/go-example/opentelemetry/demo/pkg/otlp"
+	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/collector/translator/conventions"
 	"go.opentelemetry.io/otel/api/kv"
 	"go.opentelemetry.io/otel/api/trace"
@@ -176,4 +177,22 @@ func (c *Configuration) NewTransport(options ...TransportOption) (*Transport, er
 
 	t.logger.With(zap.String("agentAddress", c.AgentAddress)).Info("success to enable trace http transport")
 	return t, nil
+}
+
+func (c *Configuration) NewDB(dsn string) (*sqlx.DB, error) {
+	if !c.Enabled {
+		return OpenDB(nil, dsn)
+	}
+
+	tracer, err := c.NewTracer(ServiceName(c.ServiceName))
+	if err != nil {
+		return OpenDB(nil, dsn)
+	}
+
+	db, err := OpenDB(tracer, dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil
 }
