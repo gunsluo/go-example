@@ -158,3 +158,22 @@ func (c *Configuration) NewHttpMiddleware(options ...HttpOption) (*HttpMiddlewar
 	m.logger.With(zap.String("agentAddress", c.AgentAddress)).Info("success to enable trace http middleware")
 	return m, nil
 }
+
+func (c *Configuration) NewTransport(options ...TransportOption) (*Transport, error) {
+	if !c.Enabled {
+		return &Transport{}, nil
+	}
+
+	tracer, err := c.NewTracer(ServiceName(c.ServiceName))
+	if err != nil {
+		return &Transport{}, err
+	}
+
+	t, err := NewTransport(tracer, options...)
+	if err != nil {
+		return t, err
+	}
+
+	t.logger.With(zap.String("agentAddress", c.AgentAddress)).Info("success to enable trace http transport")
+	return t, nil
+}

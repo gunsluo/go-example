@@ -18,6 +18,7 @@ type Server struct {
 	logger         *zap.Logger
 	accountClient  *client.AccountClient
 	identityClient identitypb.IdmClient
+	traceConfig    *trace.Configuration
 }
 
 // ConfigOptions used to make sure service clients
@@ -29,38 +30,51 @@ type ConfigOptions struct {
 }
 
 // NewServer creates a new frontend.Server
-func NewServer(options ConfigOptions, logger *zap.Logger) *Server {
+func NewServer(options ConfigOptions, logger *zap.Logger) (*Server, error) {
 	logger = logger.Named("backend")
-	return &Server{
-		address:       options.Address,
-		idmAddress:    options.IdmAddress,
-		logger:        logger,
-		accountClient: client.NewAccountClient(logger, options.AccountURL),
+
+	s := &Server{
+		address:    options.Address,
+		idmAddress: options.IdmAddress,
+		logger:     logger,
 	}
+
+	// trace
+	traceConfig, err := trace.FromEnv()
+	if err != nil {
+		s.logger.With(zap.Error(err)).Fatal("failed to loading trace config from environmet variable")
+	}
+	traceConfig.ServiceName = "backend"
+	s.traceConfig = traceConfig
+
+	identityClient, err := createIdmClient(s.idmAddress)
+	if err != nil {
+		return nil, err
+	}
+	s.identityClient = identityClient
+
+	transport, err := traceConfig.NewTransport(
+		trace.WithTransportComponentName("Account Http Client"),
+		trace.WithTransportLogger(logger),
+	)
+	s.accountClient = client.NewAccountClient(
+		logger,
+		&http.Client{Transport: transport},
+		options.AccountURL)
+
+	return s, nil
 }
 
 // Run starts the frontend server
 func (s *Server) Run() error {
-	identityClient, err := createIdmClient(s.idmAddress)
-	if err != nil {
-		return err
-	}
-	s.identityClient = identityClient
-
 	mux := s.createServeMux()
 	s.logger.With(zap.String("address", s.address)).Info("Starting Service")
 	return http.ListenAndServe(s.address, mux)
 }
 
 func (s *Server) createServeMux() http.Handler {
-	cfg, err := trace.FromEnv()
-	if err != nil {
-		s.logger.With(zap.Error(err)).Fatal("failed to loading trace config from environmet variable")
-	}
-
-	cfg.ServiceName = "backend"
-	traceMiddleware, err := cfg.NewHttpMiddleware(
-		trace.WithHttpComponentName("backend http server"),
+	traceMiddleware, err := s.traceConfig.NewHttpMiddleware(
+		trace.WithHttpComponentName("Backend Http Server"),
 		trace.WithHttpLogger(s.logger))
 	if err != nil {
 		s.logger.With(zap.Error(err)).Warn("failed to create trace http middleware")

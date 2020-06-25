@@ -15,10 +15,13 @@ var accountCmd = &cobra.Command{
 			Address: accountAddress,
 		}
 
-		server := account.NewServer(
+		server, err := account.NewServer(
 			options,
 			logger,
 		)
+		if err != nil {
+			logger.Fatal("failed to create account server")
+		}
 
 		server.Run()
 	},

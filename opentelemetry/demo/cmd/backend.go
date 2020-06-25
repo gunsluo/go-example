@@ -17,10 +17,13 @@ var backendCmd = &cobra.Command{
 			IdmAddress: backendIdmAddress,
 		}
 
-		server := backend.NewServer(
+		server, err := backend.NewServer(
 			options,
 			logger,
 		)
+		if err != nil {
+			logger.Fatal("failed to create backend server")
+		}
 
 		server.Run()
 	},

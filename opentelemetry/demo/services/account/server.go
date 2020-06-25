@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/otlp/trace"
 	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/storage"
 	"go.uber.org/zap"
 )
@@ -14,7 +15,8 @@ type Server struct {
 	//tracer  opentracing.Tracer
 	logger *zap.Logger
 
-	database *storage.Database
+	database    *storage.Database
+	traceConfig *trace.Configuration
 }
 
 // ConfigOptions used to make sure service clients
@@ -24,15 +26,23 @@ type ConfigOptions struct {
 }
 
 // NewServer creates a new frontend.Server
-func NewServer(options ConfigOptions, logger *zap.Logger) *Server {
-	//tracer := trace.Init("account", logger, nil)
+func NewServer(options ConfigOptions, logger *zap.Logger) (*Server, error) {
 	logger = logger.Named("account")
-	return &Server{
+	s := &Server{
 		address:  options.Address,
 		logger:   logger,
 		database: storage.NewDatabase(logger),
-		//tracer:   tracer,
 	}
+
+	// trace
+	traceConfig, err := trace.FromEnv()
+	if err != nil {
+		s.logger.With(zap.Error(err)).Fatal("failed to loading trace config from environmet variable")
+	}
+	traceConfig.ServiceName = "account"
+	s.traceConfig = traceConfig
+
+	return s, nil
 }
 
 // Run starts the frontend server
@@ -43,12 +53,15 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) createServeMux() http.Handler {
+	traceMiddleware, err := s.traceConfig.NewHttpMiddleware(
+		trace.WithHttpComponentName("Account Http Server"),
+		trace.WithHttpLogger(s.logger))
+	if err != nil {
+		s.logger.With(zap.Error(err)).Warn("failed to create trace http middleware")
+	}
+
 	mux := http.NewServeMux()
-	/*
-		traceMiddleware := trace.NewHttpMiddleware(s.tracer, trace.WithHttpComponentName("Account Server"))
-		mux.HandleFunc("/account", traceMiddleware.Handle(s.account))
-	*/
-	mux.HandleFunc("/account", s.account)
+	mux.HandleFunc("/account", traceMiddleware.Handle(s.account))
 	return mux
 }
 

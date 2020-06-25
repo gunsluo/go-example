@@ -15,23 +15,16 @@ import (
 
 // AccountClient is a remote client that implements customer.Interface
 type AccountClient struct {
-	logger     *zap.SugaredLogger
+	logger     *zap.Logger
 	accountURL string
 	client     *http.Client
-	//tracer   opentracing.Tracer
-	//client   *tracing.HTTPAccountClient
 }
 
 // NewAccountClient creates a new customer.AccountClient
-func NewAccountClient(logger *zap.Logger, accountURL string) *AccountClient {
+func NewAccountClient(logger *zap.Logger, client *http.Client, accountURL string) *AccountClient {
 	return &AccountClient{
-		logger: logger.Sugar(),
-		/*
-			client: &http.Client{
-				Transport: trace.NewTransport(tracer,
-					trace.TransportComponentName("Customer Client"))},
-		*/
-		client:     &http.Client{},
+		logger:     logger,
+		client:     client,
 		accountURL: accountURL,
 	}
 }
