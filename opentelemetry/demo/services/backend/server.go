@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/client"
+	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/otlp/trace"
 	identitypb "github.com/gunsluo/go-example/opentelemetry/demo/pkg/proto/identity"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -14,10 +15,9 @@ import (
 type Server struct {
 	address        string
 	idmAddress     string
-	logger         *zap.SugaredLogger
+	logger         *zap.Logger
 	accountClient  *client.AccountClient
 	identityClient identitypb.IdmClient
-	//tracer         opentracing.Tracer
 }
 
 // ConfigOptions used to make sure service clients
@@ -30,14 +30,12 @@ type ConfigOptions struct {
 
 // NewServer creates a new frontend.Server
 func NewServer(options ConfigOptions, logger *zap.Logger) *Server {
-	//tracer := trace.Init("backend", logger, nil)
 	logger = logger.Named("backend")
 	return &Server{
 		address:       options.Address,
 		idmAddress:    options.IdmAddress,
-		logger:        logger.Sugar(),
+		logger:        logger,
 		accountClient: client.NewAccountClient(logger, options.AccountURL),
-		//tracer:        tracer,
 	}
 }
 
@@ -50,19 +48,26 @@ func (s *Server) Run() error {
 	s.identityClient = identityClient
 
 	mux := s.createServeMux()
-	s.logger.With("address", s.address).Info("Starting Service")
+	s.logger.With(zap.String("address", s.address)).Info("Starting Service")
 	return http.ListenAndServe(s.address, mux)
 }
 
 func (s *Server) createServeMux() http.Handler {
+	cfg, err := trace.FromEnv()
+	if err != nil {
+		s.logger.With(zap.Error(err)).Fatal("failed to loading trace config from environmet variable")
+	}
+
+	cfg.ServiceName = "backend"
+	traceMiddleware, err := cfg.NewHttpMiddleware(
+		trace.WithHttpComponentName("backend http server"),
+		trace.WithHttpLogger(s.logger))
+	if err != nil {
+		s.logger.With(zap.Error(err)).Warn("failed to create trace http middleware")
+	}
+
 	mux := http.NewServeMux()
-	/*
-		traceMiddleware := trace.NewHttpMiddleware(s.tracer,
-			trace.WithHttpComponentName("Backend Server"),
-			trace.WithHttpLogger(s.logger))
-		mux.HandleFunc("/profile", traceMiddleware.Handle(s.profile))
-	*/
-	mux.HandleFunc("/profile", s.profile)
+	mux.HandleFunc("/profile", traceMiddleware.Handle(s.profile))
 	return mux
 }
 
@@ -75,19 +80,19 @@ func (s *Server) profile(w http.ResponseWriter, r *http.Request) {
 
 	// query user from account server
 	ctx := r.Context()
-	s.logger.With("accountId", userID).Info("query account by user id from account")
+	s.logger.With(zap.String("accountId", userID)).Info("query account by user id from account")
 	account, err := s.accountClient.GetAccount(ctx, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		s.logger.With(zap.Error(err)).With("accountId", userID).Warn("failed to query account")
+		s.logger.With(zap.Error(err)).With(zap.String("accountId", userID)).Warn("failed to query account")
 		return
 	}
 
-	s.logger.With("userId", userID).Info("query user by user id from identity")
+	s.logger.With(zap.String("userId", userID)).Info("query user by user id from identity")
 	reply, err := s.identityClient.UserIdentity(ctx, &identitypb.UserIdentityRequest{Id: userID})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		s.logger.With(zap.Error(err)).With("userId", userID).Warn("failed to query user")
+		s.logger.With(zap.Error(err)).With(zap.String("userId", userID)).Warn("failed to query user")
 		return
 	}
 

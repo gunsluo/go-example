@@ -16,7 +16,7 @@ import (
 type Server struct {
 	address string
 	//tracer  opentracing.Tracer
-	logger *zap.SugaredLogger
+	logger *zap.Logger
 
 	database *storage.Database
 }
@@ -33,7 +33,7 @@ func NewServer(options ConfigOptions, logger *zap.Logger) *Server {
 	logger = logger.Named("idm")
 	return &Server{
 		address:  options.Address,
-		logger:   logger.Sugar(),
+		logger:   logger,
 		database: storage.NewDatabase(logger),
 		//tracer:   tracer,
 	}
@@ -48,7 +48,7 @@ func (s *Server) Run() error {
 		return err
 	}
 
-	s.logger.With("address", s.address).Info("Starting GRPC Service")
+	s.logger.With(zap.String("address", s.address)).Info("Starting GRPC Service")
 	return srv.Serve(listener)
 }
 
@@ -58,10 +58,10 @@ func (s *Server) UserIdentity(ctx context.Context, req *identitypb.UserIdentityR
 	}
 
 	// query user from account server
-	s.logger.With("userId", req.Id).Info("loading identity from database")
+	s.logger.With(zap.String("userId", req.Id)).Info("loading identity from database")
 	identity, err := s.database.GetIdentity(ctx, req.Id)
 	if err != nil {
-		s.logger.With(zap.Error(err), "userId", req.Id).Warn("failed to loading identity from database")
+		s.logger.With(zap.Error(err), zap.String("userId", req.Id)).Warn("failed to loading identity from database")
 		return nil, err
 	}
 

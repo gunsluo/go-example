@@ -12,7 +12,7 @@ import (
 type Server struct {
 	address string
 	//tracer  opentracing.Tracer
-	logger *zap.SugaredLogger
+	logger *zap.Logger
 
 	database *storage.Database
 }
@@ -29,7 +29,7 @@ func NewServer(options ConfigOptions, logger *zap.Logger) *Server {
 	logger = logger.Named("account")
 	return &Server{
 		address:  options.Address,
-		logger:   logger.Sugar(),
+		logger:   logger,
 		database: storage.NewDatabase(logger),
 		//tracer:   tracer,
 	}
@@ -38,7 +38,7 @@ func NewServer(options ConfigOptions, logger *zap.Logger) *Server {
 // Run starts the frontend server
 func (s *Server) Run() error {
 	mux := s.createServeMux()
-	s.logger.With("address", s.address).Info("Starting Service")
+	s.logger.With(zap.String("address", s.address)).Info("Starting Service")
 	return http.ListenAndServe(s.address, mux)
 }
 
@@ -61,11 +61,11 @@ func (s *Server) account(w http.ResponseWriter, r *http.Request) {
 
 	// query user from account server
 	ctx := r.Context()
-	s.logger.With("accountId", userID).Info("loading account from database")
+	s.logger.With(zap.String("accountId", userID)).Info("loading account from database")
 	account, err := s.database.GetAccount(ctx, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		s.logger.With(zap.Error(err), "accountId", userID).Warn("failed to loading account from database")
+		s.logger.With(zap.Error(err), zap.String("accountId", userID)).Warn("failed to loading account from database")
 		return
 	}
 
