@@ -2,10 +2,13 @@ package account
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/otlp/trace"
 	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/storage"
+	"github.com/jmoiron/sqlx"
+	"github.com/xo/dburl"
 	"go.uber.org/zap"
 )
 
@@ -23,24 +26,39 @@ type Server struct {
 // can find correct server ports
 type ConfigOptions struct {
 	Address string
+	DSN     string
 }
 
 // NewServer creates a new frontend.Server
 func NewServer(options ConfigOptions, logger *zap.Logger) (*Server, error) {
 	logger = logger.Named("account")
 	s := &Server{
-		address:  options.Address,
-		logger:   logger,
-		database: storage.NewDatabase(logger),
+		address: options.Address,
+		logger:  logger,
 	}
 
 	// trace
 	traceConfig, err := trace.FromEnv()
 	if err != nil {
-		s.logger.With(zap.Error(err)).Fatal("failed to loading trace config from environmet variable")
+		return nil, fmt.Errorf("failed to loading trace config, %w", err)
 	}
 	traceConfig.ServiceName = "account"
 	s.traceConfig = traceConfig
+
+	u, err := dburl.Parse(options.DSN)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't parse database address, %w", err)
+	}
+	db, err := sqlx.Open(u.Driver, u.DSN)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect db, %w", err)
+	}
+
+	database, err := storage.NewDatabase(logger, db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create database, %w", err)
+	}
+	s.database = database
 
 	return s, nil
 }
@@ -77,14 +95,14 @@ func (s *Server) account(w http.ResponseWriter, r *http.Request) {
 	s.logger.With(zap.String("accountId", userID)).Info("loading account from database")
 	account, err := s.database.GetAccount(ctx, userID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		s.logger.With(zap.Error(err), zap.String("accountId", userID)).Warn("failed to loading account from database")
 		return
 	}
 
 	data, err := json.Marshal(account)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 

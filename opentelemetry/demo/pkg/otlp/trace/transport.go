@@ -92,7 +92,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		span.SetStatus(codes.Internal, err.Error())
 		return resp, err
 	}
-	if resp.StatusCode >= http.StatusInternalServerError {
+	if resp.StatusCode >= http.StatusBadRequest {
 		span.SetStatus(codes.Internal, "invalid code")
 	} else {
 		span.SetAttributes(
@@ -101,36 +101,4 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	return resp, nil
-	/*
-		sp := t.startSpan(req)
-		if sp == nil {
-			return rt.RoundTrip(req)
-		}
-
-		ext.HTTPMethod.Set(sp, req.Method)
-		ext.HTTPUrl.Set(sp, req.URL.String())
-		t.opts.spanObserver(sp, req)
-
-		if !t.opts.disableInjectSpanContext {
-			carrier := opentracing.HTTPHeadersCarrier(req.Header)
-			sp.Tracer().Inject(sp.Context(), opentracing.HTTPHeaders, carrier)
-		}
-
-		resp, err := rt.RoundTrip(req)
-
-		if err != nil {
-			sp.Finish()
-			return resp, err
-		}
-		ext.HTTPStatusCode.Set(sp, uint16(resp.StatusCode))
-		if resp.StatusCode >= http.StatusInternalServerError {
-			ext.Error.Set(sp, true)
-		}
-		if req.Method == "HEAD" {
-			sp.Finish()
-		} else {
-			resp.Body = closeTracker{resp.Body, sp}
-		}
-		return resp, nil
-	*/
 }

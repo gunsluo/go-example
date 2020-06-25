@@ -2,27 +2,65 @@ package storage
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"math"
-	"math/rand"
-	"strings"
-	"time"
 
 	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/internal"
 	identitypb "github.com/gunsluo/go-example/opentelemetry/demo/pkg/proto/identity"
+	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
+
+	_ "github.com/lib/pq"
 )
 
 // Database simulates Customer repository implemented on top of an SQL Database
 type Database struct {
-	//tracer     opentracing.Tracer
+	db         *sqlx.DB
+	logger     *zap.Logger
+	accounts   map[string]*internal.Account
+	identities map[string]*identitypb.Identity
+}
+
+func NewDatabase(logger *zap.Logger, db *sqlx.DB) (*Database, error) {
+	return &Database{
+		db:     db,
+		logger: logger,
+	}, nil
+}
+
+func (d *Database) GetAccount(ctx context.Context, id string) (*internal.Account, error) {
+	sqlstr := "SELECT * FROM account WHERE id=?"
+
+	out := &internal.Account{}
+	err := d.db.QueryRowxContext(ctx, d.db.Rebind(sqlstr), id).Scan(&out.Id, &out.Name, &out.Email)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query account id: %s, %w", id, err)
+	}
+
+	return out, nil
+}
+
+func (d *Database) GetIdentity(ctx context.Context, id string) (*identitypb.Identity, error) {
+	sqlstr := "SELECT * FROM identity WHERE id=?"
+
+	out := &identitypb.Identity{}
+	err := d.db.QueryRowxContext(ctx, d.db.Rebind(sqlstr), id).Scan(&out.Id, &out.Name, &out.CertId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query identity id: %s, %w", id, err)
+	}
+
+	return out, nil
+}
+
+/*
+// Database simulates Customer repository implemented on top of an SQL Database
+type Database struct {
+	db         *sqlx.DB
 	logger     *zap.SugaredLogger
 	accounts   map[string]*internal.Account
 	identities map[string]*identitypb.Identity
 }
 
-func NewDatabase(logger *zap.Logger) *Database {
+func NewDatabase(logger *zap.Logger, db *sqlx.DB) *Database {
 	//tracer := trace.Init("postgres", logger, nil)
 	return &Database{
 		//tracer: tracer,
@@ -110,17 +148,18 @@ func (d *Database) invokeQuery(ctx context.Context, sql string, in, out interfac
 			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 		}
-	*/
+*/
 
-	err := d.invoke(ctx, sql, in, out)
-	/*
-		if err != nil {
-			if span := opentracing.SpanFromContext(ctx); span != nil {
-				ext.Error.Set(span, true)
-			}
+//err := d.invoke(ctx, sql, in, out)
+/*
+	if err != nil {
+		if span := opentracing.SpanFromContext(ctx); span != nil {
+			ext.Error.Set(span, true)
 		}
-	*/
+	}
+*/
 
+/*
 	return err
 }
 
@@ -161,3 +200,4 @@ func (d *Database) invoke(ctx context.Context, sql string, in, out interface{}) 
 
 	return errors.New("invalid sql")
 }
+*/

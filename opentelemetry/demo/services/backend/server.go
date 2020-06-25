@@ -2,6 +2,7 @@ package backend
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/client"
@@ -42,7 +43,7 @@ func NewServer(options ConfigOptions, logger *zap.Logger) (*Server, error) {
 	// trace
 	traceConfig, err := trace.FromEnv()
 	if err != nil {
-		s.logger.With(zap.Error(err)).Fatal("failed to loading trace config from environmet variable")
+		return nil, fmt.Errorf("failed to loading trace config, %w", err)
 	}
 	traceConfig.ServiceName = "backend"
 	s.traceConfig = traceConfig

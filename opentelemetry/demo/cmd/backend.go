@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/gunsluo/go-example/opentelemetry/demo/services/backend"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 )
 
 // backendCmd represents the base command when called without any subcommands
@@ -22,7 +23,7 @@ var backendCmd = &cobra.Command{
 			logger,
 		)
 		if err != nil {
-			logger.Fatal("failed to create backend server")
+			logger.With(zap.Error(err)).Fatal("failed to create backend server")
 		}
 
 		server.Run()

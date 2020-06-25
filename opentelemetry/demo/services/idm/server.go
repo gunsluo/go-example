@@ -2,10 +2,13 @@ package idm
 
 import (
 	"context"
+	"fmt"
 	"net"
 
 	identitypb "github.com/gunsluo/go-example/opentelemetry/demo/pkg/proto/identity"
 	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/storage"
+	"github.com/jmoiron/sqlx"
+	"github.com/xo/dburl"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -25,18 +28,33 @@ type Server struct {
 // can find correct server ports
 type ConfigOptions struct {
 	Address string
+	DSN     string
 }
 
 // NewServer creates a new frontend.Server
-func NewServer(options ConfigOptions, logger *zap.Logger) *Server {
-	//tracer := trace.Init("idm", logger, nil)
+func NewServer(options ConfigOptions, logger *zap.Logger) (*Server, error) {
 	logger = logger.Named("idm")
-	return &Server{
-		address:  options.Address,
-		logger:   logger,
-		database: storage.NewDatabase(logger),
-		//tracer:   tracer,
+	s := &Server{
+		address: options.Address,
+		logger:  logger,
 	}
+
+	u, err := dburl.Parse(options.DSN)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't parse database address, %w", err)
+	}
+	db, err := sqlx.Open(u.Driver, u.DSN)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect db, %w", err)
+	}
+
+	database, err := storage.NewDatabase(logger, db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create database, %w", err)
+	}
+	s.database = database
+
+	return s, nil
 }
 
 // Run starts the frontend server

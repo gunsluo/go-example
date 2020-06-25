@@ -103,7 +103,7 @@ func (m *HttpMiddleware) Handle(h http.HandlerFunc) http.HandlerFunc {
 				//standard.HTTPClientIPKey.String(r.Host),
 			)
 
-			if sct.status >= http.StatusInternalServerError || !sct.wroteheader {
+			if sct.status >= http.StatusBadRequest || !sct.wroteheader {
 				span.SetStatus(codes.Internal, "invalid code")
 				//span.SetAttributes(kv.Key("error").Bool(true))
 			}

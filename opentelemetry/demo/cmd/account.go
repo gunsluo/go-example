@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/gunsluo/go-example/opentelemetry/demo/services/account"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 )
 
 // accountCmd represents the base command when called without any subcommands
@@ -13,6 +14,7 @@ var accountCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		options := account.ConfigOptions{
 			Address: accountAddress,
+			DSN:     accountDSN,
 		}
 
 		server, err := account.NewServer(
@@ -20,17 +22,21 @@ var accountCmd = &cobra.Command{
 			logger,
 		)
 		if err != nil {
-			logger.Fatal("failed to create account server")
+			logger.With(zap.Error(err)).Fatal("failed to create account server")
 		}
 
 		server.Run()
 	},
 }
 
-var accountAddress string
+var (
+	accountAddress string
+	accountDSN     string
+)
 
 func init() {
 	accountCmd.Flags().StringVarP(&accountAddress, "address", "a", ":8081", "address to listen on")
+	accountCmd.Flags().StringVar(&accountDSN, "dsn", "postgres://postgres:password@127.0.0.1:5432/trace?sslmode=disable", "database URL")
 
 	rootCmd.AddCommand(accountCmd)
 }

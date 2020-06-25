@@ -41,3 +41,18 @@ services:
     depends_on:
       - otel-collector
 
+  postgres:
+    image: postgres:11.1-alpine
+    container_name: postgres 
+    restart: on-failure
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      PGDATA: /var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:
