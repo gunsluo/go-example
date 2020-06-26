@@ -43,7 +43,7 @@ func NewServer(options ConfigOptions, logger *zap.Logger) (*Server, error) {
 	traceConfig.ServiceName = "account"
 	s.traceConfig = traceConfig
 
-	db, err := traceConfig.NewDB(options.DSN)
+	db, err := traceConfig.OpenDB(options.DSN)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect db, %w", err)
 	}

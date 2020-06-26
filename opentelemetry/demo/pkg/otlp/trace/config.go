@@ -179,7 +179,7 @@ func (c *Configuration) NewTransport(options ...TransportOption) (*Transport, er
 	return t, nil
 }
 
-func (c *Configuration) NewDB(dsn string) (*sqlx.DB, error) {
+func (c *Configuration) OpenDB(dsn string) (*sqlx.DB, error) {
 	if !c.Enabled {
 		return OpenDB(nil, dsn)
 	}

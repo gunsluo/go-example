@@ -26,12 +26,16 @@ func OpenDB(tracer trace.Tracer, dsn string) (*sqlx.DB, error) {
 		return sqlx.Open(u.Driver, u.DSN)
 	}
 
-	sql.Register("instrumented-postgres",
+	ductimes++
+	driver := fmt.Sprintf("instrumented-postgres-%d", ductimes)
+	sql.Register(driver,
 		instrumentedsql.WrapDriver(&pq.Driver{},
 			instrumentedsql.WithTracer(&dbTracer{tracer: tracer})))
 
-	return sqlx.Open("instrumented-postgres", u.DSN)
+	return sqlx.Open(driver, u.DSN)
 }
+
+var ductimes int
 
 type dbTracer struct {
 	tracer trace.Tracer

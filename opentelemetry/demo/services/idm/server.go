@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/otlp/trace"
 	identitypb "github.com/gunsluo/go-example/opentelemetry/demo/pkg/proto/identity"
 	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/storage"
-	"github.com/jmoiron/sqlx"
-	"github.com/xo/dburl"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -22,6 +21,7 @@ type Server struct {
 	logger *zap.Logger
 
 	database *storage.Database
+	grpcSrv  *grpc.Server
 }
 
 // ConfigOptions used to make sure service clients
@@ -39,11 +39,22 @@ func NewServer(options ConfigOptions, logger *zap.Logger) (*Server, error) {
 		logger:  logger,
 	}
 
-	u, err := dburl.Parse(options.DSN)
+	// trace
+	traceConfig, err := trace.FromEnv()
 	if err != nil {
-		return nil, fmt.Errorf("couldn't parse database address, %w", err)
+		return nil, fmt.Errorf("failed to loading trace config, %w", err)
 	}
-	db, err := sqlx.Open(u.Driver, u.DSN)
+	traceConfig.ServiceName = "idm"
+
+	tracer, err := traceConfig.NewTracer(trace.ServiceName("idm"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create tracer, %w", err)
+	}
+
+	s.grpcSrv = grpc.NewServer(
+		grpc.UnaryInterceptor(trace.UnaryServerInterceptor(tracer, "Identity GRPC server")))
+
+	db, err := trace.OpenDB(tracer, options.DSN)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect db, %w", err)
 	}
@@ -59,15 +70,14 @@ func NewServer(options ConfigOptions, logger *zap.Logger) (*Server, error) {
 
 // Run starts the frontend server
 func (s *Server) Run() error {
-	srv := grpc.NewServer()
-	identitypb.RegisterIdmServer(srv, s)
+	identitypb.RegisterIdmServer(s.grpcSrv, s)
 	listener, err := net.Listen("tcp", s.address)
 	if err != nil {
 		return err
 	}
 
 	s.logger.With(zap.String("address", s.address)).Info("Starting GRPC Service")
-	return srv.Serve(listener)
+	return s.grpcSrv.Serve(listener)
 }
 
 func (s *Server) UserIdentity(ctx context.Context, req *identitypb.UserIdentityRequest) (*identitypb.UserIdentityReply, error) {

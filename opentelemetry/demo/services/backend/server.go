@@ -48,11 +48,17 @@ func NewServer(options ConfigOptions, logger *zap.Logger) (*Server, error) {
 	traceConfig.ServiceName = "backend"
 	s.traceConfig = traceConfig
 
-	identityClient, err := createIdmClient(s.idmAddress)
+	tracer, err := traceConfig.NewTracer(trace.ServiceName("backend"), trace.Logger(logger))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create trace, %w", err)
+	}
+	conn, err := grpc.Dial(s.idmAddress, grpc.WithInsecure(),
+		grpc.WithUnaryInterceptor(trace.UnaryClientInterceptor(tracer, "Identity GRPC Client")),
+	)
 	if err != nil {
 		return nil, err
 	}
-	s.identityClient = identityClient
+	s.identityClient = identitypb.NewIdmClient(conn)
 
 	transport, err := traceConfig.NewTransport(
 		trace.WithTransportComponentName("Account Http Client"),
@@ -132,12 +138,4 @@ type user struct {
 	Name   string `json:"name"`
 	Email  string `json:"email"`
 	CertId string `json:"cert_id"`
-}
-
-func createIdmClient(address string) (identitypb.IdmClient, error) {
-	conn, err := grpc.Dial(address, grpc.WithInsecure())
-	if err != nil {
-		return nil, err
-	}
-	return identitypb.NewIdmClient(conn), nil
 }
