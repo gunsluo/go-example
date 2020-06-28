@@ -22,17 +22,17 @@ const (
 	// environment variable names
 	envServiceName  = "TRACE_SERVICE_NAME"
 	envEnabled      = "TRACE_ENABLED"
-	envAgentAddress = "TRACE_AGENT_ADDRESS"
+	envAgentAddress = "OTLP_AGENT_ADDRESS"
 )
 
-// Configuration configures and creates Jaeger Tracer
+// Configuration configures and creates Tracer
 type Configuration struct {
 	// ServiceName specifies the service name to use on the tracer.
 	// Can be provided via environment variable named TRACE_SERVICE_NAME
 	ServiceName string
 
 	// AgentAddress is agent address of collecting trace message, host:port
-	// Can be provided via environment variable named TRACE_AGENT_ADDRESS
+	// Can be provided via environment variable named OTLP_AGENT_ADDRESS
 	AgentAddress string
 
 	// Enabled can be provided via environment variable named TRACE_ENABLED

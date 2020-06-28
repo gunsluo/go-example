@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"net/http"
 
+	ometric "github.com/gunsluo/go-example/opentelemetry/demo/pkg/otlp/metric"
 	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/otlp/trace"
 	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/storage"
+	"go.opentelemetry.io/otel/api/kv"
+	"go.opentelemetry.io/otel/api/metric"
 	"go.uber.org/zap"
 )
 
@@ -18,6 +21,8 @@ type Server struct {
 
 	database    *storage.Database
 	traceConfig *trace.Configuration
+
+	accountReadCounter metric.BoundInt64Counter
 }
 
 // ConfigOptions used to make sure service clients
@@ -53,6 +58,28 @@ func NewServer(options ConfigOptions, logger *zap.Logger) (*Server, error) {
 		return nil, fmt.Errorf("failed to create database, %w", err)
 	}
 	s.database = database
+
+	// metric
+	metricConfig, err := ometric.FromEnv()
+	if err != nil {
+		return nil, fmt.Errorf("failed to loading metric config, %w", err)
+	}
+	meter, err := metricConfig.NewMeter("account")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create metric, %w", err)
+	}
+
+	//recorder, err := meter.NewFloat64ValueRecorder("account.read")
+	counter, err := meter.NewInt64Counter("account.read")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create metric recorder, %w", err)
+	}
+
+	commonLabels := []kv.KeyValue{
+		kv.String("priority", "Ultra"),
+	}
+	s.accountReadCounter = counter.Bind(commonLabels...)
+	//defer s.accountReadCounter.Unbind()
 
 	return s, nil
 }
@@ -100,6 +127,7 @@ func (s *Server) account(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.accountReadCounter.Add(ctx, 1)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(data)
 }
