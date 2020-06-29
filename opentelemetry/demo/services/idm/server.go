@@ -80,16 +80,20 @@ func (s *Server) Run() error {
 	return s.grpcSrv.Serve(listener)
 }
 
+func withContxt(ctx context.Context) []zap.Field {
+	return []zap.Field{trace.TraceId(ctx)}
+}
+
 func (s *Server) UserIdentity(ctx context.Context, req *identitypb.UserIdentityRequest) (*identitypb.UserIdentityReply, error) {
 	if req.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "Missing required 'id' parameter")
 	}
 
 	// query user from account server
-	s.logger.With(zap.String("userId", req.Id)).Info("loading identity from database")
+	s.logger.With(withContxt(ctx)...).With(zap.String("userId", req.Id)).Info("loading identity from database")
 	identity, err := s.database.GetIdentity(ctx, req.Id)
 	if err != nil {
-		s.logger.With(zap.Error(err), zap.String("userId", req.Id)).Warn("failed to loading identity from database")
+		s.logger.With(withContxt(ctx)...).With(zap.Error(err), zap.String("userId", req.Id)).Warn("failed to loading identity from database")
 		return nil, err
 	}
 

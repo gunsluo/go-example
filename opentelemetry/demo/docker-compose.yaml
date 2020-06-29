@@ -1,4 +1,4 @@
-version: "2"
+version: "3"
 services:
 
   # Jaeger
@@ -53,6 +53,43 @@ services:
       - 5432:5432
     volumes:
       - postgres-data:/var/lib/postgresql/data
+
+  # Logging
+  loki:
+    image: grafana/loki:1.5.0
+    container_name: loki
+    volumes:
+      - ./loki-config.yaml:/etc/loki/config.yaml
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/config.yaml
+
+  grafana:
+    image: grafana/grafana:master
+    container_name: grafana
+    ports:
+      - "3000:3000"
+
+  # Agent
+  demo:
+    image: golang:1.14.0-buster
+    container_name: demo
+    logging:
+      driver: loki
+      options:
+        loki-url: http://host.docker.internal:3100/loki/api/v1/push
+    command: >
+        go run main.go all
+    working_dir: /go/src/github.com/gunsluo/go-example/opentelemetry/demo
+    volumes:
+      - .:/go/src/github.com/gunsluo/go-example/opentelemetry/demo
+    environment:
+      GO111MODULE: "off"
+      OTLP_AGENT_ADDRESS: otel-agent:55680
+      TRACE_ENABLED: "true"
+    ports:
+      - "8080:8080"
+
 
 volumes:
   postgres-data:

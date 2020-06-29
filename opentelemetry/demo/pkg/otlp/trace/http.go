@@ -88,6 +88,7 @@ func (m *HttpMiddleware) Handle(h http.HandlerFunc) http.HandlerFunc {
 			trace.WithAttributes(attrs...),
 		)
 
+		ctx = trace.ContextWithRemoteSpanContext(ctx, span.SpanContext())
 		r = r.WithContext(correlation.ContextWithMap(ctx, correlation.NewMap(correlation.MapUpdate{
 			MultiKV: entries,
 		})))

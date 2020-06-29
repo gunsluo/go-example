@@ -1,6 +1,7 @@
 package account
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -104,6 +105,10 @@ func (s *Server) createServeMux() http.Handler {
 	return mux
 }
 
+func withContxt(ctx context.Context) []zap.Field {
+	return []zap.Field{trace.TraceId(ctx)}
+}
+
 func (s *Server) account(w http.ResponseWriter, r *http.Request) {
 	userID := r.URL.Query().Get("id")
 	if userID == "" {
@@ -113,11 +118,11 @@ func (s *Server) account(w http.ResponseWriter, r *http.Request) {
 
 	// query user from account server
 	ctx := r.Context()
-	s.logger.With(zap.String("accountId", userID)).Info("loading account from database")
+	s.logger.With(withContxt(ctx)...).With(zap.String("accountId", userID)).Info("loading account from database")
 	account, err := s.database.GetAccount(ctx, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		s.logger.With(zap.Error(err), zap.String("accountId", userID)).Warn("failed to loading account from database")
+		s.logger.With(withContxt(ctx)...).With(zap.Error(err), zap.String("accountId", userID)).Warn("failed to loading account from database")
 		return
 	}
 

@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -92,6 +93,10 @@ func (s *Server) createServeMux() http.Handler {
 	return mux
 }
 
+func withContxt(ctx context.Context) []zap.Field {
+	return []zap.Field{trace.TraceId(ctx)}
+}
+
 func (s *Server) profile(w http.ResponseWriter, r *http.Request) {
 	userID := r.URL.Query().Get("id")
 	if userID == "" {
@@ -101,19 +106,19 @@ func (s *Server) profile(w http.ResponseWriter, r *http.Request) {
 
 	// query user from account server
 	ctx := r.Context()
-	s.logger.With(zap.String("accountId", userID)).Info("query account by user id from account")
+	s.logger.With(withContxt(ctx)...).With(zap.String("accountId", userID)).Info("query account by user id from account")
 	account, err := s.accountClient.GetAccount(ctx, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		s.logger.With(zap.Error(err)).With(zap.String("accountId", userID)).Warn("failed to query account")
+		s.logger.With(withContxt(ctx)...).With(zap.Error(err)).With(zap.String("accountId", userID)).Warn("failed to query account")
 		return
 	}
 
-	s.logger.With(zap.String("userId", userID)).Info("query user by user id from identity")
+	s.logger.With(withContxt(ctx)...).With(zap.String("userId", userID)).Info("query user by user id from identity")
 	reply, err := s.identityClient.UserIdentity(ctx, &identitypb.UserIdentityRequest{Id: userID})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		s.logger.With(zap.Error(err)).With(zap.String("userId", userID)).Warn("failed to query user")
+		s.logger.With(withContxt(ctx)...).With(zap.Error(err)).With(zap.String("userId", userID)).Warn("failed to query user")
 		return
 	}
 
