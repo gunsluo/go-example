@@ -1,0 +1,14 @@
+2020-06-28T10:40:21.155+0800	INFO	Starting all services
+2020-06-28T10:40:21.155+0800	INFO	backend	success to enable trace	{"agentAddress": "127.0.0.1:55680"}
+2020-06-28T10:40:21.156+0800	INFO	idm	Starting GRPC Service	{"address": ":8082"}
+2020-06-28T10:40:21.156+0800	INFO	backend	success to enable trace http transport	{"agentAddress": "127.0.0.1:55680"}
+2020-06-28T10:40:21.157+0800	INFO	account	success to enable trace http middleware	{"agentAddress": "127.0.0.1:55680"}
+2020-06-28T10:40:21.157+0800	INFO	account	Starting Service	{"address": ":8081"}
+2020-06-28T10:40:21.157+0800	INFO	backend	success to enable trace http middleware	{"agentAddress": "127.0.0.1:55680"}
+2020-06-28T10:40:21.157+0800	INFO	backend	Starting Service	{"address": ":8080"}
+
+
+2020-06-28T10:40:24.948+0800	INFO	backend	query account by user id from account	{"_tid": "ebb4ffc38108a4c1e80faab477b0e721", "accountId": "123"}
+2020-06-28T10:40:24.949+0800	INFO	account	loading account from database	{"_tid": "ebb4ffc38108a4c1e80faab477b0e721", "accountId": "123"}
+2020-06-28T10:40:25.002+0800	INFO	backend	query user by user id from identity	{"_tid": "ebb4ffc38108a4c1e80faab477b0e721", "userId": "123"}
+2020-06-28T10:40:25.002+0800	INFO	idm	loading identity from database	{"_tid": "ebb4ffc38108a4c1e80faab477b0e721", "userId": "123"}
