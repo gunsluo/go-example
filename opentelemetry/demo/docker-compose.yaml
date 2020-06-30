@@ -79,7 +79,7 @@ services:
       options:
         loki-url: http://host.docker.internal:3100/loki/api/v1/push
     command: >
-        go run main.go all
+        go run main.go all --dsn=postgres://postgres:password@postgres:5432/trace?sslmode=disable
     working_dir: /go/src/github.com/gunsluo/go-example/opentelemetry/demo
     volumes:
       - .:/go/src/github.com/gunsluo/go-example/opentelemetry/demo

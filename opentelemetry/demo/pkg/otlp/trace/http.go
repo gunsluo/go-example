@@ -30,22 +30,25 @@ type HttpOption func(*HttpMiddleware)
 
 func NewHttpMiddleware(tracer trace.Tracer, opts ...HttpOption) (*HttpMiddleware, error) {
 	m := &HttpMiddleware{
-		tracer:        tracer,
-		enable:        true,
+		logger:        zap.NewNop(),
 		opNameFunc:    defaultOpNameFunc,
 		componentName: defaultHttpComponentName}
 	for _, opt := range opts {
 		opt(m)
 	}
 
-	return m, nil
-}
-
-// WithHttpEnable disable to collect trace
-func WithHttpEnable(enable bool) HttpOption {
-	return func(m *HttpMiddleware) {
-		m.enable = enable
+	if tracer == nil {
+		return m, nil
 	}
+
+	if _, ok := tracer.(*trace.NoopTracer); ok {
+		return m, nil
+	}
+	m.tracer = tracer
+	m.enable = true
+
+	m.logger.With(zap.String("component", m.componentName)).Info("success to enable trace http middleware")
+	return m, nil
 }
 
 // WithHttpComponentName set component name

@@ -17,8 +17,7 @@ import (
 // Server implements jaeger-demo-frontend service
 type Server struct {
 	address string
-	//tracer  opentracing.Tracer
-	logger *zap.Logger
+	logger  *zap.Logger
 
 	database *storage.Database
 	grpcSrv  *grpc.Server

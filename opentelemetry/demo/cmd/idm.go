@@ -14,7 +14,7 @@ var idmCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		options := idm.ConfigOptions{
 			Address: idmAddress,
-			DSN:     accountDSN,
+			DSN:     idmDSN,
 		}
 
 		server, err := idm.NewServer(
@@ -36,7 +36,7 @@ var (
 
 func init() {
 	idmCmd.Flags().StringVarP(&idmAddress, "address", "a", ":8082", "address to listen on")
-	idmCmd.Flags().StringVar(&idmDSN, "dsn", "postgres://postgres:password@postgres:5432/trace?sslmode=disable", "database URL")
+	idmCmd.Flags().StringVar(&idmDSN, "dsn", "postgres://postgres:password@127.0.0.1:5432/trace?sslmode=disable", "database URL")
 
 	rootCmd.AddCommand(idmCmd)
 }

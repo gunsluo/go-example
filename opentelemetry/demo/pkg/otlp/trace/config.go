@@ -85,6 +85,10 @@ func Logger(logger *zap.Logger) Option {
 
 // NewTracer create a new tracer
 func (c *Configuration) NewTracer(options ...Option) (trace.Tracer, error) {
+	if !c.Enabled {
+		return &trace.NoopTracer{}, nil
+	}
+
 	if c.AgentAddress == "" {
 		return nil, fmt.Errorf("missing agent address, please set environment variable %s", envAgentAddress)
 	}
@@ -105,7 +109,7 @@ func (c *Configuration) NewTracer(options ...Option) (trace.Tracer, error) {
 		}
 		exporter = exp
 		sotlp.SetExporter(exporter)
-		opts.Logger.With(zap.String("agentAddress", c.AgentAddress)).Info("success to enable trace")
+		opts.Logger.With(zap.String("agentAddress", c.AgentAddress)).Info("success to otlp agent")
 	}
 	// exporter.Stop()
 
@@ -142,9 +146,9 @@ func applyOptions(options ...Option) Options {
 }
 
 func (c *Configuration) NewHttpMiddleware(options ...HttpOption) (*HttpMiddleware, error) {
-	if !c.Enabled {
-		return &HttpMiddleware{}, nil
-	}
+	//if !c.Enabled {
+	//	return &HttpMiddleware{}, nil
+	//}
 
 	tracer, err := c.NewTracer(ServiceName(c.ServiceName))
 	if err != nil {
@@ -156,15 +160,10 @@ func (c *Configuration) NewHttpMiddleware(options ...HttpOption) (*HttpMiddlewar
 		return m, err
 	}
 
-	m.logger.With(zap.String("agentAddress", c.AgentAddress)).Info("success to enable trace http middleware")
 	return m, nil
 }
 
 func (c *Configuration) NewTransport(options ...TransportOption) (*Transport, error) {
-	if !c.Enabled {
-		return &Transport{}, nil
-	}
-
 	tracer, err := c.NewTracer(ServiceName(c.ServiceName))
 	if err != nil {
 		return &Transport{}, err
@@ -175,15 +174,10 @@ func (c *Configuration) NewTransport(options ...TransportOption) (*Transport, er
 		return t, err
 	}
 
-	t.logger.With(zap.String("agentAddress", c.AgentAddress)).Info("success to enable trace http transport")
 	return t, nil
 }
 
 func (c *Configuration) OpenDB(dsn string) (*sqlx.DB, error) {
-	if !c.Enabled {
-		return OpenDB(nil, dsn)
-	}
-
 	tracer, err := c.NewTracer(ServiceName(c.ServiceName))
 	if err != nil {
 		return OpenDB(nil, dsn)

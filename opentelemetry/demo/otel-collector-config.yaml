@@ -25,3 +25,6 @@ service:
       processors: [batch, queued_retry]
       exporters: [logging, jaeger]
 
+    metrics:
+      receivers: [otlp]
+      exporters: [logging]

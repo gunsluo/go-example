@@ -50,18 +50,29 @@ func WithTransportLogger(logger *zap.Logger) TransportOption {
 
 func NewTransport(tracer trace.Tracer, options ...TransportOption) (*Transport, error) {
 	t := &Transport{
-		tracer:        tracer,
-		enable:        true,
 		componentName: "net/http",
 		logger:        zap.NewNop(),
 		opNameFunc: func(r *http.Request) string {
 			return r.Method + " " + r.URL.String() + " - HTTP Client"
 		},
 	}
+
 	for _, opt := range options {
 		opt(t)
 	}
 
+	if tracer == nil {
+		return t, nil
+	}
+
+	if _, ok := tracer.(*trace.NoopTracer); ok {
+		return t, nil
+	}
+
+	t.tracer = tracer
+	t.enable = true
+
+	t.logger.With(zap.String("component", t.componentName)).Info("success to enable trace http transport")
 	return t, nil
 }
 

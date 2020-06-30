@@ -36,7 +36,7 @@ var (
 
 func init() {
 	accountCmd.Flags().StringVarP(&accountAddress, "address", "a", ":8081", "address to listen on")
-	accountCmd.Flags().StringVar(&accountDSN, "dsn", "postgres://postgres:password@postgres:5432/trace?sslmode=disable", "database URL")
+	accountCmd.Flags().StringVar(&accountDSN, "dsn", "postgres://postgres:password@127.0.0.1:5432/trace?sslmode=disable", "database URL")
 
 	rootCmd.AddCommand(accountCmd)
 }

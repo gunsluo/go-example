@@ -32,4 +32,8 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch, queued_retry]
-      exporters: [logging, otlp]
+      exporters: [otlp]
+
+    metrics:
+      receivers: [otlp]
+      exporters: [logging]

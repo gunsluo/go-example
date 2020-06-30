@@ -65,12 +65,11 @@ func NewServer(options ConfigOptions, logger *zap.Logger) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to loading metric config, %w", err)
 	}
-	meter, err := metricConfig.NewMeter("account")
+	meter, err := metricConfig.NewMeter("account", ometric.Logger(logger))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create metric, %w", err)
 	}
 
-	//recorder, err := meter.NewFloat64ValueRecorder("account.read")
 	counter, err := meter.NewInt64Counter("account.read")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create metric recorder, %w", err)

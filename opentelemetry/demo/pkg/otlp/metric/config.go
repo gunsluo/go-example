@@ -76,6 +76,10 @@ var (
 
 // NewMeter create a new metric
 func (c *Configuration) NewMeter(name string, options ...Option) (metric.Meter, error) {
+	if !c.Enabled {
+		return metric.NoopProvider{}.Meter(name), nil
+	}
+
 	if c.AgentAddress == "" {
 		return metric.Meter{}, fmt.Errorf("missing agent address, please set environment variable %s", envAgentAddress)
 	}
@@ -92,7 +96,7 @@ func (c *Configuration) NewMeter(name string, options ...Option) (metric.Meter, 
 		}
 		exporter = exp
 		sotlp.SetExporter(exporter)
-		opts.Logger.With(zap.String("agentAddress", c.AgentAddress)).Info("success to enable trace")
+		opts.Logger.With(zap.String("agentAddress", c.AgentAddress)).Info("success to otlp agent")
 	}
 	// exporter.Stop()
 
@@ -104,7 +108,8 @@ func (c *Configuration) NewMeter(name string, options ...Option) (metric.Meter, 
 			push.WithPeriod(5*time.Second),
 		)
 		meterProvider = meterPusher.Provider()
-		//meterPusher.Start()
+		meterPusher.Start()
+		opts.Logger.With(zap.String("agentAddress", c.AgentAddress)).Info("success to create metric pusher and start to push metric")
 	}
 
 	return meterProvider.Meter(name), nil

@@ -26,6 +26,10 @@ func OpenDB(tracer trace.Tracer, dsn string) (*sqlx.DB, error) {
 		return sqlx.Open(u.Driver, u.DSN)
 	}
 
+	if _, ok := tracer.(*trace.NoopTracer); ok {
+		return sqlx.Open(u.Driver, u.DSN)
+	}
+
 	ductimes++
 	driver := fmt.Sprintf("instrumented-postgres-%d", ductimes)
 	sql.Register(driver,
