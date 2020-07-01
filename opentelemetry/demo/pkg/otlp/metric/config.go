@@ -17,8 +17,8 @@ import (
 
 const (
 	// environment variable names
-	envEnabled      = "METRIC_ENABLED"
-	envAgentAddress = "OTLP_AGENT_ADDRESS"
+	envEnabled       = "METRIC_ENABLED"
+	envAgentEndpoint = "OTLP_AGENT_EDNPOINT"
 )
 
 // FromEnv uses environment variables to set the metric's Configuration
@@ -29,9 +29,9 @@ func FromEnv() (*Configuration, error) {
 
 // Configuration configures and creates Metric
 type Configuration struct {
-	// AgentAddress is agent address of collecting trace message, host:port
-	// Can be provided via environment variable named OTLP_AGENT_ADDRESS
-	AgentAddress string
+	// AgentEndpoint is agent address of collecting trace message, host:port
+	// Can be provided via environment variable named OTLP_AGENT_EDNPOINT
+	AgentEndpoint string
 
 	// Enabled can be provided via environment variable named METRIC_ENABLED
 	Enabled bool
@@ -47,8 +47,8 @@ func (c *Configuration) FromEnv() (*Configuration, error) {
 		}
 	}
 
-	if e := os.Getenv(envAgentAddress); e != "" {
-		c.AgentAddress = e
+	if e := os.Getenv(envAgentEndpoint); e != "" {
+		c.AgentEndpoint = e
 	}
 
 	return c, nil
@@ -80,15 +80,15 @@ func (c *Configuration) NewMeter(name string, options ...Option) (metric.Meter, 
 		return metric.NoopProvider{}.Meter(name), nil
 	}
 
-	if c.AgentAddress == "" {
-		return metric.Meter{}, fmt.Errorf("missing agent address, please set environment variable %s", envAgentAddress)
+	if c.AgentEndpoint == "" {
+		return metric.Meter{}, fmt.Errorf("missing agent address, please set environment variable %s", envAgentEndpoint)
 	}
 
 	opts := applyOptions(options...)
 	exporter := sotlp.SingletonExporter()
 	if exporter == nil {
 		exp, err := otlp.NewExporter(otlp.WithInsecure(),
-			otlp.WithAddress(c.AgentAddress),
+			otlp.WithAddress(c.AgentEndpoint),
 			otlp.WithReconnectionPeriod(time.Minute),
 			otlp.WithGRPCDialOption(grpc.WithTimeout(5*time.Second)))
 		if err != nil {
@@ -96,7 +96,7 @@ func (c *Configuration) NewMeter(name string, options ...Option) (metric.Meter, 
 		}
 		exporter = exp
 		sotlp.SetExporter(exporter)
-		opts.Logger.With(zap.String("agentAddress", c.AgentAddress)).Info("success to otlp agent")
+		opts.Logger.With(zap.String("agentEndpoint", c.AgentEndpoint)).Info("success to otlp agent")
 	}
 	// exporter.Stop()
 
@@ -105,11 +105,11 @@ func (c *Configuration) NewMeter(name string, options ...Option) (metric.Meter, 
 			simple.NewWithExactDistribution(),
 			exporter,
 			push.WithStateful(true),
-			push.WithPeriod(5*time.Second),
+			push.WithPeriod(30*time.Second),
 		)
 		meterProvider = meterPusher.Provider()
 		meterPusher.Start()
-		opts.Logger.With(zap.String("agentAddress", c.AgentAddress)).Info("success to create metric pusher and start to push metric")
+		opts.Logger.With(zap.String("agentEndpoint", c.AgentEndpoint)).Info("success to create metric pusher and start to push metric")
 	}
 
 	return meterProvider.Meter(name), nil

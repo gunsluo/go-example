@@ -12,19 +12,10 @@ extensions:
   health_check: {}
 
 exporters:
-  jaeger:
-    endpoint: "jaeger:14250"
-    insecure: true
   otlp:
     endpoint: "otel-collector:55679"
-    insecure: true
   logging:
     loglevel: debug
-
-
-
-  logging:
-      loglevel: debug
 
 service:
   extensions: [health_check]
@@ -36,4 +27,4 @@ service:
 
     metrics:
       receivers: [otlp]
-      exporters: [logging]
+      exporters: [otlp]

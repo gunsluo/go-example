@@ -20,9 +20,11 @@ import (
 
 const (
 	// environment variable names
-	envServiceName  = "TRACE_SERVICE_NAME"
-	envEnabled      = "TRACE_ENABLED"
-	envAgentAddress = "OTLP_AGENT_ADDRESS"
+	envServiceName   = "TRACE_SERVICE_NAME"
+	envEnabled       = "TRACE_ENABLED"
+	envAgentEndpoint = "OTLP_AGENT_EDNPOINT"
+
+	OTEL_AGENT_ENDPOINT
 )
 
 // Configuration configures and creates Tracer
@@ -31,9 +33,9 @@ type Configuration struct {
 	// Can be provided via environment variable named TRACE_SERVICE_NAME
 	ServiceName string
 
-	// AgentAddress is agent address of collecting trace message, host:port
-	// Can be provided via environment variable named OTLP_AGENT_ADDRESS
-	AgentAddress string
+	// AgentEndpoint is agent address of collecting trace message, host:port
+	// Can be provided via environment variable named OTLP_AGENT_EDNPOINT
+	AgentEndpoint string
 
 	// Enabled can be provided via environment variable named TRACE_ENABLED
 	Enabled bool
@@ -53,8 +55,8 @@ func (c *Configuration) FromEnv() (*Configuration, error) {
 		}
 	}
 
-	if e := os.Getenv(envAgentAddress); e != "" {
-		c.AgentAddress = e
+	if e := os.Getenv(envAgentEndpoint); e != "" {
+		c.AgentEndpoint = e
 	}
 
 	return c, nil
@@ -89,8 +91,8 @@ func (c *Configuration) NewTracer(options ...Option) (trace.Tracer, error) {
 		return &trace.NoopTracer{}, nil
 	}
 
-	if c.AgentAddress == "" {
-		return nil, fmt.Errorf("missing agent address, please set environment variable %s", envAgentAddress)
+	if c.AgentEndpoint == "" {
+		return nil, fmt.Errorf("missing agent address, please set environment variable %s", envAgentEndpoint)
 	}
 
 	opts := applyOptions(options...)
@@ -101,7 +103,7 @@ func (c *Configuration) NewTracer(options ...Option) (trace.Tracer, error) {
 	exporter := sotlp.SingletonExporter()
 	if exporter == nil {
 		exp, err := otlp.NewExporter(otlp.WithInsecure(),
-			otlp.WithAddress(c.AgentAddress),
+			otlp.WithAddress(c.AgentEndpoint),
 			otlp.WithReconnectionPeriod(time.Minute),
 			otlp.WithGRPCDialOption(grpc.WithTimeout(5*time.Second)))
 		if err != nil {
@@ -109,7 +111,7 @@ func (c *Configuration) NewTracer(options ...Option) (trace.Tracer, error) {
 		}
 		exporter = exp
 		sotlp.SetExporter(exporter)
-		opts.Logger.With(zap.String("agentAddress", c.AgentAddress)).Info("success to otlp agent")
+		opts.Logger.With(zap.String("agentEndpoint", c.AgentEndpoint)).Info("success to otlp agent")
 	}
 	// exporter.Stop()
 

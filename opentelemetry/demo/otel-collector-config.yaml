@@ -10,10 +10,13 @@ extensions:
   health_check: {}
 
 exporters:
-  jaeger:
+  jaeger_grpc:
     endpoint: "jaeger:14250"
-    insecure: true
-
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: example
+    const_labels:
+      label1: test
   logging:
       loglevel: debug
 
@@ -23,8 +26,8 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch, queued_retry]
-      exporters: [logging, jaeger]
+      exporters: [logging, jaeger_grpc]
 
     metrics:
       receivers: [otlp]
-      exporters: [logging]
+      exporters: [prometheus]
