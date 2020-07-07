@@ -1,6 +1,8 @@
 receivers:
   otlp:
-    endpoint: 0.0.0.0:55679
+    protocols:
+      grpc:
+        endpoint: "0.0.0.0:55679"
 
 processors:
   batch:
@@ -10,8 +12,9 @@ extensions:
   health_check: {}
 
 exporters:
-  jaeger_grpc:
+  jaeger:
     endpoint: "jaeger:14250"
+    insecure: true
   prometheus:
     endpoint: "0.0.0.0:8889"
     namespace: example
@@ -26,7 +29,7 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch, queued_retry]
-      exporters: [logging, jaeger_grpc]
+      exporters: [logging, jaeger]
 
     metrics:
       receivers: [otlp]

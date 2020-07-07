@@ -6,7 +6,7 @@ import (
 	"go.opentelemetry.io/otel/api/kv"
 	"go.opentelemetry.io/otel/api/standard"
 	"go.opentelemetry.io/otel/api/trace"
-	"go.opentelemetry.io/otel/plugin/httptrace"
+	"go.opentelemetry.io/otel/instrumentation/httptrace"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 )
