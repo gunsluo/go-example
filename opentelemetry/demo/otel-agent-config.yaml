@@ -30,4 +30,4 @@ service:
 
     metrics:
       receivers: [otlp]
-      exporters: [otlp]
+      exporters: [otlp, logging]

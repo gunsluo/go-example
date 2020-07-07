@@ -23,7 +23,7 @@ type Server struct {
 	database    *storage.Database
 	traceConfig *trace.Configuration
 
-	accountReadCounter metric.BoundInt64Counter
+	accountReadCounter metric.BoundFloat64Counter
 }
 
 // ConfigOptions used to make sure service clients
@@ -70,13 +70,13 @@ func NewServer(options ConfigOptions, logger *zap.Logger) (*Server, error) {
 		return nil, fmt.Errorf("failed to create metric, %w", err)
 	}
 
-	counter, err := meter.NewInt64Counter("account.read")
+	counter, err := meter.NewFloat64Counter("account.read", metric.WithDescription("record number of reading account"))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create metric recorder, %w", err)
 	}
 
 	commonLabels := []kv.KeyValue{
-		kv.String("priority", "Ultra"),
+		kv.String("priority", "hight"),
 	}
 	s.accountReadCounter = counter.Bind(commonLabels...)
 	//defer s.accountReadCounter.Unbind()

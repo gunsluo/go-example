@@ -29,8 +29,8 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch, queued_retry]
-      exporters: [logging, jaeger]
+      exporters: [jaeger]
 
     metrics:
       receivers: [otlp]
-      exporters: [prometheus]
+      exporters: [prometheus, logging]

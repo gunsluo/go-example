@@ -104,8 +104,8 @@ func (c *Configuration) NewMeter(name string, options ...Option) (metric.Meter, 
 		meterPusher = push.New(
 			simple.NewWithExactDistribution(),
 			exporter,
-			push.WithTimeout(10*time.Second),
 			push.WithPeriod(30*time.Second),
+			//push.WithTimeout(10*time.Second),
 		)
 		meterProvider = meterPusher.Provider()
 		meterPusher.Start()
