@@ -9,14 +9,14 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"reflect"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/graph-gophers/graphql-go"
 	"github.com/jmoiron/sqlx"
 	"github.com/shopspring/decimal"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 // Storager is interface structure for database operation that can be called
@@ -97,59 +97,31 @@ type Storager interface {
 
 // PostgresStorage is Postgres for the database.
 type PostgresStorage struct {
-	Logger XOLogger
-}
-
-func (s *PostgresStorage) info(format string, args ...interface{}) {
-	if len(args) == 0 {
-		xoLog(s.Logger, logrus.InfoLevel, format)
-	} else {
-		xoLogf(s.Logger, logrus.InfoLevel, "%s %v", format, args)
-	}
+	Logger Logger
 }
 
 // MssqlStorage is Mssql for the database.
 type MssqlStorage struct {
-	Logger XOLogger
-}
-
-func (s *MssqlStorage) info(format string, args ...interface{}) {
-	if len(args) == 0 {
-		xoLog(s.Logger, logrus.InfoLevel, format)
-	} else {
-		xoLogf(s.Logger, logrus.InfoLevel, "%s %v", format, args)
-	}
+	Logger Logger
 }
 
 // GodrorStorage is Godror for the database.
 type GodrorStorage struct {
-	Logger XOLogger
-}
-
-func (s *GodrorStorage) info(format string, args ...interface{}) {
-	if len(args) == 0 {
-		xoLog(s.Logger, logrus.InfoLevel, format)
-	} else {
-		xoLogf(s.Logger, logrus.InfoLevel, "%s %v", format, args)
-	}
+	Logger Logger
 }
 
 // New is a construction method that return a new Storage
-func New(driver string, c Config) (Storager, error) {
-	// fix bug which interface type is not nil and interface value is nil
-	var logger XOLogger
-	if c.Logger != nil && !(reflect.ValueOf(c.Logger).Kind() == reflect.Ptr && reflect.ValueOf(c.Logger).IsNil()) {
-		logger = c.Logger
-	}
+func New(driver string, opts ...Option) (Storager, error) {
+	o := applyOptions(opts...)
 
 	var s Storager
 	switch driver {
 	case "postgres":
-		s = &PostgresStorage{Logger: logger}
+		s = &PostgresStorage{Logger: o.logger}
 	case "mssql":
-		s = &MssqlStorage{Logger: logger}
+		s = &MssqlStorage{Logger: o.logger}
 	case "godror":
-		s = &GodrorStorage{Logger: logger}
+		s = &GodrorStorage{Logger: o.logger}
 	default:
 		return nil, errors.New("driver " + driver + " not support")
 	}
@@ -227,7 +199,7 @@ func (r *PageInfoResolver) HasPreviousPage() bool {
 
 // ResolverConfig is a config for Resolver
 type ResolverConfig struct {
-	Logger   XOLogger
+	Logger   Logger
 	DB       *sqlx.DB
 	S        Storager
 	Recorder EventRecorder
@@ -236,11 +208,22 @@ type ResolverConfig struct {
 
 // ResolverExtensions it's passing between root resolver and  children resolver
 type ResolverExtensions struct {
-	Logger   XOLogger
+	Logger   Logger
 	DB       *sqlx.DB
 	Storage  Storager
 	Recorder EventRecorder
+	Values   *sync.Map
+	Mutex    *sync.Mutex
 	Verifier Verifier
+}
+
+func (re *ResolverExtensions) WithValue(key string, value interface{}) {
+	re.Values.Store(key, value)
+}
+
+func (re *ResolverExtensions) Value(key string) interface{} {
+	value, _ := re.Values.Load(key)
+	return value
 }
 
 // RootResolver is a graphql root resolver
@@ -250,27 +233,18 @@ type RootResolver struct {
 
 // NewRootResolver return a root resolver for ggraphql
 func NewRootResolver(c *ResolverConfig) *RootResolver {
-	logger := c.Logger
-	if logger == nil {
-		logger = logrus.New()
-	}
-
 	return &RootResolver{
-		Ext: ResolverExtensions{
-			Logger:   logger,
-			DB:       c.DB,
-			Storage:  c.S,
-			Recorder: c.Recorder,
-			Verifier: c.Verifier,
-		},
+		Ext: NewResolverExtensions(c),
 	}
 }
 
 // NewResolverExtensions create a resolver extension by config
 func NewResolverExtensions(c *ResolverConfig) ResolverExtensions {
-	logger := c.Logger
-	if logger == nil {
-		logger = logrus.New()
+	var logger Logger
+	if c.Logger == nil {
+		logger = NewZapLogger(zap.NewNop())
+	} else {
+		logger = c.Logger
 	}
 
 	return ResolverExtensions{
@@ -278,6 +252,8 @@ func NewResolverExtensions(c *ResolverConfig) ResolverExtensions {
 		DB:       c.DB,
 		Storage:  c.S,
 		Recorder: c.Recorder,
+		Values:   &sync.Map{},
+		Mutex:    &sync.Mutex{},
 		Verifier: c.Verifier,
 	}
 }

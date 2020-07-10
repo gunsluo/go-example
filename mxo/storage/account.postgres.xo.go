@@ -21,7 +21,7 @@ func (s *PostgresStorage) InsertAccount(db XODB, a *Account) error {
 		`) RETURNING "id"`
 
 	// run query
-	s.info(sqlstr, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate)
+	s.Logger.Info(sqlstr, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate)
 	err = db.QueryRow(sqlstr, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate).Scan(&a.ID)
 	if err != nil {
 		return err
@@ -94,7 +94,7 @@ func (s *PostgresStorage) InsertAccountByFields(db XODB, a *Account) error {
 		`) VALUES (` + placeHolderStr +
 		`) RETURNING ` + retCols
 
-	s.info(sqlstr, params)
+	s.Logger.Info(sqlstr, params)
 	err = db.QueryRow(sqlstr, params...).Scan(retVars...)
 	if err != nil {
 		return err
@@ -116,7 +116,7 @@ func (s *PostgresStorage) UpdateAccount(db XODB, a *Account) error {
 		`) WHERE "id" = $8`
 
 	// run query
-	s.info(sqlstr, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
+	s.Logger.Info(sqlstr, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
 	_, err = db.Exec(sqlstr, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate, a.ID)
 	return err
 }
@@ -152,13 +152,13 @@ func (s *PostgresStorage) UpdateAccountByFields(db XODB, a *Account, fields, ret
 	if len(retCols) > 0 {
 		sqlstr += " RETURNING " + strings.Join(retCols, ", ")
 		sqlstr = fmt.Sprintf(sqlstr, idxvals...)
-		s.info(sqlstr, params)
+		s.Logger.Info(sqlstr, params)
 		if err := db.QueryRow(sqlstr, params...).Scan(retVars...); err != nil {
 			return err
 		}
 	} else {
 		sqlstr = fmt.Sprintf(sqlstr, idxvals...)
-		s.info(sqlstr, params)
+		s.Logger.Info(sqlstr, params)
 		if _, err := db.Exec(sqlstr, params...); err != nil {
 			return err
 		}
@@ -189,7 +189,7 @@ func (s *PostgresStorage) UpsertAccount(db XODB, a *Account) error {
 		`)`
 
 	// run query
-	s.info(sqlstr, a.ID, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate)
+	s.Logger.Info(sqlstr, a.ID, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate)
 	_, err = db.Exec(sqlstr, a.ID, a.Subject, a.Email, a.Name, a.Label, a.CreatedDate, a.ChangedDate, a.DeletedDate)
 	if err != nil {
 		return err
@@ -206,7 +206,7 @@ func (s *PostgresStorage) DeleteAccount(db XODB, a *Account) error {
 	const sqlstr = `DELETE FROM "public"."account" WHERE "id" = $1`
 
 	// run query
-	s.info(sqlstr, a.ID)
+	s.Logger.Info(sqlstr, a.ID)
 	_, err = db.Exec(sqlstr, a.ID)
 	if err != nil {
 		return err
@@ -237,7 +237,7 @@ func (s *PostgresStorage) DeleteAccounts(db XODB, as []*Account) error {
 	var sqlstr = `DELETE FROM "public"."account" WHERE "id" in (` + placeholder + `)`
 
 	// run query
-	s.info(sqlstr, args)
+	s.Logger.Info(sqlstr, args)
 	_, err = db.Exec(sqlstr, args...)
 	if err != nil {
 		return err
@@ -254,7 +254,7 @@ func (s *PostgresStorage) GetMostRecentAccount(db XODB, n int) ([]*Account, erro
 		`FROM "public"."account" ` +
 		`ORDER BY "created_date" DESC LIMIT $1`
 
-	s.info(sqlstr, n)
+	s.Logger.Info(sqlstr, n)
 	q, err := db.Query(sqlstr, n)
 	if err != nil {
 		return nil, err
@@ -285,7 +285,7 @@ func (s *PostgresStorage) GetMostRecentChangedAccount(db XODB, n int) ([]*Accoun
 		`FROM "public"."account" ` +
 		`ORDER BY "changed_date" DESC LIMIT $1`
 
-	s.info(sqlstr, n)
+	s.Logger.Info(sqlstr, n)
 	q, err := db.Query(sqlstr, n)
 	if err != nil {
 		return nil, err
@@ -376,7 +376,7 @@ func (s *PostgresStorage) GetAllAccount(db XODB, queryArgs *AccountQueryArgument
 		desc,
 		offsetPos,
 		limitPos)
-	s.info(sqlstr, params)
+	s.Logger.Info(sqlstr, params)
 
 	q, err := db.Query(sqlstr, params...)
 	if err != nil {
@@ -430,7 +430,7 @@ func (s *PostgresStorage) CountAllAccount(db XODB, queryArgs *AccountQueryArgume
 
 	var err error
 	var sqlstr = fmt.Sprintf(`SELECT count(*) from "public"."account" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
-	s.info(sqlstr)
+	s.Logger.Info(sqlstr)
 
 	var count int
 	err = db.QueryRow(sqlstr, params...).Scan(&count)
@@ -453,7 +453,7 @@ func (s *PostgresStorage) AccountByID(db XODB, id int) (*Account, error) {
 		`WHERE "id" = $1`
 
 	// run query
-	s.info(sqlstr, id)
+	s.Logger.Info(sqlstr, id)
 	a := Account{}
 
 	err = db.QueryRow(sqlstr, id).Scan(&a.ID, &a.Subject, &a.Email, &a.Name, &a.Label, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)
@@ -477,7 +477,7 @@ func (s *PostgresStorage) AccountBySubject(db XODB, subject string) (*Account, e
 		`WHERE "subject" = $1`
 
 	// run query
-	s.info(sqlstr, subject)
+	s.Logger.Info(sqlstr, subject)
 	a := Account{}
 
 	err = db.QueryRow(sqlstr, subject).Scan(&a.ID, &a.Subject, &a.Email, &a.Name, &a.Label, &a.CreatedDate, &a.ChangedDate, &a.DeletedDate)

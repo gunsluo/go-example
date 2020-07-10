@@ -23,7 +23,7 @@ func (s *GodrorStorage) InsertUser(db XODB, u *User) error {
 		`) RETURNING "id" INTO :6`
 
 	// run query
-	s.info(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate)
+	s.Logger.Info(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate)
 	_, err = db.Exec(sqlstr, RealOracleEmptyString(u.Subject), RealOracleNullString(u.Name), u.CreatedDate, u.ChangedDate, u.DeletedDate, sql.Out{Dest: &u.ID})
 	if err != nil {
 		return err
@@ -105,7 +105,7 @@ func (s *GodrorStorage) InsertUserByFields(db XODB, u *User) error {
 		` INTO ` + strings.Join(retFieldsPlaceHolders, ",")
 
 	// run query
-	s.info(sqlstr, params)
+	s.Logger.Info(sqlstr, params)
 	_, err = db.Exec(sqlstr, params...)
 	if err != nil {
 		return err
@@ -129,7 +129,7 @@ func (s *GodrorStorage) UpdateUser(db XODB, u *User) error {
 		` WHERE "id" = :6`
 
 	// run query
-	s.info(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate, u.ID)
+	s.Logger.Info(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate, u.ID)
 	_, err = db.Exec(sqlstr, RealOracleEmptyString(u.Subject), RealOracleNullString(u.Name), u.CreatedDate, u.ChangedDate, u.DeletedDate, u.ID)
 	return err
 }
@@ -172,7 +172,7 @@ func (s *GodrorStorage) UpdateUserByFields(db XODB, u *User, fields, retCols []s
 	oparams = append(oparams, id)
 	idxvals = append(idxvals, len(oparams))
 	var sqlstr = fmt.Sprintf(`UPDATE "AC"."user" SET `+setstr+` WHERE "id" = :%d`, idxvals...)
-	s.info(sqlstr, params, id)
+	s.Logger.Info(sqlstr, params, id)
 	if _, err := db.Exec(sqlstr, oparams...); err != nil {
 		return err
 	}
@@ -214,7 +214,7 @@ func (s *GodrorStorage) UpsertUser(db XODB, u *User) error {
 		`WHEN NOT MATCHED THEN INSERT ("subject", "name", "created_date", "changed_date", "deleted_date") VALUES (s."subject", s."name", s."created_date", s."changed_date", s."deleted_date")`
 
 	// run query
-	s.info(sqlstr, u.ID, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate)
+	s.Logger.Info(sqlstr, u.ID, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate)
 	_, err = db.Exec(sqlstr, u.ID, RealOracleEmptyString(u.Subject), RealOracleNullString(u.Name), u.CreatedDate, u.ChangedDate, u.DeletedDate)
 	if err != nil {
 		return err
@@ -231,7 +231,7 @@ func (s *GodrorStorage) DeleteUser(db XODB, u *User) error {
 	const sqlstr = `DELETE FROM "AC"."user" WHERE "id" = :1`
 
 	// run query
-	s.info(sqlstr, u.ID)
+	s.Logger.Info(sqlstr, u.ID)
 	_, err = db.Exec(sqlstr, u.ID)
 	if err != nil {
 		return err
@@ -262,7 +262,7 @@ func (s *GodrorStorage) DeleteUsers(db XODB, us []*User) error {
 	var sqlstr = `DELETE FROM "AC"."user" WHERE "id" in (` + placeholder + `)`
 
 	// run query
-	s.info(sqlstr, args)
+	s.Logger.Info(sqlstr, args)
 	_, err = db.Exec(sqlstr, args...)
 	if err != nil {
 		return err
@@ -279,7 +279,7 @@ func (s *GodrorStorage) GetMostRecentUser(db XODB, n int) ([]*User, error) {
 		`FROM "AC"."user" ` +
 		`ORDER BY "created_date" DESC FETCH NEXT :1 ROWS ONLY`
 
-	s.info(sqlstr, n)
+	s.Logger.Info(sqlstr, n)
 	q, err := db.Query(sqlstr, n)
 	if err != nil {
 		return nil, err
@@ -314,7 +314,7 @@ func (s *GodrorStorage) GetMostRecentChangedUser(db XODB, n int) ([]*User, error
 		`FROM "AC"."user" ` +
 		`ORDER BY "changed_date" DESC FETCH NEXT :1 ROWS ONLY`
 
-	s.info(sqlstr, n)
+	s.Logger.Info(sqlstr, n)
 	q, err := db.Query(sqlstr, n)
 	if err != nil {
 		return nil, err
@@ -392,7 +392,7 @@ func (s *GodrorStorage) GetAllUser(db XODB, queryArgs *UserQueryArguments) ([]*U
 		desc,
 		offsetPos,
 		limitPos)
-	s.info(sqlstr, params)
+	s.Logger.Info(sqlstr, params)
 
 	q, err := db.Query(sqlstr, params...)
 	if err != nil {
@@ -434,7 +434,7 @@ func (s *GodrorStorage) CountAllUser(db XODB, queryArgs *UserQueryArguments) (in
 
 	var err error
 	var sqlstr = fmt.Sprintf(`SELECT count(*) from "AC"."user" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
-	s.info(sqlstr)
+	s.Logger.Info(sqlstr)
 
 	var count int
 	err = db.QueryRow(sqlstr, params...).Scan(&count)
@@ -481,7 +481,7 @@ func (s *GodrorStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *Use
 		offsetPos,
 		limitPos)
 
-	s.info(sqlstr, params...)
+	s.Logger.Info(sqlstr, params)
 	q, err := db.Query(sqlstr, params...)
 	if err != nil {
 		return nil, err
@@ -525,7 +525,7 @@ func (s *GodrorStorage) CountUsersBySubjectFK(db XODB, subject string, queryArgs
 
 	var err error
 	var sqlstr = fmt.Sprintf(`SELECT count(*) from "AC"."user" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
-	s.info(sqlstr)
+	s.Logger.Info(sqlstr)
 
 	var count int
 	err = db.QueryRow(sqlstr, params...).Scan(&count)
@@ -555,7 +555,7 @@ func (s *GodrorStorage) UserByID(db XODB, id int) (*User, error) {
 		`WHERE "id" = :1`
 
 	// run query
-	s.info(sqlstr, id)
+	s.Logger.Info(sqlstr, id)
 	u := User{}
 
 	err = db.QueryRow(sqlstr, id).Scan(&u.ID, &u.Subject, &u.Name, &u.CreatedDate, &u.ChangedDate, &u.DeletedDate)

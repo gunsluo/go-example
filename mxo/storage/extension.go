@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"reflect"
-
 	"github.com/pkg/errors"
 )
 
@@ -38,20 +36,17 @@ func (s *GodrorStorageExtension) CustomEndpoint(db XODB, args ...interface{}) er
 	return nil
 }
 
-func NewStorageExtension(driver string, c Config) (StorageExtension, error) {
-	var logger XOLogger
-	if c.Logger != nil && !(reflect.ValueOf(c.Logger).Kind() == reflect.Ptr && reflect.ValueOf(c.Logger).IsNil()) {
-		logger = c.Logger
-	}
+func NewStorageExtension(driver string, opts ...Option) (StorageExtension, error) {
+	o := applyOptions(opts...)
 
 	var s StorageExtension
 	switch driver {
 	case "postgres":
-		s = &PostgresStorageExtension{PostgresStorage: PostgresStorage{Logger: logger}}
+		s = &PostgresStorageExtension{PostgresStorage: PostgresStorage{Logger: o.logger}}
 	case "mssql":
-		s = &MssqlStorageExtension{MssqlStorage: MssqlStorage{Logger: logger}}
+		s = &MssqlStorageExtension{MssqlStorage: MssqlStorage{Logger: o.logger}}
 	case "godror":
-		s = &GodrorStorageExtension{GodrorStorage: GodrorStorage{Logger: logger}}
+		s = &GodrorStorageExtension{GodrorStorage: GodrorStorage{Logger: o.logger}}
 	default:
 		return nil, errors.New("driver " + driver + " not support")
 	}

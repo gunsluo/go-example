@@ -21,7 +21,7 @@ func (s *PostgresStorage) InsertUser(db XODB, u *User) error {
 		`) RETURNING "id"`
 
 	// run query
-	s.info(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate)
+	s.Logger.Info(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate)
 	err = db.QueryRow(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate).Scan(&u.ID)
 	if err != nil {
 		return err
@@ -88,7 +88,7 @@ func (s *PostgresStorage) InsertUserByFields(db XODB, u *User) error {
 		`) VALUES (` + placeHolderStr +
 		`) RETURNING ` + retCols
 
-	s.info(sqlstr, params)
+	s.Logger.Info(sqlstr, params)
 	err = db.QueryRow(sqlstr, params...).Scan(retVars...)
 	if err != nil {
 		return err
@@ -110,7 +110,7 @@ func (s *PostgresStorage) UpdateUser(db XODB, u *User) error {
 		`) WHERE "id" = $6`
 
 	// run query
-	s.info(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate, u.ID)
+	s.Logger.Info(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate, u.ID)
 	_, err = db.Exec(sqlstr, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate, u.ID)
 	return err
 }
@@ -146,13 +146,13 @@ func (s *PostgresStorage) UpdateUserByFields(db XODB, u *User, fields, retCols [
 	if len(retCols) > 0 {
 		sqlstr += " RETURNING " + strings.Join(retCols, ", ")
 		sqlstr = fmt.Sprintf(sqlstr, idxvals...)
-		s.info(sqlstr, params)
+		s.Logger.Info(sqlstr, params)
 		if err := db.QueryRow(sqlstr, params...).Scan(retVars...); err != nil {
 			return err
 		}
 	} else {
 		sqlstr = fmt.Sprintf(sqlstr, idxvals...)
-		s.info(sqlstr, params)
+		s.Logger.Info(sqlstr, params)
 		if _, err := db.Exec(sqlstr, params...); err != nil {
 			return err
 		}
@@ -183,7 +183,7 @@ func (s *PostgresStorage) UpsertUser(db XODB, u *User) error {
 		`)`
 
 	// run query
-	s.info(sqlstr, u.ID, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate)
+	s.Logger.Info(sqlstr, u.ID, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate)
 	_, err = db.Exec(sqlstr, u.ID, u.Subject, u.Name, u.CreatedDate, u.ChangedDate, u.DeletedDate)
 	if err != nil {
 		return err
@@ -200,7 +200,7 @@ func (s *PostgresStorage) DeleteUser(db XODB, u *User) error {
 	const sqlstr = `DELETE FROM "public"."user" WHERE "id" = $1`
 
 	// run query
-	s.info(sqlstr, u.ID)
+	s.Logger.Info(sqlstr, u.ID)
 	_, err = db.Exec(sqlstr, u.ID)
 	if err != nil {
 		return err
@@ -231,7 +231,7 @@ func (s *PostgresStorage) DeleteUsers(db XODB, us []*User) error {
 	var sqlstr = `DELETE FROM "public"."user" WHERE "id" in (` + placeholder + `)`
 
 	// run query
-	s.info(sqlstr, args)
+	s.Logger.Info(sqlstr, args)
 	_, err = db.Exec(sqlstr, args...)
 	if err != nil {
 		return err
@@ -248,7 +248,7 @@ func (s *PostgresStorage) GetMostRecentUser(db XODB, n int) ([]*User, error) {
 		`FROM "public"."user" ` +
 		`ORDER BY "created_date" DESC LIMIT $1`
 
-	s.info(sqlstr, n)
+	s.Logger.Info(sqlstr, n)
 	q, err := db.Query(sqlstr, n)
 	if err != nil {
 		return nil, err
@@ -279,7 +279,7 @@ func (s *PostgresStorage) GetMostRecentChangedUser(db XODB, n int) ([]*User, err
 		`FROM "public"."user" ` +
 		`ORDER BY "changed_date" DESC LIMIT $1`
 
-	s.info(sqlstr, n)
+	s.Logger.Info(sqlstr, n)
 	q, err := db.Query(sqlstr, n)
 	if err != nil {
 		return nil, err
@@ -352,7 +352,7 @@ func (s *PostgresStorage) GetAllUser(db XODB, queryArgs *UserQueryArguments) ([]
 		desc,
 		offsetPos,
 		limitPos)
-	s.info(sqlstr, params)
+	s.Logger.Info(sqlstr, params)
 
 	q, err := db.Query(sqlstr, params...)
 	if err != nil {
@@ -390,7 +390,7 @@ func (s *PostgresStorage) CountAllUser(db XODB, queryArgs *UserQueryArguments) (
 
 	var err error
 	var sqlstr = fmt.Sprintf(`SELECT count(*) from "public"."user" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
-	s.info(sqlstr)
+	s.Logger.Info(sqlstr)
 
 	var count int
 	err = db.QueryRow(sqlstr, params...).Scan(&count)
@@ -437,7 +437,7 @@ func (s *PostgresStorage) UsersBySubjectFK(db XODB, subject string, queryArgs *U
 		offsetPos,
 		limitPos)
 
-	s.info(sqlstr, params...)
+	s.Logger.Info(sqlstr, params)
 	q, err := db.Query(sqlstr, params...)
 	if err != nil {
 		return nil, err
@@ -476,7 +476,7 @@ func (s *PostgresStorage) CountUsersBySubjectFK(db XODB, subject string, queryAr
 
 	var err error
 	var sqlstr = fmt.Sprintf(`SELECT count(*) from "public"."user" WHERE %s "deleted_date" IS %s`, placeHolders, dead)
-	s.info(sqlstr)
+	s.Logger.Info(sqlstr)
 
 	var count int
 	err = db.QueryRow(sqlstr, params...).Scan(&count)
@@ -506,7 +506,7 @@ func (s *PostgresStorage) UserByID(db XODB, id int) (*User, error) {
 		`WHERE "id" = $1`
 
 	// run query
-	s.info(sqlstr, id)
+	s.Logger.Info(sqlstr, id)
 	u := User{}
 
 	err = db.QueryRow(sqlstr, id).Scan(&u.ID, &u.Subject, &u.Name, &u.CreatedDate, &u.ChangedDate, &u.DeletedDate)

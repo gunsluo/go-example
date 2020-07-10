@@ -14,11 +14,37 @@ import (
 
 	"github.com/graph-gophers/graphql-go"
 	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
-// Config is storage configuration
-type Config struct {
-	Logger XOLogger
+// Option is optional storage configuration
+type Option func(*options)
+
+// ZapLogger set a zap logger
+func ZapLogger(logger *zap.Logger) Option {
+	return func(o *options) {
+		o.logger = NewZapLogger(logger)
+	}
+}
+
+// LogrusLogger set a logrus logger
+func LogrusLogger(logger *logrus.Logger) Option {
+	return func(o *options) {
+		o.logger = NewLogrusLogger(logger)
+	}
+}
+
+type options struct {
+	logger Logger
+}
+
+func applyOptions(opts ...Option) options {
+	o := options{logger: NewZapLogger(zap.NewNop())}
+	for _, opt := range opts {
+		opt(&o)
+	}
+
+	return o
 }
 
 // XODB is the common interface for database operations that can be used with
@@ -31,23 +57,208 @@ type XODB interface {
 	QueryRow(string, ...interface{}) *sql.Row
 }
 
-// XOLogger provides the log interface used by generated queries.
-type XOLogger interface {
-	logrus.FieldLogger
-	Log(level logrus.Level, args ...interface{})
-	Logf(level logrus.Level, format string, args ...interface{})
+// Logger provides the log interface used by generated queries.
+type Logger interface {
+	Debug(args ...interface{})
+
+	Info(args ...interface{})
+
+	Warn(args ...interface{})
+
+	Error(args ...interface{})
+
+	Fatal(args ...interface{})
+
+	Debugf(format string, args ...interface{})
+
+	Infof(format string, args ...interface{})
+
+	Warnf(format string, args ...interface{})
+
+	Errorf(format string, args ...interface{})
+
+	Fatalf(format string, args ...interface{})
+
+	WithFields(keyValues Fields) Logger
 }
 
-func xoLog(logger XOLogger, level logrus.Level, args ...interface{}) {
-	if logger != nil {
-		logger.Log(level, args...)
+// Fields Type to pass when we want to call WithFields for structured logging
+type Fields map[string]interface{}
+
+type zapLogger struct {
+	logger *zap.SugaredLogger
+}
+
+// NewZapLogger create zap logger
+func NewZapLogger(logger *zap.Logger) Logger {
+	return &zapLogger{
+		logger: logger.Sugar(),
 	}
 }
 
-func xoLogf(logger XOLogger, level logrus.Level, format string, args ...interface{}) {
-	if logger != nil {
-		logger.Logf(level, format, args...)
+func (l *zapLogger) Debug(args ...interface{}) {
+	l.logger.Debug(args...)
+}
+
+func (l *zapLogger) Info(args ...interface{}) {
+	l.logger.Info(args...)
+}
+
+func (l *zapLogger) Warn(args ...interface{}) {
+	l.logger.Warn(args...)
+}
+
+func (l *zapLogger) Error(args ...interface{}) {
+	l.logger.Error(args...)
+}
+
+func (l *zapLogger) Fatal(args ...interface{}) {
+	l.logger.Fatal(args...)
+}
+
+func (l *zapLogger) Debugf(format string, args ...interface{}) {
+	l.logger.Debugf(format, args...)
+}
+
+func (l *zapLogger) Infof(format string, args ...interface{}) {
+	l.logger.Infof(format, args...)
+}
+
+func (l *zapLogger) Warnf(format string, args ...interface{}) {
+	l.logger.Warnf(format, args...)
+}
+
+func (l *zapLogger) Errorf(format string, args ...interface{}) {
+	l.logger.Errorf(format, args...)
+}
+
+func (l *zapLogger) Fatalf(format string, args ...interface{}) {
+	l.logger.Fatalf(format, args...)
+}
+
+func (l *zapLogger) WithFields(fields Fields) Logger {
+	var f = make([]interface{}, 0)
+	for k, v := range fields {
+		f = append(f, k)
+		f = append(f, v)
 	}
+	newLogger := l.logger.With(f...)
+	return &zapLogger{newLogger}
+}
+
+type logrusLogger struct {
+	logger *logrus.Logger
+}
+
+// NewLogrusLogger create logrus logger
+func NewLogrusLogger(logger *logrus.Logger) Logger {
+	return &logrusLogger{
+		logger: logger,
+	}
+}
+
+func (l *logrusLogger) Debug(args ...interface{}) {
+	l.logger.Debug(args...)
+}
+
+func (l *logrusLogger) Info(args ...interface{}) {
+	l.logger.Info(args...)
+}
+
+func (l *logrusLogger) Warn(args ...interface{}) {
+	l.logger.Warn(args...)
+}
+
+func (l *logrusLogger) Error(args ...interface{}) {
+	l.logger.Error(args...)
+}
+
+func (l *logrusLogger) Fatal(args ...interface{}) {
+	l.logger.Fatal(args...)
+}
+
+func (l *logrusLogger) Debugf(format string, args ...interface{}) {
+	l.logger.Debugf(format, args...)
+}
+
+func (l *logrusLogger) Infof(format string, args ...interface{}) {
+	l.logger.Infof(format, args...)
+}
+
+func (l *logrusLogger) Warnf(format string, args ...interface{}) {
+	l.logger.Warnf(format, args...)
+}
+
+func (l *logrusLogger) Errorf(format string, args ...interface{}) {
+	l.logger.Errorf(format, args...)
+}
+
+func (l *logrusLogger) Fatalf(format string, args ...interface{}) {
+	l.logger.Fatalf(format, args...)
+}
+
+func (l *logrusLogger) WithFields(fields Fields) Logger {
+	return &logrusLogEntry{
+		entry: l.logger.WithFields(convertToLogrusFields(fields)),
+	}
+}
+
+type logrusLogEntry struct {
+	entry *logrus.Entry
+}
+
+func (l *logrusLogEntry) Debug(args ...interface{}) {
+	l.entry.Debug(args...)
+}
+
+func (l *logrusLogEntry) Info(args ...interface{}) {
+	l.entry.Info(args...)
+}
+
+func (l *logrusLogEntry) Warn(args ...interface{}) {
+	l.entry.Warn(args...)
+}
+
+func (l *logrusLogEntry) Error(args ...interface{}) {
+	l.entry.Error(args...)
+}
+
+func (l *logrusLogEntry) Fatal(args ...interface{}) {
+	l.entry.Fatal(args...)
+}
+
+func (l *logrusLogEntry) Debugf(format string, args ...interface{}) {
+	l.entry.Debugf(format, args...)
+}
+
+func (l *logrusLogEntry) Infof(format string, args ...interface{}) {
+	l.entry.Infof(format, args...)
+}
+
+func (l *logrusLogEntry) Warnf(format string, args ...interface{}) {
+	l.entry.Warnf(format, args...)
+}
+
+func (l *logrusLogEntry) Errorf(format string, args ...interface{}) {
+	l.entry.Errorf(format, args...)
+}
+
+func (l *logrusLogEntry) Fatalf(format string, args ...interface{}) {
+	l.entry.Fatalf(format, args...)
+}
+
+func (l *logrusLogEntry) WithFields(fields Fields) Logger {
+	return &logrusLogEntry{
+		entry: l.entry.WithFields(convertToLogrusFields(fields)),
+	}
+}
+
+func convertToLogrusFields(fields Fields) logrus.Fields {
+	logrusFields := logrus.Fields{}
+	for index, val := range fields {
+		logrusFields[index] = val
+	}
+	return logrusFields
 }
 
 // ScannerValuer is the common interface for types that implement both the

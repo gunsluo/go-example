@@ -18,8 +18,8 @@ import (
 	"github.com/gunsluo/go-example/mxo/storage"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"github.com/xo/dburl"
+	"go.uber.org/zap"
 
 	_ "github.com/denisenkom/go-mssqldb"
 	_ "github.com/godror/godror"
@@ -92,8 +92,8 @@ func testStoage(driver, dsn string) {
 		panic(err)
 	}
 
-	s, err := storage.New(driver, storage.Config{Logger: logrus.New()})
-	//s, err := storage.NewStorageExtension(driver, storage.Config{Logger: logrus.New()})
+	s, err := storage.New(driver, storage.ZapLogger(zap.NewExample()))
+	//s, err := storage.NewStorageExtension(driver, storage.ZapLogger(zap.NewExample()))
 	if err != nil {
 		panic(err)
 	}
@@ -279,10 +279,10 @@ type gqlServer struct {
 }
 
 // NewGQLServer is graphql server
-func NewGQLServer(address string, logger *logrus.Logger, db *sqlx.DB, s storage.Storager) (*gqlServer, error) {
+func NewGQLServer(address string, logger *zap.Logger, db *sqlx.DB, s storage.Storager) (*gqlServer, error) {
 
 	// graphql API
-	rootResolver := storage.NewRootResolver(&storage.ResolverConfig{Logger: logger, DB: db, S: s, Verifier: &Verifier{}})
+	rootResolver := storage.NewRootResolver(&storage.ResolverConfig{Logger: storage.NewZapLogger(logger), DB: db, S: s, Verifier: &Verifier{}})
 	schemaString := rootResolver.BuildSchemaString("", "", "")
 	fmt.Println("--->", schemaString)
 
@@ -333,15 +333,14 @@ func (s *gqlServer) Run() error {
 }
 
 func server(driver, dsn string) {
-	var logger *logrus.Logger
-	logger = logrus.New()
+	logger := zap.NewExample()
 
 	db, err := sqlx.Open(driver, dsn)
 	if err != nil {
 		panic(err)
 	}
 
-	s, err := storage.New(driver, storage.Config{Logger: logger})
+	s, err := storage.New(driver, storage.ZapLogger(logger))
 	if err != nil {
 		panic(err)
 	}
