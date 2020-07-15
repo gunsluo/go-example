@@ -9,9 +9,9 @@ require (
 	github.com/luna-duclos/instrumentedsql v1.1.3
 	github.com/spf13/cobra v1.0.0
 	github.com/xo/dburl v0.0.0-20200124232849-e9ec94f52bc3
-	go.opentelemetry.io/collector v0.5.0
-	go.opentelemetry.io/otel v0.7.0
-	go.opentelemetry.io/otel/exporters/otlp v0.7.0
+	go.opentelemetry.io/collector v0.6.0
+	go.opentelemetry.io/otel v0.8.0
+	go.opentelemetry.io/otel/exporters/otlp v0.8.0
 	go.uber.org/zap v1.15.0
 	google.golang.org/grpc v1.30.0
 )
