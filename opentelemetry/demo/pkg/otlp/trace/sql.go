@@ -30,16 +30,28 @@ func OpenDB(tracer trace.Tracer, dsn string) (*sqlx.DB, error) {
 		return sqlx.Open(u.Driver, u.DSN)
 	}
 
-	ductimes++
-	driver := fmt.Sprintf("instrumented-postgres-%d", ductimes)
+	driver := uiqDriver()
 	sql.Register(driver,
 		instrumentedsql.WrapDriver(&pq.Driver{},
-			instrumentedsql.WithTracer(&dbTracer{tracer: tracer})))
+			instrumentedsql.WithTracer(&dbTracer{tracer: tracer}),
+			instrumentedsql.WithOpsExcluded(
+				instrumentedsql.OpSQLConnectorConnect,
+				instrumentedsql.OpSQLRowsNext,
+			)))
 
-	return sqlx.Open(driver, u.DSN)
+	db, err := sql.Open(driver, u.DSN)
+	if err != nil {
+		return nil, err
+	}
+	return sqlx.NewDb(db, u.Driver), nil
 }
 
-var ductimes int
+var uiqflag int
+
+func uiqDriver() string {
+	uiqflag++
+	return fmt.Sprintf("inst-pg-%d", uiqflag)
+}
 
 type dbTracer struct {
 	tracer trace.Tracer

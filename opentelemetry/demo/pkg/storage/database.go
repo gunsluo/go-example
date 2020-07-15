@@ -26,7 +26,7 @@ func NewDatabase(logger *zap.Logger, db *sqlx.DB) (*Database, error) {
 }
 
 func (d *Database) GetAccount(ctx context.Context, id string) (*internal.Account, error) {
-	sqlstr := "SELECT * FROM account WHERE id=$1"
+	sqlstr := "SELECT * FROM account WHERE id=?"
 
 	out := &internal.Account{}
 	err := d.db.QueryRowxContext(ctx, d.db.Rebind(sqlstr), id).Scan(&out.Id, &out.Name, &out.Email)
@@ -38,7 +38,7 @@ func (d *Database) GetAccount(ctx context.Context, id string) (*internal.Account
 }
 
 func (d *Database) GetIdentity(ctx context.Context, id string) (*identitypb.Identity, error) {
-	sqlstr := "SELECT * FROM identity WHERE id=$1"
+	sqlstr := "SELECT * FROM identity WHERE id=?"
 
 	out := &identitypb.Identity{}
 	err := d.db.QueryRowxContext(ctx, d.db.Rebind(sqlstr), id).Scan(&out.Id, &out.Name, &out.CertId)
