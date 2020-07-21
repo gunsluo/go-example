@@ -12,7 +12,7 @@ services:
 
   # Collector
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.5.0
+    image: otel/opentelemetry-collector-contrib:0.6.0
     container_name: otel-collector
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
@@ -28,7 +28,7 @@ services:
 
   # Agent
   otel-agent:
-    image: otel/opentelemetry-collector-contrib:0.5.0
+    image: otel/opentelemetry-collector-contrib:0.6.0
     container_name: otel-agent
     command: ["--config=/etc/otel-agent-config.yaml"]
     volumes:
@@ -41,19 +41,6 @@ services:
       # - "14268"       # Jaeger receiver
     depends_on:
       - otel-collector
-
-  postgres:
-    image: postgres:11.1-alpine
-    container_name: postgres 
-    restart: on-failure
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      PGDATA: /var/lib/postgresql/data
-    ports:
-      - 5432:5432
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
 
   # Logging
   loki:
@@ -100,6 +87,3 @@ services:
     ports:
       - "8080:8080"
 
-
-volumes:
-  postgres-data:
