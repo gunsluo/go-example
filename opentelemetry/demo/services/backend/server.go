@@ -9,6 +9,7 @@ import (
 	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/client"
 	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/otlp/trace"
 	identitypb "github.com/gunsluo/go-example/opentelemetry/demo/pkg/proto/identity"
+	"github.com/streadway/amqp"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -21,14 +22,17 @@ type Server struct {
 	accountClient  *client.AccountClient
 	identityClient identitypb.IdmClient
 	traceConfig    *trace.Configuration
+	rabbitmqConn   *amqp.Connection
+	rabbitmqCh     *amqp.Channel
 }
 
 // ConfigOptions used to make sure service clients
 // can find correct server ports
 type ConfigOptions struct {
-	Address    string
-	AccountURL string
-	IdmAddress string
+	Address     string
+	AccountURL  string
+	IdmAddress  string
+	RecordMQUrl string
 }
 
 // NewServer creates a new frontend.Server
@@ -69,6 +73,20 @@ func NewServer(options ConfigOptions, logger *zap.Logger) (*Server, error) {
 		logger,
 		&http.Client{Transport: transport},
 		options.AccountURL)
+
+	// rabbitmq
+	rabbitmqConn, err := amqp.Dial(options.RecordMQUrl)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to rabbitmq, %s: %w", options.RecordMQUrl, err)
+	}
+	s.rabbitmqConn = rabbitmqConn
+	s.logger.With(zap.String("mq-url", options.RecordMQUrl)).Info("success to connect to rabbitmq")
+
+	rabbitmqCh, err := s.rabbitmqConn.Channel()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create to channel, %w", err)
+	}
+	s.rabbitmqCh = rabbitmqCh
 
 	return s, nil
 }
@@ -129,6 +147,20 @@ func (s *Server) profile(w http.ResponseWriter, r *http.Request) {
 		CertId: reply.Identity.CertId,
 	}
 	data, err := json.Marshal(u)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = s.rabbitmqCh.Publish(
+		"",            // exchange
+		"test-record", // name
+		false,         // mandatory
+		false,         // immediate
+		amqp.Publishing{
+			ContentType: "text/plain",
+			Body:        data,
+		})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
