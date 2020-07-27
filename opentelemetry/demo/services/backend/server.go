@@ -10,6 +10,7 @@ import (
 	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/otlp/trace"
 	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/otlp/trace/amqptrace"
 	identitypb "github.com/gunsluo/go-example/opentelemetry/demo/pkg/proto/identity"
+	"github.com/rs/cors"
 	"github.com/streadway/amqp"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -18,6 +19,7 @@ import (
 // Server implements jaeger-demo-frontend service
 type Server struct {
 	address        string
+	corsHosts      []string
 	idmAddress     string
 	logger         *zap.Logger
 	accountClient  *client.AccountClient
@@ -31,6 +33,7 @@ type Server struct {
 // can find correct server ports
 type ConfigOptions struct {
 	Address     string
+	CorsHosts   []string
 	AccountURL  string
 	IdmAddress  string
 	RecordMQUrl string
@@ -43,6 +46,7 @@ func NewServer(options ConfigOptions, logger *zap.Logger) (*Server, error) {
 	s := &Server{
 		address:    options.Address,
 		idmAddress: options.IdmAddress,
+		corsHosts:  options.CorsHosts,
 		logger:     logger,
 	}
 
@@ -108,8 +112,21 @@ func (s *Server) createServeMux() http.Handler {
 		s.logger.With(zap.Error(err)).Warn("failed to create trace http middleware")
 	}
 
+	withCORS := func(h http.HandlerFunc) http.HandlerFunc {
+		if len(s.corsHosts) > 0 {
+			c := cors.New(cors.Options{
+				AllowCredentials: true,
+				AllowedOrigins:   s.corsHosts,
+				AllowedHeaders:   []string{"*"},
+				AllowedMethods:   []string{"HEAD", "GET", "POST", "PUT", "PATCH", "DELETE"},
+			})
+			h = c.Handler(h).ServeHTTP
+		}
+		return h
+	}
+
 	mux := http.NewServeMux()
-	mux.HandleFunc("/profile", traceMiddleware.Handle(s.profile))
+	mux.HandleFunc("/profile", traceMiddleware.Handle(withCORS(s.profile)))
 	return mux
 }
 

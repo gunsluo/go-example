@@ -7,6 +7,7 @@ require (
 	github.com/jmoiron/sqlx v1.2.1-0.20190826204134-d7d95172beb5
 	github.com/lib/pq v1.7.1
 	github.com/luna-duclos/instrumentedsql v1.1.3
+	github.com/rs/cors v1.7.0
 	github.com/spf13/cobra v1.0.0
 	github.com/streadway/amqp v0.0.0-20190827072141-edfb9018d271
 	github.com/xo/dburl v0.0.0-20200124232849-e9ec94f52bc3
