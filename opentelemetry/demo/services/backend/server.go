@@ -8,6 +8,7 @@ import (
 
 	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/client"
 	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/otlp/trace"
+	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/otlp/trace/amqptrace"
 	identitypb "github.com/gunsluo/go-example/opentelemetry/demo/pkg/proto/identity"
 	"github.com/streadway/amqp"
 	"go.uber.org/zap"
@@ -23,7 +24,7 @@ type Server struct {
 	identityClient identitypb.IdmClient
 	traceConfig    *trace.Configuration
 	rabbitmqConn   *amqp.Connection
-	rabbitmqCh     *amqp.Channel
+	rabbitmqCh     *amqptrace.Channel
 }
 
 // ConfigOptions used to make sure service clients
@@ -86,7 +87,8 @@ func NewServer(options ConfigOptions, logger *zap.Logger) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create to channel, %w", err)
 	}
-	s.rabbitmqCh = rabbitmqCh
+	s.rabbitmqCh = amqptrace.NewChannel(tracer, rabbitmqCh,
+		amqptrace.ChannelComopenentName("Record Rabbitmq Publisher"))
 
 	return s, nil
 }
@@ -152,11 +154,7 @@ func (s *Server) profile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.rabbitmqCh.Publish(
-		"",            // exchange
-		"test-record", // name
-		false,         // mandatory
-		false,         // immediate
+	err = s.rabbitmqCh.Publish(ctx, "", "test-record", false, false,
 		amqp.Publishing{
 			ContentType: "text/plain",
 			Body:        data,
