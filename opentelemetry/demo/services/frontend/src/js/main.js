@@ -56,13 +56,15 @@ const prepareClickEvent = () => {
     const span = tracer.startSpan('query:' + pUrl, {
       parent: tracer.getCurrentSpan(),
       kind: SpanKind.CLIENT,
-      // attributes: {
-      //   'service.name': 'frontend'
-      // },
+      attributes: {
+        'http.method': 'POST',
+        'http.scheme': 'http',
+      },
     });
 
     getData(span.context(), pUrl, 'POST').then((data) => {
       div.innerHTML = data;
+      span.setAttribute('http.status_code', 200)
       span.end();
     }, () => {
       span.end();

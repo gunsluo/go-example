@@ -77,7 +77,7 @@ func defaultOpNameFunc(r *http.Request) string {
 
 func (m *HttpMiddleware) Handle(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !m.enable {
+		if !m.enable || r.Method == http.MethodOptions {
 			h(w, r)
 			return
 		}

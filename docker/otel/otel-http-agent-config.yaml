@@ -1,0 +1,33 @@
+receivers:
+  # Make sure to add the otlp receiver. 
+  # This will open up the receiver on port 55680
+  otlp:
+    protocols:
+      http:
+        endpoint: "0.0.0.0:55678"
+
+processors:
+  batch:
+  queued_retry:
+
+extensions:
+  health_check: {}
+
+exporters:
+  otlp:
+    endpoint: "otel-collector:55679"
+    insecure: true
+  logging:
+    loglevel: debug
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch, queued_retry]
+      exporters: [logging, otlp]
+
+    metrics:
+      receivers: [otlp]
+      exporters: [otlp]
