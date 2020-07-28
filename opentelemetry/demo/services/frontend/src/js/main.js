@@ -51,18 +51,19 @@ const prepareClickEvent = () => {
   const pUrl = 'http://localhost:8080/profile?id=123';
   const element = document.getElementById('btn');
   const div = document.getElementById('show');
+  const method = 'POST'
 
   const onClick = () => {
-    const span = tracer.startSpan('query:' + pUrl, {
+    const span = tracer.startSpan(method + ' ' + pUrl, {
       parent: tracer.getCurrentSpan(),
       kind: SpanKind.CLIENT,
       attributes: {
-        'http.method': 'POST',
+        'http.method': method,
         'http.scheme': 'http',
       },
     });
 
-    getData(span.context(), pUrl, 'POST').then((data) => {
+    getData(span.context(), pUrl, method).then((data) => {
       div.innerHTML = data;
       span.setAttribute('http.status_code', 200)
       span.end();
