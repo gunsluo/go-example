@@ -68,6 +68,21 @@ services:
     networks:
       target:
 
+  minio:
+    image: minio/minio
+    container_name: minio
+    restart: on-failure
+    volumes:
+     - minio-data:/data
+    ports:
+      - "9000:9000"
+    environment:
+      MINIO_ACCESS_KEY: minio_access
+      MINIO_SECRET_KEY: minio_secret
+    command: server /data
+    networks:
+      target:
+
   consul:
     image: consul
     container_name: consul
@@ -133,6 +148,8 @@ volumes:
     name: mongodb-cfg-data
   consul-data:
     name: consul-data
+  minio-data:
+    name: minio-data
 
 networks:
   target:

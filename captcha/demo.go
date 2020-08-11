@@ -41,7 +41,7 @@ func generateCaptchaHandler(w http.ResponseWriter, r *http.Request) {
 	case "audio":
 		driver = param.DriverAudio
 	case "string":
-		param.DriverString = base64Captcha.NewDriverString(100, 240, 0, 3, 8, "1234567890qwertyuioplkjhgfdsazxcvbnm", nil, nil)
+		param.DriverString = base64Captcha.NewDriverString(100, 240, 0, 3, 6, "1234567890qwertyuioplkjhgfdsazxcvbnm", nil, nil)
 		driver = param.DriverString.ConvertFonts()
 	case "math":
 		param.DriverMath = base64Captcha.NewDriverMath(60, 240, 0, 3, nil, nil)
@@ -74,6 +74,7 @@ func captchaVerifyHandle(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	//verify the captcha
 	body := map[string]interface{}{"code": 0, "msg": "failed"}
+	fmt.Println("--->", param.Id, param.VerifyValue)
 	if store.Verify(param.Id, param.VerifyValue, true) {
 		body = map[string]interface{}{"code": 1, "msg": "ok"}
 	}

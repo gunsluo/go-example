@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
+	"time"
 
 	"github.com/valyala/quicktemplate"
 )
@@ -19,22 +19,24 @@ type EmailPlaceholder struct {
 
 func main() {
 	str := "we are {%s CompanyName %} {%s CompanyLocation %} {%s JobSeekerName %} {% JobTitle %} {%s JobDescription %} {%s InterviewDate %} {%s InterviewLocation %}"
-	/*
-		p := EmailPlaceholder{
-			CompanyName:       "demo",
-			CompanyLocation:   "chengdu",
-			JobSeekerName:     "luoji",
-			JobTitle:          "",
-			JobDescription:    "none",
-			InterviewDate:     time.Now().Format("2006-01-02 15:04:05"),
-			InterviewLocation: "chengdu",
-		}
-	*/
+	p := EmailPlaceholder{
+		CompanyName:       "demo",
+		CompanyLocation:   "chengdu",
+		JobSeekerName:     "luoji",
+		JobTitle:          "",
+		JobDescription:    "none",
+		InterviewDate:     time.Now().Format("2006-01-02 15:04:05"),
+		InterviewLocation: "chengdu",
+	}
 
-	var buf bytes.Buffer
-	writer := quicktemplate.AcquireWriter(&buf)
+	buffer := quicktemplate.AcquireByteBuffer()
+	writer := quicktemplate.AcquireWriter(buffer)
+
+	//var buf bytes.Buffer
+	//writer := quicktemplate.AcquireWriter(&buf)
 	//writer.N().S(str)
-	writer.E().S(str)
+	writer.E().S(p.CompanyName)
+	writer.N().S(str)
 	quicktemplate.ReleaseWriter(writer)
-	fmt.Println("result:", buf.String())
+	fmt.Println("result:", string(buffer.B))
 }
