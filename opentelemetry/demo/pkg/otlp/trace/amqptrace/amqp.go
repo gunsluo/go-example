@@ -5,9 +5,9 @@ import (
 
 	"github.com/streadway/amqp"
 	"go.opentelemetry.io/otel/api/correlation"
-	"go.opentelemetry.io/otel/api/kv"
 	"go.opentelemetry.io/otel/api/propagation"
 	"go.opentelemetry.io/otel/api/trace"
+	"go.opentelemetry.io/otel/label"
 )
 
 // Inject injects correlation context and span context into the gRPC
@@ -23,15 +23,15 @@ func Inject(ctx context.Context, headers amqp.Table, opts ...Option) {
 // Extract returns the correlation context and span context that
 // another service encoded in the rabbitmq Table object with Inject.
 // This function is meant to be used on incoming requests.
-func Extract(ctx context.Context, headers amqp.Table, opts ...Option) ([]kv.KeyValue, trace.SpanContext) {
+func Extract(ctx context.Context, headers amqp.Table, opts ...Option) ([]label.KeyValue, trace.SpanContext) {
 	c := newConfig(opts)
 	ctx = propagation.ExtractHTTP(ctx, c.propagators, &headerSupplier{
 		headers: headers,
 	})
 
 	spanContext := trace.RemoteSpanContextFromContext(ctx)
-	var correlationCtxKVs []kv.KeyValue
-	correlation.MapFromContext(ctx).Foreach(func(kv kv.KeyValue) bool {
+	var correlationCtxKVs []label.KeyValue
+	correlation.MapFromContext(ctx).Foreach(func(kv label.KeyValue) bool {
 		correlationCtxKVs = append(correlationCtxKVs, kv)
 		return true
 	})

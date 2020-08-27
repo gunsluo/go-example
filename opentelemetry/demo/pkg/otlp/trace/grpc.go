@@ -7,10 +7,11 @@ import (
 
 	"go.opentelemetry.io/otel/api/correlation"
 	"go.opentelemetry.io/otel/api/global"
-	"go.opentelemetry.io/otel/api/kv"
 	"go.opentelemetry.io/otel/api/propagation"
-	"go.opentelemetry.io/otel/api/standard"
 	"go.opentelemetry.io/otel/api/trace"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/label"
+	"go.opentelemetry.io/otel/semconv"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
@@ -44,17 +45,17 @@ func UnaryServerInterceptor(tracer trace.Tracer, componentName string) grpc.Unar
 			trace.ContextWithRemoteSpanContext(ctx, spanCtx),
 			info.FullMethod,
 			trace.WithSpanKind(trace.SpanKindServer),
-			trace.WithAttributes(kv.Key("component").String(componentName)),
+			trace.WithAttributes(label.Key("component").String(componentName)),
 			trace.WithAttributes(peerInfoFromContext(ctx)...),
-			trace.WithAttributes(standard.RPCServiceKey.String(serviceFromFullMethod(info.FullMethod))),
+			trace.WithAttributes(semconv.RPCServiceKey.String(serviceFromFullMethod(info.FullMethod))),
 		)
 		defer span.End()
 
 		//messageReceived.Event(ctx, 1, req)
 		resp, err := handler(ctx, req)
 		if err != nil {
-			s, _ := status.FromError(err)
-			span.SetStatus(s.Code(), s.Message())
+			s := status.Convert(err)
+			span.SetStatus(codes.Code(s.Code()), s.Message())
 			//messageSent.Event(ctx, 1, s.Proto())
 		} else {
 			//messageSent.Event(ctx, 1, resp)
@@ -88,9 +89,9 @@ func UnaryClientInterceptor(tracer trace.Tracer, componentName string) grpc.Unar
 		ctx, span = tracer.Start(
 			ctx, method+" - GRPC Client",
 			trace.WithSpanKind(trace.SpanKindClient),
-			trace.WithAttributes(kv.Key("component").String(componentName)),
+			trace.WithAttributes(label.Key("component").String(componentName)),
 			trace.WithAttributes(peerInfoFromTarget(cc.Target())...),
-			trace.WithAttributes(standard.RPCServiceKey.String(serviceFromFullMethod(method))),
+			trace.WithAttributes(semconv.RPCServiceKey.String(serviceFromFullMethod(method))),
 		)
 		defer span.End()
 
@@ -101,8 +102,8 @@ func UnaryClientInterceptor(tracer trace.Tracer, componentName string) grpc.Unar
 		err := invoker(ctx, method, req, reply, cc, opts...)
 		//messageReceived.Event(ctx, 1, reply)
 		if err != nil {
-			s, _ := status.FromError(err)
-			span.SetStatus(s.Code(), s.Message())
+			s := status.Convert(err)
+			span.SetStatus(codes.Code(s.Code()), s.Message())
 		}
 
 		return err
@@ -122,15 +123,15 @@ func Inject(ctx context.Context, metadata *metadata.MD, opts ...GRPCOption) {
 // Extract returns the correlation context and span context that
 // another service encoded in the gRPC metadata object with Inject.
 // This function is meant to be used on incoming requests.
-func Extract(ctx context.Context, metadata *metadata.MD, opts ...GRPCOption) ([]kv.KeyValue, trace.SpanContext) {
+func Extract(ctx context.Context, metadata *metadata.MD, opts ...GRPCOption) ([]label.KeyValue, trace.SpanContext) {
 	c := newConfig(opts)
 	ctx = propagation.ExtractHTTP(ctx, c.propagators, &metadataSupplier{
 		metadata: metadata,
 	})
 
 	spanContext := trace.RemoteSpanContextFromContext(ctx)
-	var correlationCtxKVs []kv.KeyValue
-	correlation.MapFromContext(ctx).Foreach(func(kv kv.KeyValue) bool {
+	var correlationCtxKVs []label.KeyValue
+	correlation.MapFromContext(ctx).Foreach(func(kv label.KeyValue) bool {
 		correlationCtxKVs = append(correlationCtxKVs, kv)
 		return true
 	})
@@ -138,28 +139,28 @@ func Extract(ctx context.Context, metadata *metadata.MD, opts ...GRPCOption) ([]
 	return correlationCtxKVs, spanContext
 }
 
-func peerInfoFromTarget(target string) []kv.KeyValue {
+func peerInfoFromTarget(target string) []label.KeyValue {
 	host, port, err := net.SplitHostPort(target)
 
 	if err != nil {
-		return []kv.KeyValue{}
+		return []label.KeyValue{}
 	}
 
 	if host == "" {
 		host = "127.0.0.1"
 	}
 
-	return []kv.KeyValue{
-		standard.NetPeerIPKey.String(host),
-		standard.NetPeerPortKey.String(port),
+	return []label.KeyValue{
+		semconv.NetPeerIPKey.String(host),
+		semconv.NetPeerPortKey.String(port),
 	}
 }
 
-func peerInfoFromContext(ctx context.Context) []kv.KeyValue {
+func peerInfoFromContext(ctx context.Context) []label.KeyValue {
 	p, ok := peer.FromContext(ctx)
 
 	if !ok {
-		return []kv.KeyValue{}
+		return []label.KeyValue{}
 	}
 
 	return peerInfoFromTarget(p.Addr.String())

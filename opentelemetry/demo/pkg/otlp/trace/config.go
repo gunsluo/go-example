@@ -9,9 +9,9 @@ import (
 	sotlp "github.com/gunsluo/go-example/opentelemetry/demo/pkg/otlp"
 	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/collector/translator/conventions"
-	"go.opentelemetry.io/otel/api/kv"
 	"go.opentelemetry.io/otel/api/trace"
 	"go.opentelemetry.io/otel/exporters/otlp"
+	"go.opentelemetry.io/otel/label"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.uber.org/zap"
@@ -115,15 +115,15 @@ func (c *Configuration) NewTracer(options ...Option) (trace.Tracer, error) {
 	}
 	// exporter.Stop()
 
-	tags := []kv.KeyValue{
+	tags := []label.KeyValue{
 		// the service name used to display traces
-		kv.Key(conventions.AttributeServiceName).String(c.ServiceName),
+		label.Key(conventions.AttributeServiceName).String(c.ServiceName),
 	}
 	if hostname, err := os.Hostname(); err == nil {
-		tags = append(tags, kv.Key(conventions.AttributeHostName).String(hostname))
+		tags = append(tags, label.Key(conventions.AttributeHostName).String(hostname))
 	}
 	if ip, err := HostIP(); err == nil {
-		tags = append(tags, kv.Key(conventions.AttributeNetHostIP).String(ip.String()))
+		tags = append(tags, label.Key(conventions.AttributeNetHostIP).String(ip.String()))
 	}
 
 	tp, err := sdktrace.NewProvider(

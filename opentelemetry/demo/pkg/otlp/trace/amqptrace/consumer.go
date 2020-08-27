@@ -5,8 +5,8 @@ import (
 
 	"github.com/streadway/amqp"
 	"go.opentelemetry.io/otel/api/correlation"
-	"go.opentelemetry.io/otel/api/kv"
 	"go.opentelemetry.io/otel/api/trace"
+	"go.opentelemetry.io/otel/label"
 )
 
 // Consumer is rabbit consumer for trace
@@ -66,10 +66,10 @@ func (c *Consumer) accept(msg amqp.Delivery) {
 		msg.Exchange+"."+msg.RoutingKey,
 		trace.WithSpanKind(trace.SpanKindServer),
 		trace.WithAttributes(
-			kv.String("exchange", msg.Exchange),
-			kv.String("routekey", msg.RoutingKey),
-			kv.String("content-type", msg.ContentType),
-			kv.Key("component").String(c.opts.componentName),
+			label.String("exchange", msg.Exchange),
+			label.String("routekey", msg.RoutingKey),
+			label.String("content-type", msg.ContentType),
+			label.Key("component").String(c.opts.componentName),
 		),
 	)
 	defer span.End()

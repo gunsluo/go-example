@@ -10,6 +10,7 @@ import (
 	"go.opentelemetry.io/otel/api/metric"
 	"go.opentelemetry.io/otel/exporters/otlp"
 	"go.opentelemetry.io/otel/sdk/metric/controller/push"
+	"go.opentelemetry.io/otel/sdk/metric/processor/basic"
 	"go.opentelemetry.io/otel/sdk/metric/selector/simple"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -102,7 +103,10 @@ func (c *Configuration) NewMeter(name string, options ...Option) (metric.Meter, 
 
 	if meterPusher == nil {
 		meterPusher = push.New(
-			simple.NewWithExactDistribution(),
+			basic.New(
+				simple.NewWithExactDistribution(),
+				exporter,
+			),
 			exporter,
 			push.WithPeriod(30*time.Second),
 			//push.WithTimeout(10*time.Second),

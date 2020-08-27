@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/streadway/amqp"
-	"go.opentelemetry.io/otel/api/kv"
 	"go.opentelemetry.io/otel/api/trace"
+	"go.opentelemetry.io/otel/label"
 )
 
 // Channel is trace channel
@@ -53,10 +53,10 @@ func (ch *Channel) Publish(ctx context.Context, exchange, key string, mandatory,
 		exchange+"."+key+" - Rabbitmq Publisher",
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(
-			kv.String("exchange", exchange),
-			kv.String("routekey", key),
-			kv.String("content-type", msg.ContentType),
-			kv.Key("component").String(ch.opts.componentName),
+			label.String("exchange", exchange),
+			label.String("routekey", key),
+			label.String("content-type", msg.ContentType),
+			label.Key("component").String(ch.opts.componentName),
 		),
 	)
 	defer span.End()

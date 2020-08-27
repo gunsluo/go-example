@@ -10,9 +10,9 @@ import (
 	"github.com/lib/pq"
 	"github.com/luna-duclos/instrumentedsql"
 	"github.com/xo/dburl"
-	"go.opentelemetry.io/otel/api/kv"
 	"go.opentelemetry.io/otel/api/trace"
-	"google.golang.org/grpc/codes"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/label"
 )
 
 // OpenDB open driver
@@ -76,7 +76,7 @@ func (s *dbSpan) SetLabel(k, v string) {
 	if s.parent == nil {
 		return
 	}
-	s.parent.SetAttributes(kv.Key(k).String(v))
+	s.parent.SetAttributes(label.Key(k).String(v))
 }
 
 func (s *dbSpan) SetError(err error) {

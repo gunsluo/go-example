@@ -9,8 +9,8 @@ import (
 	ometric "github.com/gunsluo/go-example/opentelemetry/demo/pkg/otlp/metric"
 	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/otlp/trace"
 	"github.com/gunsluo/go-example/opentelemetry/demo/pkg/storage"
-	"go.opentelemetry.io/otel/api/kv"
 	"go.opentelemetry.io/otel/api/metric"
+	"go.opentelemetry.io/otel/label"
 	"go.uber.org/zap"
 )
 
@@ -75,8 +75,8 @@ func NewServer(options ConfigOptions, logger *zap.Logger) (*Server, error) {
 		return nil, fmt.Errorf("failed to create metric recorder, %w", err)
 	}
 
-	commonLabels := []kv.KeyValue{
-		kv.String("priority", "hight"),
+	commonLabels := []label.KeyValue{
+		label.String("priority", "hight"),
 	}
 	s.accountReadCounter = counter.Bind(commonLabels...)
 	//defer s.accountReadCounter.Unbind()

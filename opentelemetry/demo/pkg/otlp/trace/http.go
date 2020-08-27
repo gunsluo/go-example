@@ -4,13 +4,13 @@ import (
 	"io"
 	"net/http"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace"
 	"go.opentelemetry.io/otel/api/correlation"
-	"go.opentelemetry.io/otel/api/kv"
-	"go.opentelemetry.io/otel/api/standard"
 	"go.opentelemetry.io/otel/api/trace"
-	"go.opentelemetry.io/otel/instrumentation/httptrace"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/label"
+	"go.opentelemetry.io/otel/semconv"
 	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
 )
 
 // HttpMiddleware is http middleware about trace
@@ -97,17 +97,17 @@ func (m *HttpMiddleware) Handle(h http.HandlerFunc) http.HandlerFunc {
 		sct := &statusCodeWriterTracker{ResponseWriter: w}
 		defer func() {
 			span.SetAttributes(
-				kv.Key("component").String(m.componentName),
-				standard.HTTPStatusCodeKey.Int(sct.status),
-				standard.HTTPSchemeKey.String(r.URL.Scheme),
-				standard.HTTPMethodKey.String(r.Method),
-				//standard.HTTPHostKey.String(r.Host),
-				//standard.HTTPClientIPKey.String(r.Host),
+				label.Key("component").String(m.componentName),
+				semconv.HTTPStatusCodeKey.Int(sct.status),
+				semconv.HTTPSchemeKey.String(r.URL.Scheme),
+				semconv.HTTPMethodKey.String(r.Method),
+				//semconv.HTTPHostKey.String(r.Host),
+				//semconv.HTTPClientIPKey.String(r.Host),
 			)
 
 			if sct.status >= http.StatusBadRequest || !sct.wroteheader {
 				span.SetStatus(codes.Internal, "invalid code")
-				//span.SetAttributes(kv.Key("error").Bool(true))
+				//span.SetAttributes(label.Key("error").Bool(true))
 			}
 			span.End()
 		}()

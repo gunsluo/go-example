@@ -3,12 +3,12 @@ package trace
 import (
 	"net/http"
 
-	"go.opentelemetry.io/otel/api/kv"
-	"go.opentelemetry.io/otel/api/standard"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/httptrace"
 	"go.opentelemetry.io/otel/api/trace"
-	"go.opentelemetry.io/otel/instrumentation/httptrace"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/label"
+	"go.opentelemetry.io/otel/semconv"
 	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
 )
 
 // Transport wraps a RoundTripper. If a request is being traced with
@@ -89,10 +89,10 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	ctx, span := t.tracer.Start(req.Context(), t.opNameFunc(req))
 	span.SetAttributes(
-		kv.Key("component").String(t.componentName),
-		standard.HTTPUrlKey.String(req.URL.String()),
-		standard.HTTPSchemeKey.String(req.URL.Scheme),
-		standard.HTTPMethodKey.String(req.Method),
+		label.Key("component").String(t.componentName),
+		semconv.HTTPUrlKey.String(req.URL.String()),
+		semconv.HTTPSchemeKey.String(req.URL.Scheme),
+		semconv.HTTPMethodKey.String(req.Method),
 	)
 	defer span.End()
 
@@ -107,7 +107,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		span.SetStatus(codes.Internal, "invalid code")
 	} else {
 		span.SetAttributes(
-			standard.HTTPStatusCodeKey.Int(resp.StatusCode),
+			semconv.HTTPStatusCodeKey.Int(resp.StatusCode),
 		)
 	}
 
