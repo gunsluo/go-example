@@ -14,8 +14,8 @@ services:
 
   # Collector
   otel-collector:
-    image: otel/opentelemetry-collector-dev:eb0896ec734cf6c87d429a6fffad04b99d244bd3
-      #image: otel/opentelemetry-collector-contrib:0.6.0
+      #image: otel/opentelemetry-collector-dev:eb0896ec734cf6c87d429a6fffad04b99d244bd3
+    image: otel/opentelemetry-collector-contrib:0.9.0
     container_name: otel-collector
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
@@ -33,8 +33,8 @@ services:
 
   # Agent
   otel-agent:
-    image: otel/opentelemetry-collector-dev:eb0896ec734cf6c87d429a6fffad04b99d244bd3
-      #image: otel/opentelemetry-collector-contrib:0.6.0
+      #image: otel/opentelemetry-collector-dev:eb0896ec734cf6c87d429a6fffad04b99d244bd3
+    image: otel/opentelemetry-collector-contrib:0.9.0
     container_name: otel-agent
     command: ["--config=/etc/otel-agent-config.yaml"]
     volumes:
@@ -52,8 +52,8 @@ services:
 
   # Agent
   otel-http-agent:
-    image: otel/opentelemetry-collector-dev:eb0896ec734cf6c87d429a6fffad04b99d244bd3
-    #image: otel/opentelemetry-collector-contrib:0.6.0
+      #image: otel/opentelemetry-collector-dev:eb0896ec734cf6c87d429a6fffad04b99d244bd3
+    image: otel/opentelemetry-collector-contrib:0.9.0
     container_name: otel-http-agent
     command: ["--config=/etc/otel-agent-config.yaml"]
     volumes:
