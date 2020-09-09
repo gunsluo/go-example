@@ -7,15 +7,19 @@ minikube config set cpus 4
 minikube config set memory 8192
 
 minikube start
+#minikube start --extra-config=apiserver.service-node-port-range=30000-39999
 #minikube start --cpus 4 --memory 8192 --driver=docker
+
+minikube addons configure metallb
+minikube addons enable metallb
+kubectl get pods -n metallb-system
+kubectl describe configmap config -n metallb-system
 
 
 curl -sL https://istio.io/downloadIstioctl | sh -
 export PATH=$PATH:$HOME/.istioctl/bin
 istioctl install --set profile=demo
-
 minikube addons enable istio
-
 
 kubectl label namespace postgres istio-injection=enabled
 

@@ -1,0 +1,29 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: postgres-destination
+spec:
+  host: postgres
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: postgres
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - local-gateway
+  tcp:
+  - match:
+    - port: 5432
+    route:
+    - destination:
+        host: postgres
+        port:
+          number: 5432 
+        subset: v1

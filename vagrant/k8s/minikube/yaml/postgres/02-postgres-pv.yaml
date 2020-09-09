@@ -13,7 +13,7 @@ spec:
   volumeMode: Filesystem
   accessModes:
   - ReadWriteOnce
-  # persistentVolumeReclaimPolicy: Delete
+  persistentVolumeReclaimPolicy: Delete
   hostPath:
     path: /data/postgres
 
