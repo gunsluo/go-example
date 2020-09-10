@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: envs
+  namespace: envs
+  labels:
+    svc: envs
+spec:
+  ports:
+  - port: 9112
+    targetPort: 9112
+    protocol: TCP
+    name: http
+  selector:
+    svc: envs
