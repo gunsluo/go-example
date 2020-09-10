@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rest
+  namespace: ac
+spec:
+  selector:
+    matchLabels:
+      app: rest
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: rest
+    spec:
+      containers:
+      - name: rest
+        image: registry.gitlab.com/target-digital-transformation/access-control/ac-be:3.2.5
+        command: 
+         - /usr/local/bin/ac-serve 
+         - serve 
+         - rest
+         - --address=:7002
+         - --grpc=grpc:7001
+         - --grpc-insecure
+         - --oidc=http://dex.sso:5556
+         - --sso-grpc=dex.sso:5557
+         - --sso-grpc-insecure
+         - --verbose
+        ports:
+        - containerPort: 7002
+      imagePullSecrets:
+      - name: registry.gitlab.com

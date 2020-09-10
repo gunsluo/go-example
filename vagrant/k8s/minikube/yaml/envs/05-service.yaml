@@ -4,7 +4,7 @@ metadata:
   name: envs
   namespace: envs
   labels:
-    svc: envs
+    app: envs
 spec:
   ports:
   - port: 9112
@@ -12,4 +12,4 @@ spec:
     protocol: TCP
     name: http
   selector:
-    svc: envs
+    app: envs

@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: console
+  namespace: ac
+spec:
+  selector:
+    matchLabels:
+      app: console
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: console
+    spec:
+      containers:
+      - name: console
+        image: registry.gitlab.com/target-digital-transformation/access-control/console:3.2.5
+        ports:
+        - containerPort: 80
+        env:
+        - name: ENVS_HTTP_ADDR
+          value: "http://envs.envs:9112"
+        - name: ENVA_PUBLISH
+          value: "acConsleClientID=access-control,acConsleClientSecret=ZXhhbXBsZS1hcHAtc2VjcmV0,acConsleState=acconsole,acConsleRedirectURL=http://localhost:8080/oauth2,acRestAddr=http://localhost:7002,ssoUrl=http://dex.sso:5556"
+      imagePullSecrets:
+      - name: registry.gitlab.com
