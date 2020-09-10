@@ -6,13 +6,13 @@ metadata:
 spec:
   selector:
     matchLabels:
-      svc: postgres # has to match .spec.template.metadata.labels
+      app: postgres # has to match .spec.template.metadata.labels
   serviceName: "postgres"
   replicas: 1 # by default is 1
   template:
     metadata:
       labels:
-        svc: postgres # has to match .spec.selector.matchLabels
+        app: postgres # has to match .spec.selector.matchLabels
     spec:
       terminationGracePeriodSeconds: 10
       containers:
