@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sso
+  namespace: sso
+spec:
+  selector:
+    matchLabels:
+      app: sso
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sso
+    spec:
+      containers:
+      - name: sso
+        image: registry.gitlab.com/target-digital-transformation/sso:3.2.8
+        command: 
+         - dex
+         - serve 
+         - /usr/local/config/config.yaml
+        ports:
+        - containerPort: 5556
+        - containerPort: 5557
+        volumeMounts:
+        - name: sso-config
+          mountPath: /usr/local/config/config.yaml
+          subPath: config.yaml
+      volumes:
+        - name: sso-config
+          configMap:
+            name: sso-config
+      imagePullSecrets:
+      - name: registry.gitlab.com

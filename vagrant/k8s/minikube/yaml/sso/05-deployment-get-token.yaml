@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gettoken
+  namespace: sso
+spec:
+  selector:
+    matchLabels:
+      app: gettoken
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: gettoken
+    spec:
+      containers:
+      - name: gettoken
+        image: registry.gitlab.com/target-digital-transformation/sso/example_client/master
+        command: 
+         - /usr/local/bin/dex-client
+         - --issuer=http://sso.sso:5556
+         - --listen=http://0.0.0.0:4444
+         - --client-id=example-app
+         - --client-secret=ZXhhbXBsZS1hcHAtc2VjcmV0
+         - --redirect-uri=http://127.0.0.1:4444/callback
+        ports:
+        - containerPort: 4444
+      imagePullSecrets:
+      - name: registry.gitlab.com
