@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: consul
+  namespace: consul
+  labels:
+    svc: consul
+spec:
+  ports:
+  - port: 8500
+    targetPort: 8500
+    protocol: TCP
+    name: http
+  selector:
+    svc: consul

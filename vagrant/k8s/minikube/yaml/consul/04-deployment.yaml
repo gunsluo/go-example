@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consul
+  namespace: consul
+spec:
+  selector:
+    matchLabels:
+      app: consul
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: consul
+    spec:
+      containers:
+      - name: consul
+        image: consul:1.8.3
+        command:
+         - consul
+         - agent
+         - -client=0.0.0.0
+         - -dev
+        ports:
+        - containerPort: 8500
+        - containerPort: 8502
+        - containerPort: 8600
+        volumeMounts:
+        - name: consul-pvc
+          mountPath: /consul/data
+      volumes:
+        - name: consul-pvc
+          persistentVolumeClaim:
+            claimName: consul-pvc-consul-0
+  
