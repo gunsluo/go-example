@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sso
+  name: dex
   namespace: sso
 spec:
   selector:
     matchLabels:
-      app: sso
+      app: dex
   replicas: 1
   template:
     metadata:
       labels:
-        app: sso
+        app: dex
     spec:
       containers:
-      - name: sso
+      - name: dex
         image: registry.gitlab.com/target-digital-transformation/sso:3.2.8
         command: 
          - dex

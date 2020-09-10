@@ -18,7 +18,7 @@ spec:
         image: registry.gitlab.com/target-digital-transformation/sso/example_client/master
         command: 
          - /usr/local/bin/dex-client
-         - --issuer=http://sso.sso:5556
+         - --issuer=http://dex.sso:5556
          - --listen=http://0.0.0.0:4444
          - --client-id=example-app
          - --client-secret=ZXhhbXBsZS1hcHAtc2VjcmV0

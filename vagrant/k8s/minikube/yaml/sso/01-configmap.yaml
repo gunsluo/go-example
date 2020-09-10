@@ -8,7 +8,7 @@ data:
     # The base path of dex and the external name of the OpenID Connect service.
     # This is the canonical URL that all clients MUST use to refer to dex. If a
     # path is provided, dex's HTTP service will listen at a non-root URL.
-    issuer: http://sso.sso:5556
+    issuer: http://dex.sso:5556
 
     # The storage configuration determines where dex stores its state. Supported
     # options include SQL flavors and Kubernetes third party resources.
