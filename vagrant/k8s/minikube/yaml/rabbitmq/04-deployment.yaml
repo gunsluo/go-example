@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  namespace: rabbitmq
+spec:
+  selector:
+    matchLabels:
+      app: rabbitmq
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+      - name: rabbitmq
+        image: itzg/rabbitmq-stomp
+        ports:
+        - containerPort: 5672
+        - containerPort: 15672
+        - containerPort: 61613
+        volumeMounts:
+        - name: rabbitmq-pvc
+          mountPath: /var/lib/rabbitmq
+      volumes:
+        - name: rabbitmq-pvc
+          persistentVolumeClaim:
+            claimName: rabbitmq-pvc-rabbitmq-0
+  
