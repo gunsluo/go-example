@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: grpc
-        image: registry.gitlab.com/target-digital-transformation/access-control/ac-be:3.2.5
+        image: registry.gitlab.com/target-digital-transformation/access-control/ac-be:3.2.6
         command: 
          - /usr/local/bin/ac-serve 
          - serve 
@@ -34,5 +34,21 @@ spec:
           value: "1024"
         ports:
         - containerPort: 7001
+        livenessProbe:
+          exec:
+            command: 
+            - /usr/local/bin/grpc_health_probe
+            - -addr=:7001
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command: 
+            - /usr/local/bin/grpc_health_probe
+            - -addr=:7001
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 3
       imagePullSecrets:
       - name: registry.gitlab.com

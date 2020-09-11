@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: rest
-        image: registry.gitlab.com/target-digital-transformation/access-control/ac-be:3.2.5
+        image: registry.gitlab.com/target-digital-transformation/access-control/ac-be:3.2.6
         command: 
          - /usr/local/bin/ac-serve 
          - serve 
@@ -29,5 +29,19 @@ spec:
          - --verbose
         ports:
         - containerPort: 7002
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 7002
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 7002
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 3
       imagePullSecrets:
       - name: registry.gitlab.com
