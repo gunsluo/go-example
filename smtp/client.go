@@ -8,13 +8,10 @@ import (
 	"io"
 	"log"
 	"net"
-	"strconv"
 	"strings"
 
 	"github.com/emersion/go-sasl"
 	"github.com/emersion/go-smtp"
-	"github.com/farmerx/mail"
-	"gopkg.in/gomail.v2"
 )
 
 var (
@@ -115,29 +112,31 @@ func sendMail() {
 			log.Fatal(err)
 		}
 		auth = NewNtlmClient(smtpAuthNtlmDomain, smtpUsername, smtpPassword, smtpUsername)
+	} else if smtpAuthType == "login" {
+		auth = sasl.NewLoginClient(smtpUsername, smtpPassword)
 	} else {
 		auth = sasl.NewPlainClient("", smtpUsername, smtpPassword)
 	}
 
 	err = smtpClient.Auth(auth)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("auth: %s", err)
 	}
 
 	err = smtpClient.Mail("weilong.yi@target-energysolutions.com", &smtp.MailOptions{})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Mail: %s", err)
 	}
 
 	to := []string{"ji.luo@target-energysolutions.com"}
 	for _, addr := range to {
 		if err = smtpClient.Rcpt(addr); err != nil {
-			log.Fatal(err)
+			log.Fatalf("Rcpt: %s", err)
 		}
 	}
 	w, err := smtpClient.Data()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Data: %s", err)
 	}
 
 	msg := strings.NewReader("To: recipient@example.net\r\n" +
@@ -159,17 +158,16 @@ func sendMail() {
 	}
 }
 
+/*
 func test() {
 	// Set up authentication information.
 	//auth := sasl.NewPlainClient("", "username", "password")
 	auth := sasl.NewPlainClient("", "AKIAT2CIH646YJ4YR377", "BGWfEYmkca5dLTZQEUVJUm2+Aink7Ap4XqlnsRNM9FcT")
 
-	/*
 		auth := sasl.NewOAuthBearerClient(&sasl.OAuthBearerOptions{
 			Username: "AKIAT2CIH646YJ4YR377",
 			Token:    "+Aink7Ap4XqlnsRNM",
 		})
-	*/
 
 	// Connect to the server, authenticate, set the sender and recipient,
 	// and send the email all in one step.
@@ -237,3 +235,4 @@ func sendMailByNtlm() {
 		log.Fatal(err)
 	}
 }
+*/
