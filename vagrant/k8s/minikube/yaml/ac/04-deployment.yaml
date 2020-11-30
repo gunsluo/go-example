@@ -21,7 +21,7 @@ spec:
          - serve 
          - grpc
          - --address=:7001
-         - --dsn=postgres://postgres:password@postgres.postgres:5432/?sslmode=disable
+         - --dsn=postgres://postgres:password@postgres.postgres:5432/ac?sslmode=disable
          - --verbose
         env:
         - name: TARGET_SYS_ADMIN
