@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"strconv"
+	"math/big"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr"
 	"github.com/gunsluo/go-example/antlr/calc/parser"
@@ -10,12 +10,15 @@ import (
 
 func main() {
 	// Setup the input
-	result := calc("1 + 2 * 3 + 4")
+	result, err := calc("(1.0 + 2.2) * 3 + 4")
+	if err != nil {
+		panic(err)
+	}
 	fmt.Println("calc result:", result)
 }
 
 // calc takes a string expression and returns the evaluated result.
-func calc(input string) int {
+func calc(input string) (float64, error) {
 	// Setup the input
 	is := antlr.NewInputStream(input)
 
@@ -30,22 +33,25 @@ func calc(input string) int {
 	var listener calcListener
 	antlr.ParseTreeWalkerDefault.Walk(&listener, p.Start())
 
-	return listener.pop()
+	bf := listener.pop()
+	f, _ := bf.Float64()
+	return f, nil
 }
 
 type calcListener struct {
 	*parser.BaseCalcListener
 
-	stack []int
+	stack []*big.Float
 }
 
-func (l *calcListener) push(i int) {
-	fmt.Println("push->", i, l.stack)
-	l.stack = append(l.stack, i)
-	fmt.Println("push after->", i, l.stack)
+func (l *calcListener) push(f *big.Float) {
+	// fmt.Println("push->", f, l.stack)
+	l.stack = append(l.stack, f)
+	// fmt.Println("push after->", f, l.stack)
 }
 
-func (l *calcListener) pop() int {
+func (l *calcListener) pop() *big.Float {
+	fmt.Println("pop->", l.stack)
 	if len(l.stack) < 1 {
 		panic("stack is empty unable to pop")
 	}
@@ -61,13 +67,17 @@ func (l *calcListener) pop() int {
 
 func (l *calcListener) ExitMulDiv(c *parser.MulDivContext) {
 	right, left := l.pop(), l.pop()
-	fmt.Println("ExitMulDiv->", right, left)
 
 	switch c.GetOp().GetTokenType() {
 	case parser.CalcParserMUL:
-		l.push(left * right)
+		f1 := &big.Float{}
+		f1.Mul(left, right)
+		l.push(f1)
 	case parser.CalcParserDIV:
-		l.push(left / right)
+		f1 := &big.Float{}
+		f1.Quo(left, right)
+		l.push(f1)
+		//l.push(left / right)
 	default:
 		panic(fmt.Sprintf("unexpected op: %s", c.GetOp().GetText()))
 	}
@@ -75,23 +85,30 @@ func (l *calcListener) ExitMulDiv(c *parser.MulDivContext) {
 
 func (l *calcListener) ExitAddSub(c *parser.AddSubContext) {
 	right, left := l.pop(), l.pop()
-	fmt.Println("ExitAddSub->", right, left)
+	// fmt.Println("ExitAddSub->", right, left)
 
 	switch c.GetOp().GetTokenType() {
 	case parser.CalcParserADD:
-		l.push(left + right)
+		f1 := &big.Float{}
+		f1.Add(left, right)
+		l.push(f1)
+		//l.push(left + right)
 	case parser.CalcParserSUB:
-		l.push(left - right)
+		f1 := &big.Float{}
+		f1.Sub(left, right)
+		l.push(f1)
+		//l.push(left - right)
 	default:
 		panic(fmt.Sprintf("unexpected op: %s", c.GetOp().GetText()))
 	}
 }
 
 func (l *calcListener) ExitNumber(c *parser.NumberContext) {
-	i, err := strconv.Atoi(c.GetText())
+	fmt.Println("-->", c.GetText())
+	f, _, err := big.ParseFloat(c.GetText(), 10, 0, big.ToNearestEven)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	l.push(i)
+	l.push(f)
 }

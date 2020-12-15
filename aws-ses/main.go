@@ -5,7 +5,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ses"
 )
@@ -22,7 +21,7 @@ const (
 func main() {
 	// Create a new session in the us-west-2 region.
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(endpoints.UsWest2RegionID),
+		//Region: aws.String(endpoints.UsWest2RegionID),
 		//Credentials: credentials.NewStaticCredentials("AKID", "SECRET_KEY", "TOKEN"),
 	})
 	if err != nil {
@@ -41,9 +40,11 @@ func main() {
 	// Assemble the email.
 	input := &ses.SendEmailInput{
 		Destination: &ses.Destination{
-			CcAddresses: []*string{},
+			//CcAddresses: []*string{},
 			ToAddresses: []*string{
-				aws.String("gunsluo@gmail.com"),
+				aws.String("luoji <ji.luo@target-energysolutions.com>"),
+				aws.String("yanyu <yanyu.li@target-energysolutions.com>"),
+				//aws.String("ji.luo@target-energysolutions.com"),
 			},
 		},
 		Message: &ses.Message{
@@ -63,7 +64,8 @@ func main() {
 			},
 		},
 		//Source: aws.String("andrei@simionescu.eu"),
-		Source: aws.String("gunsluo@gmail.com"),
+		//Source: aws.String("info@fluxble.com"),
+		Source: aws.String("Tax Authority of Oman <info@fluxble.com>"),
 	}
 
 	// Attempt to send the email.

@@ -44,3 +44,9 @@ func (s *BaseCalcListener) EnterAddSub(ctx *AddSubContext) {}
 
 // ExitAddSub is called when production AddSub is exited.
 func (s *BaseCalcListener) ExitAddSub(ctx *AddSubContext) {}
+
+// EnterParens is called when production Parens is entered.
+func (s *BaseCalcListener) EnterParens(ctx *ParensContext) {}
+
+// ExitParens is called when production Parens is exited.
+func (s *BaseCalcListener) ExitParens(ctx *ParensContext) {}
