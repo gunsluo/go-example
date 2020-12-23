@@ -26,7 +26,6 @@ func main() {
 	))
 
 	// fmt.Printf("---->%#v", config.Map())
-	// var address string
 	if err := config.Get().Scan(&cfg); err != nil {
 		panic(err)
 	}
@@ -65,7 +64,7 @@ func main() {
 	pub2s2 := micro.NewPublisher("topic.s2", service.Client())
 
 	go func() {
-		time.Sleep(5 * time.Second)
+		time.Sleep(3 * time.Second)
 
 		e := &Event{Message: "event"}
 		buffer, err := json.Marshal(e)
@@ -77,7 +76,13 @@ func main() {
 			fmt.Println("failed to publish event:", err)
 			return
 		}
-		fmt.Println("publish event")
+		/*
+			if err := pub2s2.Publish(context.Background(), &proto.Event{Message: "event"}); err != nil {
+				fmt.Println("failed to publish event:", err)
+				return
+			}
+		*/
+		fmt.Println("publish event:", e.Message)
 	}()
 
 	// start the service

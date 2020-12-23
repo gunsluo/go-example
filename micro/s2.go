@@ -1,17 +1,14 @@
 package main
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/micro/go-micro/v2"
-	"github.com/micro/go-micro/v2/codec/bytes"
+	"github.com/micro/go-micro/v2/broker"
 	"github.com/micro/go-micro/v2/config"
 	"github.com/micro/go-micro/v2/config/encoder/yaml"
 	"github.com/micro/go-micro/v2/config/source"
 	"github.com/micro/go-micro/v2/config/source/file"
-	"github.com/micro/go-micro/v2/metadata"
-	"github.com/micro/go-micro/v2/util/log"
 )
 
 func main() {
@@ -58,12 +55,22 @@ func main() {
 
 	// initialise flags
 	service.Init()
-	// service.Server()
 
-	// register subscriber
-	if err := micro.RegisterSubscriber("topic.s2", service.Server(), new(Sub)); err != nil {
+	broker := service.Server().Options().Broker
+	if err := broker.Connect(); err != nil {
 		panic(err)
 	}
+
+	if _, err := broker.Subscribe("topic.s2", customSubscriber); err != nil {
+		panic(err)
+	}
+	/*
+		// register subscriber
+		if err := micro.RegisterSubscriber("topic.s2", service.Server(), new(Sub)); err != nil {
+			//if err := micro.RegisterSubscriber("topic.s2", service.Server(), subEv); err != nil {
+			panic(err)
+		}
+	*/
 
 	// start the service
 	if err := service.Run(); err != nil {
@@ -71,11 +78,31 @@ func main() {
 	}
 }
 
+/*
 type Sub struct{}
 
-func (s *Sub) Process(ctx context.Context, frame *bytes.Frame) error {
+func (s *Sub) Process(ctx context.Context, frame *proto.Event) error {
 	md, _ := metadata.FromContext(ctx)
-	log.Logf("[pubsub.1] Received frame %+v with metadata %+v\n", frame, md)
+	fmt.Printf("[pubsub] Received frame %+v with metadata %+v\n", frame, md)
 	// do something with event
+	return nil
+}
+
+func subEv(ctx context.Context, frame *proto.Event) error {
+	md, _ := metadata.FromContext(ctx)
+	fmt.Printf("[pubsub] Received frame %+v with metadata %+v\n", frame, md)
+	// do something with event
+	return nil
+}
+*/
+
+func customSubscriber(e broker.Event) error {
+	if e == nil {
+		return nil
+	}
+
+	msg := e.Message()
+	fmt.Printf("[pubsub] Received broker event %+v %+v %+v %+v\n", e.Topic(), e.Error(), msg.Header, string(msg.Body))
+
 	return nil
 }
