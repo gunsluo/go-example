@@ -1,0 +1,22 @@
+version: "3.7"
+services:
+
+  envoy:
+    image: envoyproxy/envoy:v1.16.2
+    container_name: envoy
+    command: /usr/local/bin/envoy -c /etc/envoy.yaml -l trace
+    ports:
+    - 9901:9901
+    - 10000:10000
+    volumes:
+    - ./envoy-override.yaml:/etc/envoy.yaml
+
+  webapp:
+    image: gunsluo/webapp
+    container_name: webapp
+    command: /usr/local/bin/room-srv -a :10000
+
+  webapp1:
+    image: gunsluo/webapp
+    container_name: webapp1
+    command: /usr/local/bin/room-srv -a :10000
