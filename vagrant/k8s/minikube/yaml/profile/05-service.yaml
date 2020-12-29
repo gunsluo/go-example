@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: profile
+  namespace: profile
+  labels:
+    svc: profile
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 50051
+    targetPort: 50051
+    protocol: TCP
+    name: grpc
+  selector:
+    app: profile
