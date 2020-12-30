@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: grpc
-        image: registry.gitlab.com/target-digital-transformation/access-control/ac-be:3.2.6
+        image: registry.gitlab.com/target-digital-transformation/access-control/ac-be:3.3.1
         command: 
          - /usr/local/bin/ac-serve 
          - serve 

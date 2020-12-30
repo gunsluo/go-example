@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: console
-        image: registry.gitlab.com/target-digital-transformation/access-control/console:3.2.5
+        image: registry.gitlab.com/target-digital-transformation/access-control/console:3.3.1
         ports:
         - containerPort: 80
         env:
