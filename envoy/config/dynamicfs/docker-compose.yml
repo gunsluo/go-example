@@ -1,0 +1,23 @@
+version: "3.7"
+services:
+
+  envoy:
+    image: envoyproxy/envoy-dev:latest
+    container_name: envoy
+    command: /usr/local/bin/envoy -c /etc/envoy.yaml -l trace
+    ports:
+    - 9901:9901
+    - 10000:10000
+    volumes:
+    - ./envoy-override.yaml:/etc/envoy.yaml
+    - ./lds.yaml:/var/lib/envoy/lds.yaml
+    - ./cds.yaml:/var/lib/envoy/cds.yaml
+  echo:
+    image: gunsluo/echo-server
+    container_name: echo
+    command: /usr/local/bin/echo-srv -a :8080
+
+  echo1:
+    image: gunsluo/echo-server
+    container_name: echo1
+    command: /usr/local/bin/echo-srv -a :8080
