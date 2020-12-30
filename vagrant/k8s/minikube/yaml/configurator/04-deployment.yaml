@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: configurator
+  namespace: configurator
+spec:
+  selector:
+    matchLabels:
+      app: configurator
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: configurator
+    spec:
+      containers:
+      - name: configurator
+        image: registry.gitlab.com/target-digital-transformation/subscription-store:3.12.0
+        command: 
+         - /usr/local/bin/subscription-store 
+         - serve
+         - --address=:9302
+         - --grpc-address=:9301
+         - --ac-grpc=grpc.ac:7001
+         - --dsn=postgres://postgres:password@postgres.postgres/configurator?sslmode=disable
+         - --oidc=http://dex.sso:5556
+         - --cors-hosts=*
+         - --redis-addr=redis.redis:6379
+        ports:
+        - containerPort: 9301
+        - containerPort: 9302
+        env:
+        - name: MEERA_APP_PRODUCT_WORKSPACE_URL
+          value: "http://127.0.0.1:9302"
+      imagePullSecrets:
+      - name: registry.gitlab.com
