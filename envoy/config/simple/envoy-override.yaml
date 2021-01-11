@@ -7,7 +7,7 @@ admin:
 
 static_resources:
   listeners:
-  - name: webapp
+  - name: echo
     address:
       socket_address:
         address: 0.0.0.0
@@ -28,17 +28,16 @@ static_resources:
           route_config:
             name: local_route
             virtual_hosts:
-            - name: webapp
+            - name: echo
               domains: ["*"]
               routes:
               - match:
                   prefix: "/"
                 route:
-                  cluster: webapp
-
+                  cluster: echo
 
   clusters:
-  - name: webapp
+  - name: echo
     connect_timeout: 30s
     # type: ORIGINAL_DST
     type: STRICT_DNS
@@ -46,16 +45,16 @@ static_resources:
     dns_lookup_family: V4_ONLY
     lb_policy: round_robin
     load_assignment:
-      cluster_name: webapp
+      cluster_name: echo
       endpoints:
       - lb_endpoints:
         - endpoint:
             address:
               socket_address:
-                address: webapp
-                port_value: 10000
+                address: echo
+                port_value: 8080
         - endpoint:
             address:
               socket_address:
-                address: webapp1
-                port_value: 10000
+                address: echo1
+                port_value: 8080

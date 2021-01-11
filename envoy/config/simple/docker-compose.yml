@@ -11,12 +11,12 @@ services:
     volumes:
     - ./envoy-override.yaml:/etc/envoy.yaml
 
-  webapp:
-    image: gunsluo/webapp
-    container_name: webapp
-    command: /usr/local/bin/room-srv -a :10000
+  echo:
+    image: gunsluo/echo-server
+    container_name: echo
+    command: /usr/local/bin/echo-srv -a :8080
 
-  webapp1:
-    image: gunsluo/webapp
-    container_name: webapp1
-    command: /usr/local/bin/room-srv -a :10000
+  echo1:
+    image: gunsluo/echo-server
+    container_name: echo1
+    command: /usr/local/bin/echo-srv -a :8080
