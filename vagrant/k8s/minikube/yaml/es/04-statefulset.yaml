@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: es
+  namespace: es
+spec:
+  selector:
+    matchLabels:
+      app: es # has to match .spec.template.metadata.labels
+  serviceName: "es"
+  replicas: 1 # by default is 1
+  template:
+    metadata:
+      labels:
+        app: es # has to match .spec.selector.matchLabels
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: es
+        image: elasticsearch:7.10.1
+        env:
+        - name: discovery.type
+          value: "single-node"
+        ports:
+        - containerPort: 9200
+          name: tcp
+          protocol: TCP
+        volumeMounts:
+        - name: es-pvc
+          mountPath: /usr/share/elasticsearch/data
+  volumeClaimTemplates:
+  - metadata:
+      name: es-pvc
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "local-es-storage"
+      resources:
+        requests:
+          storage: 500M
