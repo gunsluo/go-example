@@ -6,6 +6,7 @@ metadata:
   labels:
     svc: grpc
 spec:
+  type: LoadBalancer
   ports:
   - port: 7001
     targetPort: 7001

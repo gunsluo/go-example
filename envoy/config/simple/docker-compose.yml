@@ -2,7 +2,7 @@ version: "3.7"
 services:
 
   envoy:
-    image: envoyproxy/envoy:v1.16.2
+    image: envoyproxy/envoy:v1.17.0
     container_name: envoy
     command: /usr/local/bin/envoy -c /etc/envoy.yaml -l trace
     ports:

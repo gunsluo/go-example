@@ -5,6 +5,8 @@ services:
     image: elasticsearch:7.10.1
     environment:
       discovery.type: single-node
+      xpack.security.enabled: 'true'
+      ELASTIC_PASSWORD: password
     ports:
       - 9200:9200
     volumes:
