@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"strings"
 	"sync"
@@ -13,7 +14,7 @@ import (
 )
 
 func main() {
-	demo()
+	bulk()
 }
 
 func demo() {
@@ -151,4 +152,112 @@ func demo() {
 
 		log.Println(strings.Repeat("=", 37))
 	}
+}
+
+func demo1() {
+	cfg := elasticsearch.Config{
+		Addresses: []string{
+			"http://localhost:9200",
+		},
+		// Username: "foo",
+		// Password: "bar",
+	}
+	es, err := elasticsearch.NewClient(cfg)
+	//es, err := elasticsearch.NewDefaultClient()
+	if err != nil {
+		panic(err)
+	}
+
+	{
+		//version
+		log.Println(elasticsearch.Version)
+		resp, err := es.Info()
+		if err != nil {
+			panic(err)
+		}
+		log.Println(resp)
+	}
+
+	//ctx := context.Background()
+	var indexName = "ac.auditlog"
+
+	res, err := es.Indices.Exists([]string{indexName})
+	if err != nil {
+		panic(err)
+	}
+	res.Body.Close()
+
+	if res.StatusCode == 404 {
+		indexSettings := `{
+  "mappings": {
+    "properties": {
+      "@timestamp": {
+        "type": "date"
+      },
+      "subject": {
+        "type": "keyword"
+      },
+      "content": {
+        "type": "text"
+      },
+      "format": {
+        "type": "keyword"
+      },
+      "event": {
+        "type": "keyword"
+      },
+      "labels": {
+        "type": "keyword"
+      },
+      "orgId": {
+        "type": "integer"
+      },
+      "reason": {
+        "type": "text"
+      }
+    }
+  }
+}`
+
+		res, err := es.Indices.Create(indexName,
+			es.Indices.Create.WithBody(strings.NewReader(indexSettings)),
+		)
+		if err != nil {
+			panic(err)
+		}
+
+		defer res.Body.Close()
+
+		if res.IsError() {
+			var e map[string]interface{}
+			if err := json.NewDecoder(res.Body).Decode(&e); err != nil {
+				panic(err)
+			}
+
+			err := fmt.Errorf("[%s] %s: %s", res.Status(), e["error"].(map[string]interface{})["type"], e["error"].(map[string]interface{})["reason"])
+			panic(err)
+		}
+
+		fmt.Println("created", res)
+	} else {
+		fmt.Println("exists")
+	}
+}
+
+func bulk() {
+	/*
+		cfg := elasticsearch.Config{
+			Addresses: []string{
+				"http://localhost:9200",
+			},
+			// Username: "foo",
+			// Password: "bar",
+		}
+		es, err := elasticsearch.NewClient(cfg)
+		if err != nil {
+			panic(err)
+		}
+
+		res, err = es.Bulk(bytes.NewReader(buf.Bytes()), es.Bulk.WithIndex(indexName))
+	*/
 }
