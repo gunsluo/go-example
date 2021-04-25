@@ -3,6 +3,7 @@ module github.com/gunsluo/go-example/xorm
 go 1.15
 
 require (
-	xorm.io/cmd/xorm v0.0.0-20191108140657-006dbf24bb9b // indirect
-	xorm.io/reverse v0.1.1 // indirect
+	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/lib/pq v1.7.0
+	xorm.io/xorm v1.0.7
 )
