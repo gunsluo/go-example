@@ -1,0 +1,13 @@
+kind: reverse
+name: test
+source:
+  database: postgres
+  conn_str: 'postgres://postgres:password@127.0.0.1:5432/xorm?sslmode=disable'
+targets:
+- type: codes
+  include_tables:
+  exclude_tables:
+  language: golang
+  table_name: true
+  multiple_files: true
+  output_dir: ./models
