@@ -6,7 +6,7 @@ import (
 	"xorm.io/xorm"
 )
 
-func newEngine(mockfns ...func(sqlmock.Sqlmock)) *xorm.Engine {
+func newMockEngine(mockfns ...func(sqlmock.Sqlmock)) *xorm.Engine {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		panic(err)
@@ -22,7 +22,21 @@ func newEngine(mockfns ...func(sqlmock.Sqlmock)) *xorm.Engine {
 	return engine
 }
 
-func newSession(mockfns ...func(sqlmock.Sqlmock)) *xorm.Session {
-	engine := newEngine(mockfns...)
+func newMockSession(mockfns ...func(sqlmock.Sqlmock)) *xorm.Session {
+	engine := newMockEngine(mockfns...)
+	return engine.NewSession()
+}
+
+func newEngine() *xorm.Engine {
+	engine, err := xorm.NewEngine("postgres", "postgres://postgres:password@127.0.0.1:5432/xorm?sslmode=disable")
+	if err != nil {
+		panic(err)
+	}
+
+	return engine
+}
+
+func newSession() *xorm.Session {
+	engine := newEngine()
 	return engine.NewSession()
 }
