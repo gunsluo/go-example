@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: configurator
-        image: registry.gitlab.com/target-digital-transformation/subscription-store:3.12.0
+        image: registry.gitlab.com/target-digital-transformation/subscription-store/master:fff071b9
         command: 
          - /usr/local/bin/subscription-store 
          - serve
@@ -28,7 +28,6 @@ spec:
          - --oidc=http://dex.sso:5556
          - --cors-hosts=*
          - --redis-addr=redis.redis:6379
-         - --bypass-license
         ports:
         - containerPort: 9301
         - containerPort: 9302
@@ -37,5 +36,9 @@ spec:
           value: "http://127.0.0.1:9302"
         - name: TARGET_CONFIGURATOR_SUPER_ADMIN
           value: "CiQwOGE4Njg0Yi1kYjg4LTRiNzMtOTBhOS0zY2QxNjYxZjU0NjYSBWxvY2Fs"
+        - name: CLIENT_ID
+          value: "configurator"
+        - name: CLIENT_SECRET
+          value: "CEmDmDPI10s3gaKKID4tFhqgW8V3wjAa"
       imagePullSecrets:
       - name: registry.gitlab.com

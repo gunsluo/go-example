@@ -7,4 +7,5 @@ import (
 
 func GetInspectorById(db *xorm.Session, inspector *models.Inspector, id int) (bool, error) {
 	return db.Where("id = ?", id).Get(inspector)
+	//return false, nil
 }

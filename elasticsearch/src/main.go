@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"reflect"
 	"strings"
 	"sync"
 
@@ -14,7 +15,7 @@ import (
 )
 
 func main() {
-	bulk()
+	query()
 }
 
 func demo() {
@@ -260,4 +261,227 @@ func bulk() {
 
 		res, err = es.Bulk(bytes.NewReader(buf.Bytes()), es.Bulk.WithIndex(indexName))
 	*/
+}
+
+func query() {
+	cfg := elasticsearch.Config{
+		Addresses: []string{
+			"http://localhost:9200",
+		},
+		// Username: "foo",
+		// Password: "bar",
+	}
+	es, err := elasticsearch.NewClient(cfg)
+	//es, err := elasticsearch.NewDefaultClient()
+	if err != nil {
+		panic(err)
+	}
+
+	{
+		//version
+		log.Println(elasticsearch.Version)
+		resp, err := es.Info()
+		if err != nil {
+			panic(err)
+		}
+		log.Println(resp)
+	}
+
+	ctx := context.Background()
+	var indexName = "ac.auditlog"
+
+	pitRes, err := es.OpenPointInTime(
+		es.OpenPointInTime.WithContext(ctx),
+		es.OpenPointInTime.WithIndex(indexName),
+		es.OpenPointInTime.WithKeepAlive("1m"),
+	)
+	if err != nil {
+		panic(err)
+	}
+	defer pitRes.Body.Close()
+
+	if pitRes.IsError() {
+		var msg esMessage
+		if err := json.NewDecoder(pitRes.Body).Decode(&msg); err != nil {
+			fmt.Printf("parsing error %w\n", err)
+			return
+		}
+		fmt.Printf("Error response status: %s type: %s Reason: %s\n",
+			pitRes.Status(), msg.Error.Type, msg.Error.Reason)
+		return
+	}
+
+	var pitResp PointInTimeResp
+	if err := json.NewDecoder(pitRes.Body).Decode(&pitResp); err != nil {
+		fmt.Printf("parsing error %w\n", err)
+		return
+	}
+	fmt.Printf("-->%+v\n", pitResp.Id)
+
+	var query = `{"query":{"match_all":{}},"sort":[{"@timestamp":{"order":"desc"}},{"id":{"order":"desc"}}],"size":100,"pit":{"id":"` + pitResp.Id + `","keep_alive":"1m"}}`
+	res, err := es.Search(
+		es.Search.WithContext(ctx),
+		//es.Search.WithIndex(indexName),
+		es.Search.WithBody(strings.NewReader(query)),
+		es.Search.WithTrackTotalHits(true),
+	)
+
+	if err != nil {
+		panic(err)
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		var msg esMessage
+		if err := json.NewDecoder(res.Body).Decode(&msg); err != nil {
+			fmt.Printf("parsing error %w\n", err)
+			return
+		}
+		fmt.Printf("Error response status: %s type: %s Reason: %s\n",
+			res.Status(), msg.Error.Type, msg.Error.Reason)
+		return
+	}
+
+	var resp esResp
+	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
+		fmt.Printf("parsing error %w\n", err)
+		return
+	}
+
+	fmt.Printf("%d\n", resp.Hits.Total.Value)
+
+	var hits []logHit
+	if err := resp.Hits.Hits.Marshal(&hits); err != nil {
+		fmt.Printf("parsing sources error %v\n", err)
+		return
+	}
+
+	var logs []*AuditloggerEntity
+	for _, hit := range hits {
+		source := hit.Source
+		logs = append(logs, &source)
+		fmt.Printf("%+v, %#+v\n", source, hit.Sort)
+		v, err := parseSortValue2String(hit.Sort)
+		if err != nil {
+			fmt.Printf("parsing sort %v\n", err)
+			return
+		}
+		fmt.Printf("%s\n", v)
+	}
+}
+
+type esMessage struct {
+	Error esError `json:"error"`
+}
+
+type esError struct {
+	Type   string `json:"type"`
+	Reason string `json:"reason"`
+}
+
+type esResp struct {
+	Took int    `json:"took"`
+	Hits esHits `json:"hits"`
+}
+
+type esHits struct {
+	Total    esTotalHits `json:"total"`
+	MaxScore float64     `json:"max_score"`
+	Hits     Hits        `json:"hits"`
+}
+
+type esTotalHits struct {
+	Value    int64  `json:"value"`
+	Relation string `json:"relation"`
+}
+
+type Hits []json.RawMessage
+
+func (h Hits) Marshal(sourcesSlicePtr interface{}) error {
+	if len(h) == 0 {
+		return nil
+	}
+
+	sliceValue := reflect.Indirect(reflect.ValueOf(sourcesSlicePtr))
+	if sliceValue.Kind() != reflect.Slice {
+		return fmt.Errorf("parameters must be a slice")
+	}
+	sliceType := sliceValue.Type()
+	sliceElementType := sliceType.Elem()
+
+	for _, item := range h {
+		buffer, err := item.MarshalJSON()
+		if err != nil {
+			return err
+		}
+		pv := reflect.New(sliceElementType)
+		v := pv.Interface()
+		if err := json.Unmarshal(buffer, v); err != nil {
+			return err
+		}
+
+		if sliceElementType.Kind() == reflect.Ptr {
+			sliceValue.Set(reflect.Append(sliceValue, reflect.ValueOf(v)))
+		} else if sliceElementType.Kind() == reflect.Struct {
+			sliceValue.Set(reflect.Append(sliceValue, reflect.Indirect(reflect.ValueOf(v))))
+		}
+	}
+
+	return nil
+}
+
+type PointInTimeResp struct {
+	Id string `json:"id,omitempty"`
+}
+
+type Hit struct {
+	Index string    `json:"_index"`
+	Type  string    `json:"_type"`
+	Id    string    `json:"_id"`
+	Score float64   `json:"_score"`
+	Sort  SortValue `json:"sort"`
+}
+
+type SortValue []json.RawMessage
+
+func parseSortValue2String(v SortValue) (string, error) {
+	if len(v) == 0 {
+		return "[]", nil
+	}
+
+	buf, err := json.Marshal(v)
+	if err != nil {
+		return "", err
+	}
+
+	return string(buf), nil
+}
+
+type logHit struct {
+	Hit
+	Source AuditloggerEntity `json:"_source"`
+}
+
+type nameHit struct {
+	Hit
+	Source nameSource `json:"_source"`
+}
+
+type nameSource struct {
+	Timestamp string `json:"@timestamp"`
+	Name      string `json:"name"`
+}
+
+// AuditloggerEntity is information of audit log
+type AuditloggerEntity struct {
+	Id        string   `json:"id"`
+	Timestamp string   `json:"@timestamp"`
+	Subject   string   `json:"subject"`
+	Content   string   `json:"content"`
+	Format    string   `json:"format"`
+	Event     string   `json:"event"`
+	Labels    []string `json:"labels"`
+	OrgId     int64    `json:"orgId"`
+	Where     string   `json:"where"`
+	Reason    string   `json:"reason"`
 }
