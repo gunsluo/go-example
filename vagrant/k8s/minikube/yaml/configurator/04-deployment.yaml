@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: configurator
-        image: registry.gitlab.com/target-digital-transformation/subscription-store/master:fff071b9
+        image: registry.gitlab.com/target-digital-transformation/subscription-store/master:1bfb3c1f
         command: 
          - /usr/local/bin/subscription-store 
          - serve
@@ -28,6 +28,8 @@ spec:
          - --oidc=http://dex.sso:5556
          - --cors-hosts=*
          - --redis-addr=redis.redis:6379
+         - --license-grpc=license.license:16000
+         - --rabbitmq-dsn=amqp://guest:guest@rabbitmq.rabbitmq:5672/
         ports:
         - containerPort: 9301
         - containerPort: 9302
