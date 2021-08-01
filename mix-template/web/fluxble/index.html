@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>{{ theme }}</title>
+</head>
+
+<body>
+theme: {{ theme }}<br/>
+
+{{ lower "ABC" }}
+{{index . "k1"}}
+{{index . "k2"}}
+
+{{ .k1 }}
+{{ .k2 }}
+{{ .d.URL }}
+{{ .d.Method }}
+</body>
+
+</html>
