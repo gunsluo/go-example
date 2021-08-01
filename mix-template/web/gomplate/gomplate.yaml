@@ -1,0 +1,10 @@
+
+inputDir: fluxble/
+outputDir: fluxbletemp/
+
+context:
+  .:
+    url: web/gomplate/data.json
+
+plugins:
+  theme: web/gomplate/plugins/theme.sh
