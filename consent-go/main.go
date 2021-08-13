@@ -34,6 +34,12 @@ func main() {
 	}
 	consentTemplate = t1
 
+	t2, err := template.New("").Parse(logoutHtml)
+	if err != nil {
+		panic(err)
+	}
+	logoutTemplate = t2
+
 	adminUrl := os.Getenv(envHydraAdminUrl)
 	if adminUrl == "" {
 		adminUrl = "http://127.0.0.1:4445"
@@ -49,6 +55,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/login", nosurf.New(http.HandlerFunc(loginHandler)))
 	mux.Handle("/consent", nosurf.New(http.HandlerFunc(consentHandler)))
+	mux.Handle("/logout", nosurf.New(http.HandlerFunc(logoutHandler)))
 
 	fmt.Println("Now server is running on port 3000.")
 	http.ListenAndServe(":3000", mux)
@@ -64,6 +71,7 @@ func loginHandler(w http.ResponseWriter, req *http.Request) {
 
 		//csrfToken := req.Form.Get("csrf_token")
 		challenge := req.Form.Get("challenge")
+		rememberFrom := req.Form.Get("remember")
 		email := req.Form.Get("email")
 		password := req.Form.Get("password")
 		action := req.Form.Get("submit")
@@ -109,12 +117,16 @@ func loginHandler(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
+		var remember bool
+		if rememberFrom == "1" {
+			remember = true
+		}
 		acceptRequest := admin.NewAcceptLoginRequestParams().
 			WithLoginChallenge(challenge).
 			WithContext(req.Context()).
 			WithBody(&models.AcceptLoginRequest{
 				Subject:     &email,
-				Remember:    false,
+				Remember:    remember,
 				RememberFor: 3600,
 				Acr:         oidcConformityMaybeFakeAcr(loginReply, "0"),
 			})
@@ -153,7 +165,7 @@ func loginHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func consentHandler(w http.ResponseWriter, req *http.Request) {
-	if req.Method == "POST" {
+	if req.Method == http.MethodPost {
 		// Parse the form
 		if err := req.ParseForm(); err != nil {
 			http.Error(w, "Could not parse form", http.StatusBadRequest)
@@ -200,6 +212,11 @@ func consentHandler(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
+		if consentReply == nil || consentReply.Payload == nil {
+			http.Error(w, "invalid response from get consent", http.StatusInternalServerError)
+			return
+		}
+
 		acceptRequest := admin.NewAcceptConsentRequestParams().
 			WithConsentChallenge(challenge).
 			WithContext(req.Context()).
@@ -230,6 +247,51 @@ func consentHandler(w http.ResponseWriter, req *http.Request) {
 
 	csrfToken := nosurf.Token(req)
 	challenge := req.URL.Query().Get("consent_challenge")
+
+	consentRequest := admin.NewGetConsentRequestParams().
+		WithConsentChallenge(challenge).
+		WithContext(req.Context())
+	consentReply, err := adminClient.Admin.GetConsentRequest(consentRequest)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if consentReply == nil || consentReply.Payload == nil {
+		http.Error(w, "invalid response from get consent", http.StatusInternalServerError)
+		return
+	}
+
+	if consentReply.Payload.Skip {
+		grantScopes := consentReply.Payload.RequestedScope
+		acceptRequest := admin.NewAcceptConsentRequestParams().
+			WithConsentChallenge(challenge).
+			WithContext(req.Context()).
+			WithBody(&models.AcceptConsentRequest{
+				GrantScope:               grantScopes,
+				Remember:                 false,
+				RememberFor:              3600,
+				Session:                  oidcConformityMaybeFakeSession(consentReply, grantScopes),
+				GrantAccessTokenAudience: consentReply.Payload.RequestedAccessTokenAudience,
+			})
+		acceptReply, err := adminClient.Admin.AcceptConsentRequest(acceptRequest)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if acceptReply == nil || acceptReply.Payload == nil || acceptReply.Payload.RedirectTo == nil {
+			http.Error(w, "invalid response from accept", http.StatusInternalServerError)
+			return
+		}
+
+		// redirect
+		redirectUrl := *acceptReply.Payload.RedirectTo
+		http.Redirect(w, req, redirectUrl, http.StatusFound)
+
+		return
+	}
+
 	var data = struct {
 		CsrfToken string
 		Challenge string
@@ -239,6 +301,81 @@ func consentHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if err := consentTemplate.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func logoutHandler(w http.ResponseWriter, req *http.Request) {
+	if req.Method == http.MethodPost {
+		// Parse the form
+		if err := req.ParseForm(); err != nil {
+			http.Error(w, "Could not parse form", http.StatusBadRequest)
+			return
+		}
+
+		challenge := req.Form.Get("challenge")
+		action := req.Form.Get("submit")
+
+		if action == "No" {
+			rejectRequest := admin.NewRejectLogoutRequestParams().
+				WithLogoutChallenge(challenge).
+				WithContext(req.Context())
+			_, err := adminClient.Admin.RejectLogoutRequest(rejectRequest)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			return
+		}
+
+		acceptRequest := admin.NewAcceptLogoutRequestParams().
+			WithLogoutChallenge(challenge).
+			WithContext(req.Context())
+		acceptReply, err := adminClient.Admin.AcceptLogoutRequest(acceptRequest)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if acceptReply == nil || acceptReply.Payload == nil || acceptReply.Payload.RedirectTo == nil {
+			http.Error(w, "invalid response from accept", http.StatusInternalServerError)
+			return
+		}
+
+		// redirect
+		redirectUrl := *acceptReply.Payload.RedirectTo
+		http.Redirect(w, req, redirectUrl, http.StatusFound)
+		return
+	}
+
+	csrfToken := nosurf.Token(req)
+	challenge := req.URL.Query().Get("logout_challenge")
+
+	logoutRequest := admin.NewGetLogoutRequestParams().
+		WithLogoutChallenge(challenge).
+		WithContext(req.Context())
+	logoutReply, err := adminClient.Admin.GetLogoutRequest(logoutRequest)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if logoutReply == nil || logoutReply.Payload == nil {
+		http.Error(w, "invalid response from get logout", http.StatusInternalServerError)
+		return
+	}
+
+	var data = struct {
+		CsrfToken string
+		Challenge string
+	}{
+		csrfToken,
+		challenge,
+	}
+
+	if err := logoutTemplate.Execute(w, data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -285,6 +422,7 @@ func oidcConformityMaybeFakeSession(reply *admin.GetConsentRequestOK, grantScope
 var (
 	loginTemplate   *template.Template
 	consentTemplate *template.Template
+	logoutTemplate  *template.Template
 )
 
 var loginHtml = `
@@ -350,3 +488,22 @@ var consentHtml = `
 
 </html>
 `
+
+var logoutHtml = `
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title></title>
+</head>
+
+<body>
+  <h1>Do you wish to log out?</h1>
+  <form action="logout" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ .CsrfToken }}">
+    <input type="hidden" name="challenge" value="{{ .Challenge }}">
+    <input type="submit" id="accept" value="Yes"><input type="submit" id="reject" value="No">
+  </form>
+</body>
+
+</html>`
