@@ -117,6 +117,11 @@ func loginHandler(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
+		if loginReply == nil || loginReply.Payload == nil {
+			http.Error(w, "invalid response from get login", http.StatusInternalServerError)
+			return
+		}
+
 		var remember bool
 		if rememberFrom == "1" {
 			remember = true
@@ -150,6 +155,47 @@ func loginHandler(w http.ResponseWriter, req *http.Request) {
 
 	csrfToken := nosurf.Token(req)
 	challenge := req.URL.Query().Get("login_challenge")
+
+	loginRequest := admin.NewGetLoginRequestParams().
+		WithLoginChallenge(challenge).
+		WithContext(req.Context())
+	loginReply, err := adminClient.Admin.GetLoginRequest(loginRequest)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if loginReply == nil || loginReply.Payload == nil {
+		http.Error(w, "invalid response from get login", http.StatusInternalServerError)
+		return
+	}
+
+	if loginReply.Payload.Skip != nil && *loginReply.Payload.Skip {
+		// accept login
+		acceptRequest := admin.NewAcceptLoginRequestParams().
+			WithLoginChallenge(challenge).
+			WithContext(req.Context()).
+			WithBody(&models.AcceptLoginRequest{
+				Subject: loginReply.Payload.Subject,
+			})
+		acceptReply, err := adminClient.Admin.AcceptLoginRequest(acceptRequest)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if acceptReply == nil || acceptReply.Payload == nil || acceptReply.Payload.RedirectTo == nil {
+			http.Error(w, "invalid response from accept", http.StatusInternalServerError)
+			return
+		}
+
+		// redirect
+		redirectUrl := *acceptReply.Payload.RedirectTo
+		http.Redirect(w, req, redirectUrl, http.StatusFound)
+
+		return
+	}
+
 	var data = struct {
 		CsrfToken string
 		Challenge string
@@ -262,6 +308,7 @@ func consentHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	fmt.Println("consent--------->", consentReply.Payload.Skip)
 	if consentReply.Payload.Skip {
 		grantScopes := consentReply.Payload.RequestedScope
 		acceptRequest := admin.NewAcceptConsentRequestParams().
