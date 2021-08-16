@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"math/big"
@@ -12,6 +14,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/julienschmidt/httprouter"
 	"golang.org/x/oauth2"
 )
@@ -59,6 +62,7 @@ func main() {
 	logoutEndpoint := joinUrl(endpoint, "/oauth2/sessions/logout")
 	logoutRedirectUri := serverLocation + "logout"
 	refreshUrl := serverLocation + "refresh"
+	checkUrl := serverLocation + "check"
 
 	conf := oauth2.Config{
 		ClientID:     clientID,
@@ -163,6 +167,8 @@ func main() {
 		idToken := fmt.Sprintf("%v", idt)
 		logoutUrl := logoutEndpoint + "?id_token_hint=" + idToken +
 			"&post_logout_redirect_uri=" + logoutRedirectUri + "&state="
+		checkUrlWithToken := checkUrl + "?access_token=" + token.AccessToken +
+			"&id_token=" + idToken
 		fmt.Printf("Access Token:\n\t%s\n", token.AccessToken)
 		fmt.Printf("Refresh Token:\n\t%s\n", token.RefreshToken)
 		fmt.Printf("Expires in:\n\t%s\n", token.Expiry.Format(time.RFC1123))
@@ -178,6 +184,7 @@ func main() {
 			DisplayBackButton bool
 			LogoutURL         string
 			RefreshUrl        string
+			CheckUrl          string
 		}{
 			AccessToken:       token.AccessToken,
 			RefreshToken:      token.RefreshToken,
@@ -187,6 +194,7 @@ func main() {
 			DisplayBackButton: true,
 			LogoutURL:         logoutUrl,
 			RefreshUrl:        refreshUrl,
+			CheckUrl:          checkUrlWithToken,
 		})
 		onDone()
 	})
@@ -217,6 +225,8 @@ func main() {
 		idToken := fmt.Sprintf("%v", idt)
 		logoutUrl := logoutEndpoint + "?id_token_hint=" + idToken +
 			"&post_logout_redirect_uri=" + logoutRedirectUri + "&state="
+		checkUrlWithToken := checkUrl + "?access_token=" + token.AccessToken +
+			"&id_token=" + idToken
 		fmt.Printf("Access Token:\n\t%s\n", token.AccessToken)
 		fmt.Printf("Refresh Token:\n\t%s\n", token.RefreshToken)
 		fmt.Printf("Expires in:\n\t%s\n", token.Expiry.Format(time.RFC1123))
@@ -232,6 +242,7 @@ func main() {
 			DisplayBackButton bool
 			LogoutURL         string
 			RefreshUrl        string
+			CheckUrl          string
 		}{
 			AccessToken:       token.AccessToken,
 			RefreshToken:      token.RefreshToken,
@@ -241,7 +252,58 @@ func main() {
 			DisplayBackButton: true,
 			LogoutURL:         logoutUrl,
 			RefreshUrl:        refreshUrl,
+			CheckUrl:          checkUrlWithToken,
 		})
+	})
+
+	oidcProvider, err := oidc.NewProvider(context.Background(), endpoint)
+	if err != nil {
+		panic(err)
+	}
+
+	//verifier = oidcProvider.Verifier(&oidc.Config{SkipClientIDCheck: true})
+	verifier := oidcProvider.Verifier(&oidc.Config{ClientID: clientID})
+
+	r.GET("/check", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		// token from query or header
+		// /oauth2/introspect
+		// accessToken := r.URL.Query().Get("access_token")
+		// TODO:
+		idToken := r.URL.Query().Get("id_token")
+
+		token, err := verifier.Verify(r.Context(), idToken)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		var raw json.RawMessage
+		err = token.Claims(&raw)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		content := &bytes.Buffer{}
+		content.WriteString("Authorized")
+		content.WriteString("<br/>")
+		content.WriteString("Subject: " + token.Subject)
+		content.WriteString("<br/>")
+		content.WriteString("Issuer: " + token.Issuer)
+		content.WriteString("<br/>")
+		content.WriteString("Audience: " + strings.Join(token.Audience, " "))
+		content.WriteString("<br/>")
+		content.WriteString("Expiry: " + token.Expiry.String())
+		content.WriteString("<br/>")
+		content.WriteString("IssuedAt: " + token.IssuedAt.String())
+		content.WriteString("<br/>")
+		content.WriteString("Nonce: " + token.Nonce)
+		content.WriteString("<br/>")
+		content.WriteString("Claims: " + string(raw))
+		content.WriteString("<br/>")
+
+		w.Header().Add("Content-Type", "text/html; charset=utf-8")
+		w.Write(content.Bytes())
 	})
 
 	if err := server.ListenAndServe(); err != nil {
@@ -339,6 +401,9 @@ var tokenUserResult = template.Must(template.New("").Parse(`<html>
 	  <input type="hidden" name="refresh_token" value="{{ .RefreshToken }}">
 	  <input type="submit" value="Redeem refresh token">
     </form>
+
+<br/>
+<a href="{{ .CheckUrl }}">Check Token</a>
 
 <br/>
 <a href="{{ .LogoutURL }}">Logout</a>
