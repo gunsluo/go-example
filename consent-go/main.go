@@ -220,6 +220,7 @@ func consentHandler(w http.ResponseWriter, req *http.Request) {
 
 		challenge := req.Form.Get("challenge")
 		grantScopes := req.Form["grant_scope"]
+		rememberFrom := req.Form.Get("remember")
 		action := req.Form.Get("submit")
 
 		if action != "Allow access" {
@@ -263,12 +264,16 @@ func consentHandler(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
+		var remember bool
+		if rememberFrom == "1" {
+			remember = true
+		}
 		acceptRequest := admin.NewAcceptConsentRequestParams().
 			WithConsentChallenge(challenge).
 			WithContext(req.Context()).
 			WithBody(&models.AcceptConsentRequest{
 				GrantScope:               grantScopes,
-				Remember:                 false,
+				Remember:                 remember,
 				RememberFor:              3600,
 				Session:                  oidcConformityMaybeFakeSession(consentReply, grantScopes),
 				GrantAccessTokenAudience: consentReply.Payload.RequestedAccessTokenAudience,
@@ -308,7 +313,6 @@ func consentHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	fmt.Println("consent--------->", consentReply.Payload.Skip)
 	if consentReply.Payload.Skip {
 		grantScopes := consentReply.Payload.RequestedScope
 		acceptRequest := admin.NewAcceptConsentRequestParams().
