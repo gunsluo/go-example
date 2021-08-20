@@ -11,10 +11,12 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"text/template"
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/gunsluo/go-example/hydra-client/pkce"
 	"github.com/julienschmidt/httprouter"
 	"golang.org/x/oauth2"
 )
@@ -25,6 +27,7 @@ var (
 	endpoint     string
 	port         int
 	scopes       []string
+	enablePKCE   bool
 )
 
 func main() {
@@ -34,6 +37,7 @@ func main() {
 	flag.IntVar(&port, "port", 5555, "Please provide a Port using -port flag.")
 	flag.StringVar(&scope, "scope", "", "Please provide a Scope using -scopes flag.")
 	flag.StringVar(&endpoint, "endpoint", "", "Please provide a endpoint using -endpoint flag.")
+	flag.BoolVar(&enablePKCE, "pkce", false, "enable pkce.")
 
 	flag.Parse()
 
@@ -75,24 +79,48 @@ func main() {
 		Scopes:      scopes,
 	}
 
-	var generateAuthCodeURL = func() (string, []rune) {
-		state, err := RuneSequence(24, AlphaLower)
-		if err != nil {
-			panic(err)
-		}
-
+	var generateAuthCodeURL = func() (string, string) {
 		nonce, err := RuneSequence(24, AlphaLower)
 		if err != nil {
 			panic(err)
 		}
 
-		authCodeURL := conf.AuthCodeURL(
-			string(state),
-			oauth2.SetAuthURLParam("audience", strings.Join(audience, "+")),
-			oauth2.SetAuthURLParam("nonce", string(nonce)),
-			oauth2.SetAuthURLParam("prompt", strings.Join(prompt, "+")),
-			oauth2.SetAuthURLParam("max_age", strconv.Itoa(maxAge)),
-		)
+		state, err := genState("", 32)
+		if err != nil {
+			panic(err)
+		}
+
+		var authCodeURL string
+		if enablePKCE {
+			// generate code verifier and code chanllenge
+			suite, err := pkce.Generate()
+			if err != nil {
+				panic(err)
+			}
+
+			fmt.Println("---->", state, suite.CodeVerifier, suite.CodeChallenge, suite.CodeChallengeMethod)
+
+			authReqRelations.save(state, suite.CodeVerifier)
+			authCodeURL = conf.AuthCodeURL(
+				state,
+				oauth2.SetAuthURLParam("audience", strings.Join(audience, "+")),
+				oauth2.SetAuthURLParam("nonce", string(nonce)),
+				oauth2.SetAuthURLParam("prompt", strings.Join(prompt, "+")),
+				oauth2.SetAuthURLParam("max_age", strconv.Itoa(maxAge)),
+				oauth2.SetAuthURLParam("code_challenge", suite.CodeChallenge),
+				oauth2.SetAuthURLParam("code_challenge_method", suite.CodeChallengeMethod),
+			)
+		} else {
+
+			authCodeURL = conf.AuthCodeURL(
+				state,
+				oauth2.SetAuthURLParam("audience", strings.Join(audience, "+")),
+				oauth2.SetAuthURLParam("nonce", string(nonce)),
+				oauth2.SetAuthURLParam("prompt", strings.Join(prompt, "+")),
+				oauth2.SetAuthURLParam("max_age", strconv.Itoa(maxAge)),
+			)
+		}
+
 		return authCodeURL, state
 	}
 	authCodeURL, state := generateAuthCodeURL()
@@ -150,8 +178,15 @@ func main() {
 		}
 
 		code := r.URL.Query().Get("code")
-		ctx := context.Background()
-		token, err := conf.Exchange(ctx, code)
+		state := r.URL.Query().Get("state")
+		var options []oauth2.AuthCodeOption
+		if enablePKCE {
+			codeVerifier, exist := authReqRelations.get(state)
+			if exist {
+				options = append(options, oauth2.SetAuthURLParam("code_verifier", codeVerifier))
+			}
+		}
+		token, err := conf.Exchange(r.Context(), code, options...)
 		if err != nil {
 			fmt.Printf("Unable to exchange code for token: %s\n", err)
 
@@ -322,6 +357,45 @@ func joinUrl(base, path string) string {
 	default:
 		return base + "/" + path
 	}
+}
+
+type requestRelation struct {
+	lock      sync.RWMutex
+	relations map[string]string
+}
+
+var authReqRelations = requestRelation{relations: make(map[string]string, 10)}
+
+func (m *requestRelation) save(state string, codeVerifier string) {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+
+	m.relations[state] = codeVerifier
+}
+
+func (m *requestRelation) get(state string) (string, bool) {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+
+	codeVerifier, ok := m.relations[state]
+	if !ok {
+		return "", false
+	}
+
+	return codeVerifier, true
+}
+
+func genState(prefix string, l int) (string, error) {
+	seq, err := RuneSequence(l, AlphaLowerNum)
+	if err != nil {
+		return "", err
+	}
+
+	if prefix == "" {
+		return string(seq), nil
+	}
+
+	return prefix + string(seq), nil
 }
 
 var (
