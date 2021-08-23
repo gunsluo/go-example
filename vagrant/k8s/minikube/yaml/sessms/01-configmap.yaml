@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sessms-config
+  namespace: sessms
+data:
+  config.yaml: |
+    sms:
+      aws:
+      - region: us-east-1
+        accessKeyId: yourkeyid
+        accessKeySecret: yourkeyscret
+        affinityRegion: []
+        unreachableRegion: []
+        default: true
+      twilio:
+      - sid: sid
+        token: token
+        from: "+447401255644"
+        affinityRegion: []
+        unreachableRegion: ["CN"]
+      omantel:
+      - username: yourusername
+        password: yourpassword
+        language: eng
+        type: normal
+

@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rest
+  namespace: sessms
+spec:
+  selector:
+    matchLabels:
+      app: rest
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: rest
+    spec:
+      containers:
+      - name: rest
+        image: registry.gitlab.com/target-digital-transformation/email-sms-sender/sessms:1.5.4
+        command: 
+         - /usr/local/bin/sender-serve
+         - rest
+         - --address=:6100
+         - --oidc=http://dex.sso:5556
+         - --cors-hosts=*
+         - --grpc-addr=grpc:6000
+         - --grpc-insecure
+         - --verbose
+      imagePullSecrets:
+      - name: registry.gitlab.com

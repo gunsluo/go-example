@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mailslurper
+  namespace: mailslurper
+  labels:
+    svc: mailslurper
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 4436
+    targetPort: 4436
+    protocol: TCP
+    name: http
+  - port: 4437
+    targetPort: 4437
+    protocol: TCP
+    name: tcp
+  - port: 11025
+    targetPort: 11025
+    protocol: TCP
+    name: mail
+  selector:
+    app: mailslurper
