@@ -122,6 +122,10 @@ func loginHandler(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
+		if loginReply.Payload.RequestURL != nil {
+			fmt.Printf("-------->login request url, %v\n", *loginReply.Payload.RequestURL)
+		}
+
 		var remember bool
 		if rememberFrom == "1" {
 			remember = true
