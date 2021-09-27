@@ -7,6 +7,7 @@ import (
 	"os"
 	"text/template"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/justinas/nosurf"
 	"github.com/ory/hydra-client-go/client"
 	"github.com/ory/hydra-client-go/client/admin"
@@ -324,7 +325,7 @@ func consentHandler(w http.ResponseWriter, req *http.Request) {
 			WithContext(req.Context()).
 			WithBody(&models.AcceptConsentRequest{
 				GrantScope:               grantScopes,
-				Remember:                 false,
+				Remember:                 true,
 				RememberFor:              3600,
 				Session:                  oidcConformityMaybeFakeSession(consentReply, grantScopes),
 				GrantAccessTokenAudience: consentReply.Payload.RequestedAccessTokenAudience,
@@ -385,6 +386,20 @@ func logoutHandler(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
+		logoutRequest := admin.NewGetLogoutRequestParams().
+			WithLogoutChallenge(challenge).
+			WithContext(req.Context())
+		logoutReply, err := adminClient.Admin.GetLogoutRequest(logoutRequest)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if logoutReply == nil || logoutReply.Payload == nil {
+			http.Error(w, "invalid response from get logout", http.StatusInternalServerError)
+			return
+		}
+
 		acceptRequest := admin.NewAcceptLogoutRequestParams().
 			WithLogoutChallenge(challenge).
 			WithContext(req.Context())
@@ -397,6 +412,24 @@ func logoutHandler(w http.ResponseWriter, req *http.Request) {
 		if acceptReply == nil || acceptReply.Payload == nil || acceptReply.Payload.RedirectTo == nil {
 			http.Error(w, "invalid response from accept", http.StatusInternalServerError)
 			return
+		}
+
+		clientId, err := getClientIdFromLogoutURL(logoutReply.Payload.RequestURL)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if clientId != "" {
+			revokerConsentRequest := admin.NewRevokeConsentSessionsParams().
+				WithContext(req.Context()).
+				WithClient(&clientId).
+				WithSubject(logoutReply.Payload.Subject)
+			_, err = adminClient.Admin.RevokeConsentSessions(revokerConsentRequest)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
 		}
 
 		// redirect
@@ -434,6 +467,40 @@ func logoutHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+func getClientIdFromLogoutURL(logoutURL string) (string, error) {
+	u, err := url.Parse(logoutURL)
+	if err != nil {
+		return "", err
+	}
+
+	idTokenHint := u.Query().Get("id_token_hint")
+	if idTokenHint == "" {
+		return "", nil
+	}
+
+	claims := jwt.MapClaims{}
+	_, _, err = new(jwt.Parser).ParseUnverified(idTokenHint, claims)
+	if err != nil {
+		return "", err
+	}
+
+	var clientId string
+	if items, ok := claims["aud"].([]interface{}); !ok {
+		return "", nil
+	} else if len(items) == 0 {
+		return "", nil
+	} else {
+		for _, item := range items {
+			if s, ok := item.(string); ok {
+				clientId = s
+				break
+			}
+		}
+	}
+
+	return clientId, nil
 }
 
 func oidcConformityMaybeFakeAcr(reply *admin.GetLoginRequestOK, defaultValue string) string {
