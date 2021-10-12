@@ -196,6 +196,7 @@ func loginHandler(w http.ResponseWriter, req *http.Request) {
 
 		// redirect
 		redirectUrl := *acceptReply.Payload.RedirectTo
+		fmt.Println("2---->", redirectUrl)
 		http.Redirect(w, req, redirectUrl, http.StatusFound)
 
 		return
@@ -420,6 +421,7 @@ func logoutHandler(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
+		fmt.Println("logout--->", clientId)
 		if clientId != "" {
 			revokerConsentRequest := admin.NewRevokeConsentSessionsParams().
 				WithContext(req.Context()).

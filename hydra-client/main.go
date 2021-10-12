@@ -199,7 +199,11 @@ func main() {
 		}
 
 		idt := token.Extra("id_token")
-		idToken := fmt.Sprintf("%v", idt)
+		var idToken string
+		if idt != nil {
+			idToken = fmt.Sprintf("%v", idt)
+		}
+
 		logoutUrl := logoutEndpoint + "?id_token_hint=" + idToken +
 			"&post_logout_redirect_uri=" + logoutRedirectUri + "&state="
 		checkUrlWithToken := checkUrl + "?access_token=" + token.AccessToken +
@@ -301,38 +305,75 @@ func main() {
 
 	r.GET("/check", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		// token from query or header
-		// /oauth2/introspect
-		// accessToken := r.URL.Query().Get("access_token")
-		// TODO:
 		idToken := r.URL.Query().Get("id_token")
 
-		token, err := verifier.Verify(r.Context(), idToken)
+		if idToken != "" {
+			token, err := verifier.Verify(r.Context(), idToken)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+				return
+			}
+
+			var raw json.RawMessage
+			err = token.Claims(&raw)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusUnauthorized)
+				return
+			}
+
+			content := &bytes.Buffer{}
+			content.WriteString("Authorized")
+			content.WriteString("<br/>")
+			content.WriteString("Subject: " + token.Subject)
+			content.WriteString("<br/>")
+			content.WriteString("Issuer: " + token.Issuer)
+			content.WriteString("<br/>")
+			content.WriteString("Audience: " + strings.Join(token.Audience, " "))
+			content.WriteString("<br/>")
+			content.WriteString("Expiry: " + token.Expiry.String())
+			content.WriteString("<br/>")
+			content.WriteString("IssuedAt: " + token.IssuedAt.String())
+			content.WriteString("<br/>")
+			content.WriteString("Nonce: " + token.Nonce)
+			content.WriteString("<br/>")
+			content.WriteString("Claims: " + string(raw))
+			content.WriteString("<br/>")
+
+			w.Header().Add("Content-Type", "text/html; charset=utf-8")
+			w.Write(content.Bytes())
+			return
+		}
+
+		accessToken := r.URL.Query().Get("access_token")
+
+		ts := oauth2.StaticTokenSource(&oauth2.Token{
+			AccessToken: accessToken,
+			TokenType:   "Bearer",
+		})
+
+		userinfo, err := oidcProvider.UserInfo(r.Context(), ts)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		var raw json.RawMessage
-		err = token.Claims(&raw)
+		err = userinfo.Claims(&raw)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		content := &bytes.Buffer{}
 		content.WriteString("Authorized")
 		content.WriteString("<br/>")
-		content.WriteString("Subject: " + token.Subject)
+		content.WriteString("Subject: " + userinfo.Subject)
 		content.WriteString("<br/>")
-		content.WriteString("Issuer: " + token.Issuer)
+		content.WriteString("Profile: " + userinfo.Profile)
 		content.WriteString("<br/>")
-		content.WriteString("Audience: " + strings.Join(token.Audience, " "))
+		content.WriteString("Email: " + userinfo.Email)
 		content.WriteString("<br/>")
-		content.WriteString("Expiry: " + token.Expiry.String())
-		content.WriteString("<br/>")
-		content.WriteString("IssuedAt: " + token.IssuedAt.String())
-		content.WriteString("<br/>")
-		content.WriteString("Nonce: " + token.Nonce)
+		content.WriteString("EmailVerified: " + fmt.Sprintf("%v", userinfo.EmailVerified))
 		content.WriteString("<br/>")
 		content.WriteString("Claims: " + string(raw))
 		content.WriteString("<br/>")

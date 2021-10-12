@@ -1,6 +1,18 @@
 #!/bin/sh
 
 if [ "$1" = "pkce" ]; then
+
+  if [ "$2" = "2" ]; then
+    go run main.go \
+      -client-id public-client2 \
+      -endpoint http://127.0.0.1:4444/ \
+      -port 7777 \
+      -scope openid,offline \
+      -pkce
+
+    exit 0
+  fi
+
   go run main.go \
     -client-id public-client \
     -endpoint http://127.0.0.1:4444/ \
@@ -8,7 +20,7 @@ if [ "$1" = "pkce" ]; then
     -scope openid,offline \
     -pkce
 
-    exit 0
+  exit 0
 fi
 
 

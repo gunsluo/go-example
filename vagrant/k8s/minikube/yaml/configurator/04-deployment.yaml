@@ -15,13 +15,12 @@ spec:
     spec:
       containers:
       - name: configurator
-        image: registry.gitlab.com/target-digital-transformation/subscription-store/master:41d5068c
+        image: registry.gitlab.com/target-digital-transformation/subscription-store:4.12.2
         command: 
          - /usr/local/bin/subscription-store 
          - serve
          - --address=:9302
          - --grpc-address=:9301
-         - --ac-grpc=grpc.ac:7001
          - --ac-grpc=grpc.ac:7001
          - --profile-grpc=profile.profile:50051
          - --dsn=postgres://postgres:password@postgres.postgres/configurator?sslmode=disable
