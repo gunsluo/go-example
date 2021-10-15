@@ -190,7 +190,12 @@ func tokenProxy(clientId, clientSecret, subject string) (*passwordToken, error) 
 	if err != nil {
 		return nil, err
 	}
-	httpClient := &http.Client{Jar: jar}
+	httpClient := &http.Client{
+		Jar: jar,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, HTTPClient, httpClient)
 
@@ -200,13 +205,13 @@ func tokenProxy(clientId, clientSecret, subject string) (*passwordToken, error) 
 		return nil, err
 	}
 
-	redirectReq, err := getLocationRequest(ctx, authCodeURL, http.MethodGet)
+	redirectReqUrl, err := getLocationRequest(ctx, authCodeURL, http.MethodGet)
 	if err != nil {
 		return nil, err
 	}
 
 	// accept login
-	loginChallenge := redirectReq.URL.Query().Get("login_challenge")
+	loginChallenge := redirectReqUrl.Query().Get("login_challenge")
 	if loginChallenge == "" {
 		return nil, fmt.Errorf("missing login_challenge")
 	}
@@ -231,12 +236,12 @@ func tokenProxy(clientId, clientSecret, subject string) (*passwordToken, error) 
 	acceptLoginRedirectUrl := *acceptReply.Payload.RedirectTo
 
 	// 2. redirect to consent page
-	consentRedirectReq, err := getLocationRequest(ctx, acceptLoginRedirectUrl, http.MethodGet)
+	consentRedirectReqUrl, err := getLocationRequest(ctx, acceptLoginRedirectUrl, http.MethodGet)
 	if err != nil {
 		return nil, err
 	}
 
-	consentChallenge := consentRedirectReq.URL.Query().Get("consent_challenge")
+	consentChallenge := consentRedirectReqUrl.Query().Get("consent_challenge")
 	if consentChallenge == "" {
 		return nil, fmt.Errorf("missing consent_challenge")
 	}
@@ -276,13 +281,13 @@ func tokenProxy(clientId, clientSecret, subject string) (*passwordToken, error) 
 	acceptConsentRedirectUrl := *acceptConsentReply.Payload.RedirectTo
 
 	// 3. get to callback url
-	callbackRedirectReq, err := getLocationRequest(ctx, acceptConsentRedirectUrl, http.MethodGet)
+	callbackRedirectReqUrl, err := getLocationRequest(ctx, acceptConsentRedirectUrl, http.MethodGet)
 	if err != nil {
 		return nil, err
 	}
 
-	code := callbackRedirectReq.URL.Query().Get("code")
-	stateInReq := callbackRedirectReq.URL.Query().Get("state")
+	code := callbackRedirectReqUrl.Query().Get("code")
+	stateInReq := callbackRedirectReqUrl.Query().Get("state")
 	if stateInReq != state {
 		return nil, fmt.Errorf("state mismatch")
 	}
@@ -367,19 +372,32 @@ func generateAuthCodeURL(conf oauth2.Config) (string, string, error) {
 	return authCodeURL, state, nil
 }
 
-func getLocationRequest(ctx context.Context, url, method string) (*http.Request, error) {
+func getLocationRequest(ctx context.Context, url, method string) (*url.URL, error) {
 	resp, err := proxyRequest(ctx, url, method)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusMovedPermanently &&
+		resp.StatusCode != http.StatusFound &&
+		resp.StatusCode != http.StatusSeeOther &&
+		resp.StatusCode != http.StatusTemporaryRedirect {
 		return nil, fmt.Errorf("fetch url, error: %s %s", url, method)
-
 	}
 
-	return resp.Request, nil
+	redirectUrl, err := resp.Location()
+	if err != nil {
+		return nil, err
+	}
+
+	return redirectUrl, nil
+
+	//if resp.StatusCode != http.StatusOK {
+	//	return nil, fmt.Errorf("fetch url, error: %s %s", url, method)
+	//}
+
+	//return resp.Request.URL, nil
 }
 
 var HTTPClient struct{}
@@ -527,7 +545,7 @@ var mockLoginPage = template.Must(template.New("").Parse(`<!DOCTYPE html>
         <td>(secret)</td>
       </tr>
       <tr>
-        <td><input type="text" id="username" name="username" value="" placeholder="email@foobar.com"></td>
+        <td><input type="text" id="username" name="username" value="foo@bar.com" placeholder="email@foobar.com"></td>
         <td>(it's "foo@bar.com")</td>
       </tr>
       <tr>
