@@ -16,6 +16,8 @@ github.com/go-playground/validator/v10 v10.4.1/go.mod h1:nlOn6nFhuKACm19sB/8EGNn
 github.com/golang/protobuf v1.3.3 h1:gyjaxf+svBWX08ZjK86iN9geUJF0H6gp2IRKX6Nf6/I=
 github.com/golang/protobuf v1.3.3/go.mod h1:vzj43D7+SQXF/4pzW/hwtAqwc6iTitCiVSaWz5lYuqw=
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
+github.com/gunsluo/nosurf v1.2.0 h1:b1vr1agu6s3itbyiYJNY46ot7ptkhK7L2bvACfueWt4=
+github.com/gunsluo/nosurf v1.2.0/go.mod h1:RBSC5bfDhpUlr77E8xLYQ7SjzyWioAs22fOJ3fgYCAo=
 github.com/gwatts/gin-adapter v0.0.0-20170508204228-c44433c485ad h1:eGCbPkMnsg02jXBIxxXn1Fxep9dAuTUvEi6UdJsbOhg=
 github.com/gwatts/gin-adapter v0.0.0-20170508204228-c44433c485ad/go.mod h1:XywyZk8euPjg6CVt44eMyHjv0sZUiHbHtBnFKgmvj8I=
 github.com/json-iterator/go v1.1.9 h1:9yzud/Ht36ygwatGx56VwCZtlI/2AD15T1X2sjSuGns=

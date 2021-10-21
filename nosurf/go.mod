@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/gin-gonic/gin v1.7.4
+	github.com/gunsluo/nosurf v1.2.0
 	github.com/gwatts/gin-adapter v0.0.0-20170508204228-c44433c485ad
 	github.com/justinas/nosurf v1.1.1
 )
