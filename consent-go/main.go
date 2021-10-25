@@ -54,9 +54,9 @@ func main() {
 	adminClient = hydraAdminClient
 
 	mux := http.NewServeMux()
-	mux.Handle("/login", nosurf.New(http.HandlerFunc(loginHandler)))
-	mux.Handle("/consent", nosurf.New(http.HandlerFunc(consentHandler)))
-	mux.Handle("/logout", nosurf.New(http.HandlerFunc(logoutHandler)))
+	mux.Handle("/oauth2/login", nosurf.New(http.HandlerFunc(loginHandler)))
+	mux.Handle("/oauth2/consent", nosurf.New(http.HandlerFunc(consentHandler)))
+	mux.Handle("/oauth2/logout", nosurf.New(http.HandlerFunc(logoutHandler)))
 
 	fmt.Println("Now server is running on port 3000.")
 	http.ListenAndServe(":3000", mux)
