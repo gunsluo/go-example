@@ -7,8 +7,11 @@ import (
 )
 
 func main() {
-	number := "+96819999999999"
+	//number := "+96819999999999"
+	number := "+92 04658863211"
 	//number := "+86 18980501737"
+	//number := "+96819960515"
+	//number := "6502530000"
 	// 6502530000
 	// parse our phone number
 
@@ -17,12 +20,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("--------->", num)
+	fmt.Println("--------->", num.String())
 
 	ok := phonenumbers.IsAlphaNumber(number)
 	fmt.Println("---->", ok)
 
 	ok = phonenumbers.IsValidNumber(num)
+	fmt.Println("---->", ok)
+
+	ok = phonenumbers.IsPossibleNumber(num)
 	fmt.Println("---->", ok)
 	/*
 		// format it using national format
