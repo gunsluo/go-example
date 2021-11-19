@@ -48,5 +48,5 @@ func main() {
 
 	var o2 subFlat
 	k.UnmarshalWithConf("parent1", &o2, koanf.UnmarshalConf{Tag: "koanf", FlatPaths: true})
-	fmt.Println(o2)
+	fmt.Println("->", o2)
 }
