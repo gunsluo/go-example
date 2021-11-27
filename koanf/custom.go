@@ -88,7 +88,7 @@ func ConnectorEnvValuesHookFunc(values map[string]interface{}, k, v string) (str
 	for i, c := range connectors {
 		if strings.ToLower(c.Type) == ty {
 			fields := items[2:]
-			if updater, ok := ConnectorsEnvUpdater[ty]; ok {
+			if updater, ok := ConnectorsEnvUpdater[c.Type]; ok {
 				updater(&c, v, fields...)
 			}
 			connectors[i] = c

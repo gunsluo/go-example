@@ -6,3 +6,15 @@ cron:
   period: 15s
   price: 0.2
 
+connectors:
+- type: mockCallback
+  id: mock
+  name: Example
+- type: github
+  id: github
+  name: GitHub
+  config:
+    clientID: 110d4377d1317f196051
+    clientSecret: e9956ce1e2bab2595a221320733b621099adf122
+    redirectURI: http://sso-dex:5556/callback
+
