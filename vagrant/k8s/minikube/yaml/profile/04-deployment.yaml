@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: profile
-        image: registry.gitlab.com/target-digital-transformation/profile-be:1.42.4
+        image: registry.gitlab.com/target-digital-transformation/profile-be:v1.47.3
         command: 
          - /usr/local/bin/profile-serve
          - profile
