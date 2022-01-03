@@ -97,7 +97,7 @@ func newETag(c ETagConfig) (*etag, error) {
 			k := strings.Replace(path, dir, e.prefix, 1)
 			e.kv[k] = v
 			if strings.HasSuffix(k, index) {
-				k := strings.TrimRight(k, index)
+				k := strings.TrimSuffix(k, index)
 				e.kv[k] = v
 				e.kv[k+"/"] = v
 			}
