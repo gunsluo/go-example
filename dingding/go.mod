@@ -7,7 +7,6 @@ replace github.com/gunsluo/godingtalk => /Users/luoji/gopath/src/github.com/guns
 require (
 	github.com/gin-gonic/gin v1.7.7
 	github.com/gunsluo/godingtalk v0.0.0-20211214123535-4c469d3f2b52
-	github.com/hugozhu/godingtalk v1.0.6
 )
 
 require (

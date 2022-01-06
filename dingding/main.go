@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -41,7 +42,7 @@ func main() {
 		Token:       token,
 	}
 	client = dingtalk.NewISVClient(config)
-	if _, err := client.GetAndRefreshSuiteAccessToken(); err != nil {
+	if _, err := client.GetAndRefreshSuiteAccessToken(context.Background()); err != nil {
 		panic(err)
 	}
 
@@ -84,7 +85,7 @@ func callback(ctx *gin.Context) {
 
 	var random string
 	if fn, ok := eventTypesHandleFuncs[notification.EventType]; ok {
-		v, err := fn(notification)
+		v, err := fn(ctx.Request.Context(), notification)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, nil)
 			return
@@ -110,7 +111,7 @@ func callback(ctx *gin.Context) {
 	})
 }
 
-var eventTypesHandleFuncs = map[string]func(*dingtalk.PushNotification) (string, error){
+var eventTypesHandleFuncs = map[string]func(context.Context, *dingtalk.PushNotification) (string, error){
 	dingtalk.CheckCreateSuiteURLEventType: checkCreateSuiteURL,
 	dingtalk.CheckUpdateSuiteUrlEventType: checkCreateSuiteURL,
 	dingtalk.CheckUrlEventType:            checkURL,
@@ -118,25 +119,25 @@ var eventTypesHandleFuncs = map[string]func(*dingtalk.PushNotification) (string,
 	dingtalk.SyncHTTPPushMediumEventType:  syncHTTPPushMedium,
 }
 
-func checkCreateSuiteURL(n *dingtalk.PushNotification) (string, error) {
+func checkCreateSuiteURL(ctx context.Context, n *dingtalk.PushNotification) (string, error) {
 	if suiteKey != n.TestSuiteKey {
 		return "", errors.New("invalid suite key")
 	}
 	return n.Random, nil
 }
 
-func checkURL(n *dingtalk.PushNotification) (string, error) {
+func checkURL(ctx context.Context, n *dingtalk.PushNotification) (string, error) {
 	return "success", nil
 }
 
-func syncHTTPPushHigh(n *dingtalk.PushNotification) (string, error) {
+func syncHTTPPushHigh(ctx context.Context, n *dingtalk.PushNotification) (string, error) {
 	var authCorpids []string
 	var permanentCodes []string
 
 	for _, item := range n.BizItems {
 		switch v := item.BizData.(type) {
 		case dingtalk.Biz2Data:
-			client.SetSuiteTicket(v.SuiteTicket)
+			client.SetSuiteTicket(ctx, v.SuiteTicket)
 		case dingtalk.Biz4Data:
 			authCorpids = append(authCorpids, v.AuthCorpInfo.CorpID)
 			permanentCodes = append(permanentCodes, v.PermanentCode)
@@ -149,7 +150,7 @@ func syncHTTPPushHigh(n *dingtalk.PushNotification) (string, error) {
 
 	// active
 	for i, corpId := range authCorpids {
-		resp, err := client.IsvActivateSuite(corpId, permanentCodes[i])
+		resp, err := client.IsvActivateSuite(ctx, corpId, permanentCodes[i])
 		if err != nil {
 			return "", err
 		}
@@ -159,7 +160,7 @@ func syncHTTPPushHigh(n *dingtalk.PushNotification) (string, error) {
 	return "success", nil
 }
 
-func syncHTTPPushMedium(n *dingtalk.PushNotification) (string, error) {
+func syncHTTPPushMedium(ctx context.Context, n *dingtalk.PushNotification) (string, error) {
 
 	return "success", nil
 }
