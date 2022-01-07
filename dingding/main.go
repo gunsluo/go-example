@@ -139,6 +139,13 @@ func syncHTTPPushHigh(ctx context.Context, n *dingtalk.PushNotification) (string
 		case dingtalk.Biz2Data:
 			client.SetSuiteTicket(ctx, v.SuiteTicket)
 		case dingtalk.Biz4Data:
+			//fmt.Printf("user-->%d, %+v\n", item.BizType, v.AuthUserInfo.UserId)
+			fmt.Println("1.===================")
+			fmt.Printf("agent-->%d, %s, %s\n", item.BizType, v.AuthCorpInfo.CorpID, v.AuthCorpInfo.CorpName)
+			for i, a := range v.AuthInfo.Agents {
+				fmt.Printf("\t%d, agent-->%d, %d, %s\n", i, item.BizType, a.AgentId, a.AgentName)
+			}
+			fmt.Println("2.===================")
 			authCorpids = append(authCorpids, v.AuthCorpInfo.CorpID)
 			permanentCodes = append(permanentCodes, v.PermanentCode)
 		case dingtalk.Biz16Data:
