@@ -1,0 +1,22 @@
+version: "3.7"
+
+services:
+  sso-dex:
+    image: nats:2.7.1-alpine3.15
+    container_name: nats
+    #command: |
+    command: "-c /etc/nats/nats.conf"
+    #command: "-c /etc/nats/nats.conf --cluster nats://0.0.0.0:6222 --routes=nats://ruser:T0pS3cr3t@nats:6222"
+    #docker run  --name nats-server -ti nats:latest
+    volumes:
+      - ./config/:/etc/nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+      - "6222:6222"
+    networks:
+      target:
+
+networks:
+  target:
+    name: target
