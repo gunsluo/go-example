@@ -1,7 +1,7 @@
 version: "3.7"
 
 services:
-  sso-dex:
+  nats:
     image: nats:2.7.1-alpine3.15
     container_name: nats
     #command: |

@@ -6,7 +6,7 @@ import (
 
 func main() {
 	// Connect to a server
-	nc, err := nats.Connect(nats.DefaultURL)
+	nc, err := nats.Connect(nats.DefaultURL, nats.UserInfo("root", "password"))
 	if err != nil {
 		panic(err)
 	}
