@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dmzacrest
+  namespace: ac
+  labels:
+    svc: dmzacrest
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 17002
+    targetPort: 17002
+    protocol: TCP
+    name: http
+  selector:
+    app: dmzacrest

@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: status
+  name: sessmsstatus
   namespace: sessms
 spec:
   selector:
     matchLabels:
-      app: status
+      app: sessmsstatus
   replicas: 1
   template:
     metadata:
       labels:
-        app: status
+        app: sessmsstatus
     spec:
       containers:
-      - name: status
+      - name: sessmsstatus
         image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms:2.0.0
         command: 
          - /usr/local/bin/sender-serve
@@ -37,20 +37,20 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: agent
+  name: sessmsagent
   namespace: sessms
 spec:
   selector:
     matchLabels:
-      app: agent 
+      app: sessmsagent 
   replicas: 1
   template:
     metadata:
       labels:
-        app: agent
+        app: sessmsagent
     spec:
       containers:
-      - name: agent
+      - name: sessmsagent
         image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms:2.0.0
         command: 
          - /usr/local/bin/sender-serve
@@ -73,20 +73,20 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: grpc
+  name: sessmsgrpc
   namespace: sessms
 spec:
   selector:
     matchLabels:
-      app: grpc
+      app: sessmsgrpc
   replicas: 1
   template:
     metadata:
       labels:
-        app: grpc
+        app: sessmsgrpc
     spec:
       containers:
-      - name: grpc
+      - name: sessmsgrpc
         image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms:2.0.0
         command: 
          - /usr/local/bin/sender-serve

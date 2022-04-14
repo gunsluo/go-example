@@ -1,37 +1,35 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sessmsrest
-  namespace: sessms
+  name: dmzdex
+  namespace: sso
 spec:
   selector:
     matchLabels:
-      app: sessmsrest
+      app: dmzdex
   replicas: 1
   template:
     metadata:
       labels:
-        app: sessmsrest
+        app: dmzdex
     spec:
       containers:
-      - name: sessmsrest
-        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms:2.0.0
+      - name: dmzdex
+        image: registry.gitlab.com/target-digital-transformation/sso/master:17dbf84d
         command: 
-         - /usr/local/bin/sender-serve
-         - serve
-         - -c
+         - dex
+         - serve 
          - /usr/local/config/config.yaml
-         - rest
-         - --verbose
         ports:
-        - containerPort: 6100
+        - containerPort: 5556
+        - containerPort: 5557
         volumeMounts:
-        - name: sessms-config
+        - name: dmzsso-config
           mountPath: /usr/local/config/config.yaml
           subPath: config.yaml
       volumes:
-        - name: sessms-config
+        - name: dmzsso-config
           configMap:
-            name: sessms-config
+            name: dmzsso-config
       imagePullSecrets:
       - name: registry.gitlab.com

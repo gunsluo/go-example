@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dmzacrest
+  namespace: ac
+spec:
+  selector:
+    matchLabels:
+      app: dmzacrest
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: dmzacrest
+    spec:
+      containers:
+      - name: dmzacrest
+        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/access-control:4.0.0
+        command: 
+         - /usr/local/bin/ac-serve 
+         - serve 
+         - -c
+         - /usr/local/config/config.yaml
+         - rest
+         - --verbose
+        ports:
+        - containerPort: 17002
+        volumeMounts:
+        - name: dmzac-config
+          mountPath: /usr/local/config/config.yaml
+          subPath: config.yaml
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 17002
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 17002
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 3
+      volumes:
+        - name: dmzac-config
+          configMap:
+            name: dmzac-config
+      imagePullSecrets:
+      - name: registry.gitlab.com

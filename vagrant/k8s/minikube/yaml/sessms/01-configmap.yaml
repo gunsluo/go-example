@@ -22,7 +22,7 @@ data:
           scopes:
         grpc:
           # SERVE_REST_GRPC_ENDPOINT
-          endpoint: grpc:6000
+          endpoint: sessmsgrpc:6000
           # SERVE_REST_GRPC_MAX_RETRIES
           max_retries: 3
           # SERVE_REST_GRPC_RETRY_TIMEOUT

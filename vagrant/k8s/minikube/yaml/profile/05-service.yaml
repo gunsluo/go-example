@@ -1,16 +1,16 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: profile
+  name: pfgrpc
   namespace: profile
   labels:
-    svc: profile
+    svc: pfgrpc
 spec:
   type: LoadBalancer
   ports:
-  - port: 50051
-    targetPort: 50051
+  - port: 5051
+    targetPort: 5051
     protocol: TCP
     name: grpc
   selector:
-    app: profile
+    app: pfgrpc

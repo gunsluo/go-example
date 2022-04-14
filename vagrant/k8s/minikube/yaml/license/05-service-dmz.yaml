@@ -1,16 +1,16 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: sessmsgrpc
-  namespace: sessms
+  name: dmzlicense
+  namespace: license
   labels:
-    svc: sessmsgrpc
+    svc: dmzlicense
 spec:
   type: LoadBalancer
   ports:
-  - port: 6000
-    targetPort: 6000
+  - port: 26000
+    targetPort: 26000
     protocol: TCP
     name: grpc
   selector:
-    app: sessmsgrpc
+    app: dmzlicense

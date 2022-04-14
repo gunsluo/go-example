@@ -1,32 +1,32 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pfgrpc
+  name: dmzpfgrpc
   namespace: profile
 spec:
   selector:
     matchLabels:
-      app: pfgrpc
+      app: dmzpfgrpc
   replicas: 1
   template:
     metadata:
       labels:
-        app: pfgrpc
+        app: dmzpfgrpc
     spec:
       containers:
-      - name: pfgrpc
+      - name: dmzpfgrpc
         image: registry.gitlab.com/target-digital-transformation/profile-be:v1.52.0
         command: 
          - /usr/local/bin/profile-serve
          - profile
          - grpc
-         - --address=:5051
-         - --dsn=postgres://postgres:password@postgres.postgres/profile?sslmode=disable
-         - --oidc=http://dex.sso:5556
-         - --sso-dex-grpc-addr=dex.sso:5557
+         - --address=:15051
+         - --dsn=postgres://postgres:password@postgres.postgres/dmzprofile?sslmode=disable
+         - --oidc=http://dmzdex.sso:15556
+         - --sso-dex-grpc-addr=dmzdex.sso:15557
          - --redis=redis.redis:6379
-         - --sso-sync-addr=amqp://guest:guest@rabbitmq.rabbitmq:5672/
+         - --sso-sync-addr=amqp://guest:guest@dmzrabbitmq.rabbitmq:35672/
         ports:
-        - containerPort: 5051
+        - containerPort: 15051
       imagePullSecrets:
       - name: registry.gitlab.com

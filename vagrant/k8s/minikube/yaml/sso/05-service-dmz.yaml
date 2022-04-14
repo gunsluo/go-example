@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dmzdex
+  namespace: sso
+  labels:
+    svc: dmzdex
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 15556
+    targetPort: 15556
+    protocol: TCP
+    name: http
+  - port: 15557
+    targetPort: 15557
+    protocol: TCP
+    name: grpc
+  selector:
+    app: dmzdex
