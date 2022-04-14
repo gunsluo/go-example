@@ -1,34 +1,34 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: rest
+  name: acrest
   namespace: ac
 spec:
   selector:
     matchLabels:
-      app: rest
+      app: acrest
   replicas: 1
   template:
     metadata:
       labels:
-        app: rest
+        app: acrest
     spec:
       containers:
-      - name: rest
-        image: registry.gitlab.com/target-digital-transformation/access-control/ac-be:3.3.6
+      - name: acrest
+        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/access-control:4.0.0
         command: 
          - /usr/local/bin/ac-serve 
          - serve 
+         - -c
+         - /usr/local/config/config.yaml
          - rest
-         - --address=:7002
-         - --grpc=grpc:7001
-         - --grpc-insecure
-         - --oidc=http://dex.sso:5556
-         - --sso-grpc=dex.sso:5557
-         - --sso-grpc-insecure
          - --verbose
         ports:
         - containerPort: 7002
+        volumeMounts:
+        - name: ac-config
+          mountPath: /usr/local/config/config.yaml
+          subPath: config.yaml
         livenessProbe:
           httpGet:
             path: /healthz
@@ -43,5 +43,9 @@ spec:
           initialDelaySeconds: 10
           periodSeconds: 5
           failureThreshold: 3
+      volumes:
+        - name: ac-config
+          configMap:
+            name: ac-config
       imagePullSecrets:
       - name: registry.gitlab.com

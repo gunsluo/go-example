@@ -1,39 +1,34 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: gprc
+  name: acgrpc
   namespace: ac
 spec:
   selector:
     matchLabels:
-      app: grpc
+      app: acgrpc
   replicas: 1
   template:
     metadata:
       labels:
-        app: grpc
+        app: acgrpc
     spec:
       containers:
-      - name: grpc
-        image: registry.gitlab.com/target-digital-transformation/access-control/ac-be:3.3.6
+      - name: acgrpc
+        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/access-control:4.0.0
         command: 
          - /usr/local/bin/ac-serve 
          - serve 
+         - -c
+         - /usr/local/config/config.yaml
          - grpc
-         - --address=:7001
-         - --dsn=postgres://postgres:password@postgres.postgres:5432/ac?sslmode=disable
          - --verbose
-        env:
-        - name: TARGET_SYS_ADMIN
-          value: "CiQwOGE4Njg0Yi1kYjg4LTRiNzMtOTBhOS0zY2QxNjYxZjU0NjYSBWxvY2Fs"
-        - name: CACHE_STRATEGY
-          value: "MEMORY"
-        - name: CACHE_EXPIRED
-          value: "6h"
-        - name: CACHE_MEMORY_MAXSIZE
-          value: "1024"
         ports:
         - containerPort: 7001
+        volumeMounts:
+        - name: ac-config
+          mountPath: /usr/local/config/config.yaml
+          subPath: config.yaml
         livenessProbe:
           exec:
             command: 
@@ -50,5 +45,9 @@ spec:
           initialDelaySeconds: 10
           periodSeconds: 5
           failureThreshold: 3
+      volumes:
+        - name: ac-config
+          configMap:
+            name: ac-config
       imagePullSecrets:
       - name: registry.gitlab.com

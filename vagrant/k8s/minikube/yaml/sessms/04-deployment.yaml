@@ -15,18 +15,22 @@ spec:
     spec:
       containers:
       - name: status
-        image: registry.gitlab.com/target-digital-transformation/email-sms-sender/sessms:1.5.4
+        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms:2.0.0
         command: 
          - /usr/local/bin/sender-serve
+         - serve
+         - -c
+         - /usr/local/config/config.yaml
          - status
-         - --enable-ses
-         - --ses-mongo-db=ses
-         - --enable-sms
-         - --sms-mongo-db=sms
-         - --mongo-url=mongodb://root:password@mongo.mongo:27017
-         - --mq-url=amqp://guest:guest@rabbitmq.rabbitmq:5672/
-         - --mq-prefix=
          - --verbose
+        volumeMounts:
+        - name: sessms-config
+          mountPath: /usr/local/config/config.yaml
+          subPath: config.yaml
+      volumes:
+        - name: sessms-config
+          configMap:
+            name: sessms-config
       imagePullSecrets:
       - name: registry.gitlab.com
 ---
@@ -47,33 +51,14 @@ spec:
     spec:
       containers:
       - name: agent
-        image: registry.gitlab.com/target-digital-transformation/email-sms-sender/sessms:1.5.4
+        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms:2.0.0
         command: 
          - /usr/local/bin/sender-serve
+         - serve
+         - -c
+         - /usr/local/config/config.yaml
          - agent
-         - --enable-ses
-         - --ses-keys=aws
-         - --enable-sms
-         - --mq-url=amqp://guest:guest@rabbitmq.rabbitmq:5672/
-         - --mq-prefix=
          - --verbose
-        env:
-        - name: ROUTING_CONFIG_PATH
-          value: "/usr/local/config/config.yaml"
-        - name: AWS_REGION
-          value: "us-east-1"
-        - name: AWS_ACCESS_KEY_ID
-          value: "AKIAT2CIH6465KAQJPKA"
-        - name: AWS_SECRET_ACCESS_KEY
-          value: "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"
-        - name: ENABLE_BLACKLIST_BY_AWS_SNS
-          value: "true"
-        - name: AWS_SNS_URL
-          value: "http://0.0.0.0:9090/notification/aws"
-        - name: AWS_SNS_TLS_CERT
-          value: ""
-        - name: AWS_SNS_TLS_KEY
-          value: ""
         volumeMounts:
         - name: sessms-config
           mountPath: /usr/local/config/config.yaml
@@ -102,29 +87,16 @@ spec:
     spec:
       containers:
       - name: grpc
-        image: registry.gitlab.com/target-digital-transformation/email-sms-sender/sessms:1.5.4
+        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms:2.0.0
         command: 
          - /usr/local/bin/sender-serve
+         - serve
+         - -c
+         - /usr/local/config/config.yaml
          - grpc
-         - --address=:6000
-         - --ses-agent=aws
-         - --ses-mongo-db=ses
-         - --sms-mongo-db=sms
-         - --enable-blacklist
-         - --enable-blacklist-email-verify
-         - --allowed-domains=target-energysolutions.com,163.com,outlook.com
-         - --email-hostname=localhost
-         - --email-source-address=no-reply@target-energysolutions.com
-         - --redis-addr=redis.redis:6379
-         - --mongo-url=mongodb://root:password@mongo.mongo:27017
-         - --mq-url=amqp://guest:guest@rabbitmq.rabbitmq:5672/
-         - --mq-prefix=
          - --verbose
         ports:
         - containerPort: 6000
-        env:
-        - name: ROUTING_CONFIG_PATH
-          value: "/usr/local/config/config.yaml"
         volumeMounts:
         - name: sessms-config
           mountPath: /usr/local/config/config.yaml
