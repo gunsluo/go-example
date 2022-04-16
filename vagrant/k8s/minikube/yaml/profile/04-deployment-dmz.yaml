@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: dmzpfgrpc
-        image: registry.gitlab.com/target-digital-transformation/profile-be:v1.52.0
+        image: registry.gitlab.com/target-digital-transformation/profile-be/master:865c8fac
         command: 
          - /usr/local/bin/profile-serve
          - profile

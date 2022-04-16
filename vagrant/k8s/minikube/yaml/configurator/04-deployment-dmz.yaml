@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: dmzconfigurator
-        image: registry.gitlab.com/target-digital-transformation/subscription-store:4.26.4
+        image: registry.gitlab.com/target-digital-transformation/subscription-store/oia-sync:6e98fb79
         command: 
          - /usr/local/bin/subscription-store 
          - serve

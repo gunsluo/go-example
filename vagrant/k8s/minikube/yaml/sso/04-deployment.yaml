@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: dex
-        image: registry.gitlab.com/target-digital-transformation/sso/master:17dbf84d
+        image: registry.gitlab.com/target-digital-transformation/sso/master:6166cf2c
         command: 
          - dex
          - serve 
@@ -27,9 +27,15 @@ spec:
         - name: sso-config
           mountPath: /usr/local/config/config.yaml
           subPath: config.yaml
+        - name: sso-private-key
+          mountPath: /usr/local/config/private.pem
+          subPath: private.pem
       volumes:
         - name: sso-config
           configMap:
             name: sso-config
+        - name: sso-private-key
+          configMap:
+            name: sso-private-key
       imagePullSecrets:
       - name: registry.gitlab.com

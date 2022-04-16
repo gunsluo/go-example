@@ -127,3 +127,11 @@ data:
     accessControl:
         #enable: true
         #grpcAddr: ${env:// .acgrpcaddr}
+    
+    exchangeToken:
+      secretKey: 123123
+      expiry: 60s
+
+    staticKey:
+      enable: true
+      privateKeyPath: /usr/local/config/private.pem
