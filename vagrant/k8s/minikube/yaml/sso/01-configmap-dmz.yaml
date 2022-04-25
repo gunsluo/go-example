@@ -120,14 +120,19 @@ data:
 
 
     mailManager:
-      gRpcAddr: "ad35fd50fa6ae11e8a1770a85e863942-219794042.us-east-1.elb.amazonaws.com:6000"
+      gRpcAddr: "sessmsgrpc.sessms:6000"
       sender: "no-reply@digitalenergycloud.com"
       issuer: "Meera"
+
+    smManager:
+      gRpcAddr: "sessmsgrpc.sessms:6000"
 
     accessControl:
         #enable: true
         #grpcAddr: ${env:// .acgrpcaddr}
     
+    enableSignup: true
+
     exchangeToken:
       secretKey: 123123
       expiry: 60s

@@ -21,6 +21,8 @@ spec:
         args:
         - server
         - /data
+        - --console-address
+        - ":9001"
         env:
         - name: MINIO_ACCESS_KEY
           value: "minio_access"
@@ -30,6 +32,10 @@ spec:
         - containerPort: 9000
           name: tcp
           protocol: TCP
+        - containerPort: 9001
+          name: http
+          protocol: TCP
+        volumeMounts:
         volumeMounts:
         - name: minio-pvc
           mountPath: /data
