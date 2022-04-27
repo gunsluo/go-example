@@ -30,12 +30,13 @@ func main() {
 
 	ok = phonenumbers.IsPossibleNumber(num)
 	fmt.Println("---->", ok)
+
+	// format it using national format
+	formattedNum := phonenumbers.Format(num, phonenumbers.E164)
+
+	fmt.Println("---->", num.GetCountryCode(), formattedNum)
+
 	/*
-		// format it using national format
-		formattedNum := phonenumbers.Format(num, phonenumbers.NATIONAL)
-
-		fmt.Println("---->", num.GetCountryCode(), formattedNum)
-
 		b := phonenumbers.GetRegionCodeForCountryCode(int(num.GetCountryCode()))
 		fmt.Println("---->", b)
 	*/
