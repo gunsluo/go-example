@@ -49,11 +49,11 @@ type APIClient struct {
 
 	// API Services
 
-	PetApi *PetApiService
+	PetApi PetApi
 
-	StoreApi *StoreApiService
+	StoreApi StoreApi
 
-	UserApi *UserApiService
+	UserApi UserApi
 }
 
 type service struct {

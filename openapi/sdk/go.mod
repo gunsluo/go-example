@@ -1,4 +1,4 @@
-module github.com/GIT_USER_ID/GIT_REPO_ID
+module github.com/ory/github.com/gunsluo/go-example/openapi/sdk
 
 go 1.13
 

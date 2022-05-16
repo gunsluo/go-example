@@ -22,7 +22,7 @@ go get golang.org/x/net/context
 Put the package under your project folder and add the following in import:
 
 ```golang
-import petstore "github.com/GIT_USER_ID/GIT_REPO_ID"
+import petstore "github.com/ory/github.com/gunsluo/go-example/openapi/sdk"
 ```
 
 To use a proxy, set the environment variable `HTTP_PROXY`:

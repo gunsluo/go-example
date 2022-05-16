@@ -1,0 +1,5 @@
+disallowAdditionalPropertiesIfNotPresent: true
+packageName: petstore
+generateInterfaces: true
+structPrefix: true
+enumClassPrefix: true
