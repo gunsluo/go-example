@@ -9,22 +9,22 @@ release_note=$3
 git_host=$4
 
 if [ "$git_host" = "" ]; then
-    git_host="github.com"
+    git_host="{{{gitHost}}}"
     echo "[INFO] No command line input provided. Set \$git_host to $git_host"
 fi
 
 if [ "$git_user_id" = "" ]; then
-    git_user_id="gunsluo"
+    git_user_id="{{{gitUserId}}}"
     echo "[INFO] No command line input provided. Set \$git_user_id to $git_user_id"
 fi
 
 if [ "$git_repo_id" = "" ]; then
-    git_repo_id="go-example/openapi/sdk"
+    git_repo_id="{{{gitRepoId}}}"
     echo "[INFO] No command line input provided. Set \$git_repo_id to $git_repo_id"
 fi
 
 if [ "$release_note" = "" ]; then
-    release_note="Minor update"
+    release_note="{{{releaseNote}}}"
     echo "[INFO] No command line input provided. Set \$release_note to $release_note"
 fi
 

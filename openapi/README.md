@@ -9,9 +9,10 @@ brew install openapi-generator
 openapi-generator config-help -g go
 
 openapi-generator generate -i petstore.yaml -g go -o sdk \
-    --git-user-id ory \
-    --git-repo-id "github.com/gunsluo/go-example/openapi/sdk" \
+    --git-user-id gunsluo \
+    --git-repo-id "go-example/openapi/sdk" \
     --git-host github.com \
+    -t templates/go \
     -c go.yml
 ```
 

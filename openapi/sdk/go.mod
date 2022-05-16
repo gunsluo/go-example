@@ -1,4 +1,4 @@
-module github.com/ory/github.com/gunsluo/go-example/openapi/sdk
+module github.com/gunsluo/go-example/openapi/sdk
 
 go 1.13
 
