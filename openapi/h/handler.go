@@ -44,7 +44,7 @@ func AddMembers(c *gin.Context) {
 	}
 
 	param.OrganizationId = getOrganizationId(c)
-	fmt.Println("--->", param, c.Request.Header.Get("Authorization"))
+	fmt.Println("param:", param, c.Request.Header.Get("Authorization"))
 
 	var resp v.AddMembersResponse
 	resp.Data.Created = []string{"mock"}

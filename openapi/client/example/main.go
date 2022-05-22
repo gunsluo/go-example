@@ -20,7 +20,7 @@ func main() {
 
 	client := api.NewAPIClient(cfg)
 
-	ctx := context.Background()
+	ctx := context.WithValue(context.Background(), api.ContextAccessToken, "token")
 	resp, _, err := client.OrganizationApi.AddMembersRequest(ctx).
 		OrganizationId(100).OrganizatoinMember(
 		[]api.OrganizatoinMember{
