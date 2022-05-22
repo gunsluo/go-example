@@ -1,28 +1,60 @@
-###  Install Tools
+
+# Server
+
+### Go Swagger
+
+```
+https://github.com/go-swagger/go-swagger
+```
+
+
+### Write swagger source
+```
+// swagger:meta
+
+// swagger:route
+
+// swagger:parameters
+
+// swagger:model
+```
+
+
+### Generate a spec from source
+
+```
+swagger generate spec -m -o spec/swagger.json \
+    -c github.com/gunsluo/go-example/openapi/h \
+    -c github.com/gunsluo/go-example/openapi/v
+```
  
+
+# Client
+
+###  Install Tools
+
 ```
 brew install openapi-generator
 ```
 
 ### Generate SDK
 ```
+ory dev swagger sanitize ./spec/swagger.json
+
+swagger validate ./spec/swagger.json
+
 openapi-generator config-help -g go
 
-openapi-generator generate -i petstore.yaml -g go -o sdk \
+ory dev openapi migrate \
+    --health-path-tags metadata \
+    spec/swagger.json spec/api.json
+
+openapi-generator generate -i spec/api.json -g go -o client/api \
     --git-user-id gunsluo \
-    --git-repo-id "go-example/openapi/sdk" \
+    --git-repo-id "go-example/openapi/client/api" \
     --git-host github.com \
-    -t templates/go \
-    -c go.yml
-```
-
-
-### Generate Gin Stub
-
-```
-openapi-generator config-help -g go-gin-server
-
-openapi-generator generate -i petstore.yaml -g go-gin-server -o stub --additional-properties=packageName=petstore --additional-properties=packageVersion=1.0.0 --additional-properties=serverPort=8080
+    -t client/templates/go \
+    -c client/go.yml
 ```
 
 

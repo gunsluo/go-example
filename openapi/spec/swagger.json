@@ -1,0 +1,182 @@
+{
+  "consumes": [
+    "application/json",
+    "application/x-www-form-urlencoded"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "description": "Welcome to the Configurator HTTP API documentation. You will find documentation for all HTTP APIs here.",
+    "title": "Configurator",
+    "version": "latest"
+  },
+  "basePath": "/v2",
+  "paths": {
+    "/org/add-members": {
+      "post": {
+        "security": [
+          {
+            "Bearer": []
+          }
+        ],
+        "description": "This endpoint tells Configurator that some members is added to the organziation.\n\nThe consent challenge is appended to the consent provider's URL to which the subject's user-agent (browser) is redirected to. The consent\nprovider uses that challenge to fetch information on the OAuth2 request and then tells ORY Hydra if the subject accepted\nor rejected the request.\n\nThe response contains information about the created user.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "organization"
+        ],
+        "summary": "Add members to the organization",
+        "operationId": "addMembersRequest",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "organizationId",
+            "in": "header",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/organizatoinMember"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "addMembersResponse",
+            "schema": {
+              "$ref": "#/definitions/addMembersResponse"
+            }
+          },
+          "400": {
+            "description": "jsonErrorResponse",
+            "schema": {
+              "$ref": "#/definitions/jsonErrorResponse"
+            }
+          },
+          "500": {
+            "description": "jsonErrorResponse",
+            "schema": {
+              "$ref": "#/definitions/jsonErrorResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "AddMembersResponseData": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "email_already_exists": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "phone_mobile_already_exists": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "addMembersResponse": {
+      "type": "object",
+      "title": "The response payload sent when adding memebers request.",
+      "required": [
+        "data"
+      ],
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/AddMembersResponseData"
+        }
+      }
+    },
+    "jsonErrorResponse": {
+      "description": "Error responses are sent when an error (e.g. unauthorized, bad request, ...) occurred.",
+      "type": "object",
+      "title": "Generic Error Response",
+      "properties": {
+        "code": {
+          "description": "Code represents the error code.",
+          "type": "string",
+          "example": "Success or BadRequest"
+        },
+        "detail": {
+          "description": "Detail contains further information on the nature of the error.",
+          "type": "string",
+          "example": "Member with ID 12345 does not exist"
+        },
+        "msg": {
+          "description": "Message is the error message.",
+          "type": "string",
+          "example": "The requested resource could not be found"
+        },
+        "traceId": {
+          "description": "TraceId is the identifier for a trace. It is globally unique.",
+          "type": "string",
+          "example": "463ac35c9f6413ad48485a3953bb6124"
+        },
+        "type": {
+          "description": "Type A URI reference that identifies the error type.",
+          "type": "string",
+          "example": "https://example.net/validation-error"
+        }
+      }
+    },
+    "organizatoinMember": {
+      "type": "object",
+      "title": "The request payload which is information about the members of an organization.",
+      "required": [
+        "name",
+        "mail"
+      ],
+      "properties": {
+        "mail": {
+          "description": "Mail is email of the member.",
+          "type": "string",
+          "format": "email"
+        },
+        "name": {
+          "description": "Name is name of the member.",
+          "type": "string"
+        }
+      }
+    }
+  ,"UUID":{"type": "string", "format": "uuid4"}},
+  "securityDefinitions": {
+    "Bearer": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    }
+  },
+  "x-request-id": "string"
+}

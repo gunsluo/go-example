@@ -1,0 +1,5 @@
+disallowAdditionalPropertiesIfNotPresent: true
+packageName: api
+generateInterfaces: true
+structPrefix: true
+enumClassPrefix: true

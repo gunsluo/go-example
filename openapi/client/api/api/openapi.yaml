@@ -1,0 +1,156 @@
+openapi: 3.0.3
+info:
+  description: Welcome to the Configurator HTTP API documentation. You will find documentation
+    for all HTTP APIs here.
+  title: Configurator
+  version: latest
+servers:
+- url: /
+paths:
+  /org/add-members:
+    post:
+      description: |-
+        This endpoint tells Configurator that some members is added to the organziation.
+
+        The consent challenge is appended to the consent provider's URL to which the subject's user-agent (browser) is redirected to. The consent
+        provider uses that challenge to fetch information on the OAuth2 request and then tells ORY Hydra if the subject accepted
+        or rejected the request.
+
+        The response contains information about the created user.
+      operationId: addMembersRequest
+      parameters:
+      - explode: false
+        in: header
+        name: organizationId
+        required: true
+        schema:
+          format: int64
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                $ref: '#/components/schemas/organizatoinMember'
+              type: array
+        x-originalParamName: Body
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/addMembersResponse'
+          description: addMembersResponse
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/jsonErrorResponse'
+          description: jsonErrorResponse
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/jsonErrorResponse'
+          description: jsonErrorResponse
+      security:
+      - Bearer: []
+      summary: Add members to the organization
+      tags:
+      - organization
+components:
+  schemas:
+    AddMembersResponseData:
+      example:
+        email_already_exists:
+        - email_already_exists
+        - email_already_exists
+        created:
+        - created
+        - created
+        phone_mobile_already_exists:
+        - phone_mobile_already_exists
+        - phone_mobile_already_exists
+      properties:
+        created:
+          items:
+            type: string
+          type: array
+        email_already_exists:
+          items:
+            type: string
+          type: array
+        phone_mobile_already_exists:
+          items:
+            type: string
+          type: array
+      type: object
+    UUID:
+      format: uuid4
+      type: string
+    addMembersResponse:
+      example:
+        data:
+          email_already_exists:
+          - email_already_exists
+          - email_already_exists
+          created:
+          - created
+          - created
+          phone_mobile_already_exists:
+          - phone_mobile_already_exists
+          - phone_mobile_already_exists
+      properties:
+        data:
+          $ref: '#/components/schemas/AddMembersResponseData'
+      required:
+      - data
+      title: The response payload sent when adding memebers request.
+      type: object
+    jsonErrorResponse:
+      description: Error responses are sent when an error (e.g. unauthorized, bad
+        request, ...) occurred.
+      properties:
+        code:
+          description: Code represents the error code.
+          example: Success or BadRequest
+          type: string
+        detail:
+          description: Detail contains further information on the nature of the error.
+          example: Member with ID 12345 does not exist
+          type: string
+        msg:
+          description: Message is the error message.
+          example: The requested resource could not be found
+          type: string
+        traceId:
+          description: TraceId is the identifier for a trace. It is globally unique.
+          example: 463ac35c9f6413ad48485a3953bb6124
+          type: string
+        type:
+          description: Type A URI reference that identifies the error type.
+          example: https://example.net/validation-error
+          type: string
+      title: Generic Error Response
+      type: object
+    organizatoinMember:
+      properties:
+        mail:
+          description: Mail is email of the member.
+          format: email
+          type: string
+        name:
+          description: Name is name of the member.
+          type: string
+      required:
+      - mail
+      - name
+      title: The request payload which is information about the members of an organization.
+      type: object
+  securitySchemes:
+    Bearer:
+      in: header
+      name: Authorization
+      type: apiKey
+x-request-id: string
