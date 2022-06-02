@@ -1,0 +1,12 @@
+version: "3"
+services:
+  ewstest:
+    image: ewstest
+    restart: on-failure
+    container_name: ewstest
+    command: /usr/local/bin/soap-srv
+    ports:
+      - 10000:10000
+    volumes:
+      - ./ews:/go/src/ews
+
