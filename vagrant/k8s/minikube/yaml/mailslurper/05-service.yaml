@@ -16,9 +16,9 @@ spec:
     targetPort: 4437
     protocol: TCP
     name: tcp
-  - port: 11025
-    targetPort: 11025
+  - port: 2500
+    targetPort: 2500
     protocol: TCP
-    name: mail
+    name: stmp
   selector:
     app: mailslurper

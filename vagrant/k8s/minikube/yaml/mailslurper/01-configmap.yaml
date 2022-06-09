@@ -11,7 +11,7 @@ data:
       "serviceAddress": "0.0.0.0",
       "servicePort": 4437,
       "smtpAddress": "0.0.0.0",
-      "smtpPort": 11025,
+      "smtpPort": 2500,
       "dbEngine": "SQLite",
       "dbHost": "",
       "dbPort": 0,
@@ -20,8 +20,8 @@ data:
       "dbPassword": "",
       "maxWorkers": 1000,
       "autoStartBrowser": false,
-      "keyFile": "mailslurper-key.pem",
-      "certFile": "mailslurper-cert.pem",
+      "keyFile": "",
+      "certFile": "",
       "adminKeyFile": "",
       "adminCertFile": ""
     }
