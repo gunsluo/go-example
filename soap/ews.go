@@ -4,25 +4,30 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/mhewedy/ews"
-	"github.com/mhewedy/ews/ewsutil"
+	"github.com/gunsluo/goews/v2"
 )
 
 func main() {
-
-	c := ews.NewClient(
-		"https://outlook.office365.com/EWS/Exchange.asmx",
-		"email@exchangedomain",
-		"password",
-		&ews.Config{Dump: true, NTLM: false},
+	c, err := goews.NewClient(
+		goews.Config{
+			Address:  "https://outlook.office365.com/EWS/Exchange.asmx",
+			Username: "email@exchangedomain",
+			Password: "password",
+			Dump:     true,
+			NTLM:     false,
+			SkipTLS:  false,
+		},
 	)
+	if err != nil {
+		log.Fatal("->: ", err.Error())
+	}
 
-	err := ewsutil.SendEmail(c,
+	err = c.SendEmail(
+		"email@exchangedomain",
 		[]string{"mhewedy@gmail.com", "someone@else.com"},
 		"An email subject",
 		"The email body, as plain text",
 	)
-
 	if err != nil {
 		log.Fatal("err>: ", err.Error())
 	}

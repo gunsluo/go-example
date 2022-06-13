@@ -1,12 +1,13 @@
 version: "3"
 services:
   ewstest:
-    image: ewstest
+    image: gunsluo/ewstest
     restart: on-failure
     container_name: ewstest
+    working_dir: /build
     command: /usr/local/bin/soap-srv
     ports:
       - 10000:10000
     volumes:
-      - ./ews:/go/src/ews
+      - ./demo:/build/demo
 
