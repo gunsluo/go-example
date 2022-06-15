@@ -16,9 +16,10 @@ import (
 func main() {
 	c, err := NewClient(
 		Config{
-			Endpoint: "",
-			ClientId: "",
-			ApiKey:   "password",
+			Endpoint: "https://api.localsms.com",
+			Sender:   "OIA",
+			ClientId: "a3a26d70-2b7d-4ff4-b840-c228e643593b",
+			ApiKey:   "Shc9/xtBjwUpTyhA96vFCBnIuENMQeBS/kiF91P3JT0=",
 			SkipTLS:  false,
 		},
 	)
@@ -27,11 +28,19 @@ func main() {
 	}
 
 	ctx := context.Background()
-	ids, err := c.Send(ctx, []string{}, "test")
+	data, err := c.Send(ctx, []string{"96821213333", "8618980501737"}, "test")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("--->", ids, err)
+
+	for _, item := range data {
+		if item.MessageErrorCode != 0 {
+			fmt.Printf("Error Code %d, to %v, description: %s\n", item.MessageErrorCode, item.MobileNumber, item.MessageErrorDescription)
+			//return nil,
+		} else {
+			fmt.Printf("success, to %v, mid: %s\n", item.MobileNumber, item.MessageId)
+		}
+	}
 }
 
 type Config struct {
@@ -103,17 +112,21 @@ type oiaOwnerSendResponse struct {
 type oiaOwnerSendResponseData struct {
 	MobileNumber string `josn:"MobileNumber"`
 	MessageId    string `josn:"MessageId"`
+
+	MessageErrorCode        int    `josn:"MessageErrorCode"`
+	MessageErrorDescription string `josn:"MessageErrorDescription"`
+	Custom                  string `josn:"Custom"`
 }
 
-func (c *oiaOwnerClient) Send(ctx context.Context, to []string, message string) ([]string, error) {
+func (c *oiaOwnerClient) Send(ctx context.Context, to []string, message string) ([]oiaOwnerSendResponseData, error) {
 	param := &oiaOwnerSendRequest{
 		SenderId:      c.config.Sender,
 		IsUnicode:     true,
 		IsFlash:       false,
 		SchedTime:     "",
-		GroupId:       strings.Join(to, ","),
+		GroupId:       "",
 		Message:       message,
-		MobileNumbers: "",
+		MobileNumbers: strings.Join(to, ","),
 		ApiKey:        c.config.ApiKey,
 		ClientId:      c.config.ClientId,
 	}
@@ -141,18 +154,27 @@ func (c *oiaOwnerClient) Send(ctx context.Context, to []string, message string) 
 	}
 
 	if httpResp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Status Code %d, body: %s", httpResp.StatusCode, string(respBytes))
+		var errResp = struct {
+			ErrorCode        int    `josn:"ErrorCode"`
+			ErrorDescription string `josn:"ErrorDescription"`
+			Data             string `josn:"Data"`
+		}{}
+
+		if err := json.Unmarshal(respBytes, &errResp); err != nil {
+			return nil, fmt.Errorf("Code %d, body: %s, err: %w", httpResp.StatusCode, string(respBytes), err)
+		}
+
+		return nil, fmt.Errorf("Error code %d, description: %s", errResp.ErrorCode, errResp.ErrorDescription)
 	}
 
 	resp := &oiaOwnerSendResponse{}
 	if err := json.Unmarshal(respBytes, resp); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Code %d, body: %s, err: %w", httpResp.StatusCode, string(respBytes), err)
 	}
 
-	ids := []string{}
-	for _, item := range resp.Data {
-		ids = append(ids, item.MessageId)
+	if resp.ErrorCode != 0 {
+		return nil, fmt.Errorf("Error code %d, description: %s", resp.ErrorCode, resp.ErrorDescription)
 	}
 
-	return ids, nil
+	return resp.Data, nil
 }

@@ -14,7 +14,7 @@ func main() {
 			Username: "email@exchangedomain",
 			Password: "password",
 			Dump:     true,
-			NTLM:     false,
+			NTLM:     true,
 			SkipTLS:  false,
 		},
 	)

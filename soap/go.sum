@@ -7,6 +7,10 @@ github.com/gunsluo/goews/v2 v2.0.0 h1:nUY1p/a/4BKFpa/+E+s1upNxyT36LETY32JIk4X29P
 github.com/gunsluo/goews/v2 v2.0.0/go.mod h1:sqiO5ZB5PH5J4cWxms4hk77n26U/Ocbddkg7vfvxjak=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/stretchr/testify v1.7.2 h1:4jaiDzPyXQvSd7D0EjG45355tLlV3VOECpq10pLC+8s=
+github.com/vadimi/go-http-ntlm/v2 v2.4.1 h1:y/OWq3pp8+qQymcYHf7rztV9VcLH3cbqnIa4WSXFRVw=
+github.com/vadimi/go-http-ntlm/v2 v2.4.1/go.mod h1:KduY1xBqaL8Q2Rh/erMvRQHKoj3VAT9GNYxe9EH+rOo=
+github.com/vadimi/go-ntlm v1.2.1 h1:y2xZf/a5+BJlYNJIIulP1q8F438H9bU7aGcYE53vghQ=
+github.com/vadimi/go-ntlm v1.2.1/go.mod h1:hPTY60eLSKGj9oUJAB+kZiLs2Cg5eKdH60aLczM9rMg=
 golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e h1:T8NU3HyQ8ClP4SEE+KbFlg6n0NhuTsN4MyznaarGsZM=
 golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e/go.mod h1:IxCIyHEi3zRg3s0A5j5BB6A9Jmi73HwBIUl50j+osU4=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
