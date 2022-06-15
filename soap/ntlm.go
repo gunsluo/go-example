@@ -20,7 +20,9 @@ func main() {
 			// Configure RoundTripper if necessary, otherwise DefaultTransport is used
 			RoundTripper: &http.Transport{
 				// provide tls config
-				TLSClientConfig: &tls.Config{},
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true,
+				},
 				// other properties RoundTripper, see http.DefaultTransport
 			},
 		},
