@@ -51,5 +51,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Println(body)
+	log.Println(resp.StatusCode, body)
 }

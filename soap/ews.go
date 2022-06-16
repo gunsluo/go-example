@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/gunsluo/goews/v2"
 )
@@ -14,7 +15,8 @@ func main() {
 			Username: "email@exchangedomain",
 			Password: "password",
 			Dump:     true,
-			NTLM:     true,
+			NTLM:     false,
+			Domain:   "",
 			SkipTLS:  false,
 		},
 	)
@@ -22,12 +24,40 @@ func main() {
 		log.Fatal("->: ", err.Error())
 	}
 
+	filename := "a.txt"
+	content, err := os.ReadFile(filename)
+	if err != nil {
+		log.Fatal("read file: ", err.Error())
+	}
+
+	htmlBody := `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Simple HTML document</title>
+</head>
+<body>
+  <h1>The email body, as html!</h1>
+</body>
+</html>`
+
 	err = c.SendEmail(
-		"email@exchangedomain",
-		[]string{"mhewedy@gmail.com", "someone@else.com"},
-		"An email subject",
-		"The email body, as plain text",
-	)
+		goews.SendEmailParams{
+			From:     "email@exchangedomain",
+			To:       []string{"ji.luo@target-energysolutions.com"},
+			Cc:       []string{"junkun.ren@target-energysolutions.com"},
+			Bcc:      []string{"Dongsheng.liu@target-energysolutions.com"},
+			Subject:  "An email subject",
+			Body:     htmlBody,
+			BodyType: goews.BodyTypeHtml,
+			FileAttachments: []goews.AttachmentParams{
+				{
+					Name:        filename,
+					ContentType: "",
+					Size:        int64(len(content)),
+					Content:     content,
+				},
+			},
+		})
 	if err != nil {
 		log.Fatal("err>: ", err.Error())
 	}
