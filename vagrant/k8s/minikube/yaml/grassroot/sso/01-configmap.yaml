@@ -1,0 +1,142 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sso-config
+  namespace: grassroot
+data:
+  config.yaml: |
+    # The base path of dex and the external name of the OpenID Connect service.
+    # This is the canonical URL that all clients MUST use to refer to dex. If a
+    # path is provided, dex's HTTP service will listen at a non-root URL.
+    issuer: http://dex.grassroot:5556
+
+    # The storage configuration determines where dex stores its state. Supported
+    # options include SQL flavors and Kubernetes third party resources.
+    #
+    # See the storage document at Documentation/storage.md for further information.
+    storage:
+      type: postgres
+      config:
+        dsn: postgres://postgres:password@postgres.infra:5432/sso?sslmode=disable
+
+    # Configuration for the HTTP endpoints.
+    web:
+      http: 0.0.0.0:5556
+      allowedOrigins: ["*"]
+      # Uncomment for HTTPS options.
+      # https: 127.0.0.1:5554
+      # tlsCert: /etc/dex/tls.crt
+      # tlsKey: /etc/dex/tls.key
+
+    frontend:
+      Theme: fluxble
+      Issuer: Fluxble
+      Dir: /web
+
+    admin:
+      dir: /admin
+      cookieExpired: 7200
+
+    # Configuration for telemetry
+    telemetry:
+      http: 0.0.0.0:5558
+
+    # Uncomment this block to enable the gRPC API. This values MUST be different
+    # from the HTTP endpoints.
+    grpc:
+      addr: :5557
+    #  tlsCert: examples/grpc-client/server.crt
+    #  tlsKey: examples/grpc-client/server.key
+    #  tlsClientCA: /etc/dex/client.crt
+
+    # Uncomment this block to enable configuration for the expiration time durations.
+    # expiry:
+    #   signingKeys: "6h"
+    #   idTokens: "24h"
+
+    # Options for controlling the logger.
+    # logger:
+    #   level: "debug"
+    #   format: "text" # can also be "json"
+
+    # Uncomment this block to control which response types dex supports. For example
+    # the following response types enable the implicit flow for web-only clients.
+    # Defaults to ["code"], the code flow.
+    oauth2:
+      skipApprovalScreen: true
+    #   responseTypes: ["code", "token", "id_token"]
+
+    regions:
+      enableSyncStaticPassword: true
+      syncAddr: amqp://guest:guest@rabbitmq.infra:5672/
+      # syncAddr: "amqps://rabbitmq-tls:5671/"
+      # serverName: "localhost"
+      # tlsCA: "/certs/ca_cert.pem"
+      # tlsCert: "/certs/client/client_cert.pem"
+      # tlsKey: "/certs/client/client_key.pem" 
+      regions:
+        - name: default
+          serverName: "dev.local"
+          matchDomains:
+            - "*"
+          client:
+            id: example-app
+            authType: authorization_code
+            state: "I wish to wash my irish wristwatch"
+            scopes: ["openid", "profile", "email", "mobile", "offline_access"]
+            redirectURI: "http://127.0.0.1:4444/callback"
+          profile:
+            enable: true
+            enableLoginSync: true
+            # to set a list of connector ids which are allowed sync to profile. the default value is `["local"]`.
+            # such as `["*"]`, `["local"]`, `["local", "github"]`.
+            allowedConnectorIds: ["*"]
+            allowedSyncRegions: ["default"]
+
+
+    # Instead of reading from an external storage, use this list of clients.
+    #
+    # If this option isn't chosen clients may be added through the gRPC API.
+    staticClients:
+
+    connectors:
+    #- type: mockCallback
+    #  id: mock
+    #  name: Example
+
+    # Let dex keep a list of passwords which can be used to login to dex.
+    enablePasswordDB: true
+
+    # A static list of passwords to login the end user. By identifying here, dex
+    # won't look in its underlying storage for passwords.
+    #
+    # If this option isn't chosen users may be added through the gRPC API.
+    staticPasswords:
+    - email: "admin@example.com"
+      # bcrypt hash of the string "password"
+      hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
+      username: "admin"
+      userID: "08a8684b-db88-4b73-90a9-3cd1661f5466"
+
+
+    mailManager:
+      gRpcAddr: "sessmsgrpc.grassroot:6000"
+      sender: "no-reply@digitalenergycloud.com"
+      issuer: "Fluxble"
+
+    smManager:
+      gRpcAddr: "sessmsgrpc.grassroot:6000"
+
+    accessControl:
+        #enable: true
+        #grpcAddr: ${env:// .acgrpcaddr}
+    
+    enableSignup: true
+
+    exchangeToken:
+      secretKey: 123123
+      expiry: 60s
+
+    staticKey:
+      enable: true
+      privateKeyPath: /usr/local/config/private.pem

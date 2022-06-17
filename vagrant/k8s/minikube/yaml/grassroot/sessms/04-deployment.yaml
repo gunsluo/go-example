@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sessmsstatus
+  namespace: grassroot
+spec:
+  selector:
+    matchLabels:
+      app: sessmsstatus
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sessmsstatus
+    spec:
+      containers:
+      - name: sessmsstatus
+        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms:2.1.0
+        command: 
+         - /usr/local/bin/sender-serve
+         - serve
+         - -c
+         - /usr/local/config/config.yaml
+         - status
+         - --verbose
+        volumeMounts:
+        - name: sessms-config
+          mountPath: /usr/local/config/config.yaml
+          subPath: config.yaml
+      volumes:
+        - name: sessms-config
+          configMap:
+            name: sessms-config
+      imagePullSecrets:
+      - name: registry.gitlab.com
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sessmsagent
+  namespace: grassroot
+spec:
+  selector:
+    matchLabels:
+      app: sessmsagent 
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sessmsagent
+    spec:
+      containers:
+      - name: sessmsagent
+        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms:2.0.0
+        command: 
+         - /usr/local/bin/sender-serve
+         - serve
+         - -c
+         - /usr/local/config/config.yaml
+         - agent
+         - --verbose
+        volumeMounts:
+        - name: sessms-config
+          mountPath: /usr/local/config/config.yaml
+          subPath: config.yaml
+      volumes:
+        - name: sessms-config
+          configMap:
+            name: sessms-config
+      imagePullSecrets:
+      - name: registry.gitlab.com
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sessmsgrpc
+  namespace: grassroot
+spec:
+  selector:
+    matchLabels:
+      app: sessmsgrpc
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sessmsgrpc
+    spec:
+      containers:
+      - name: sessmsgrpc
+        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms:2.0.0
+        command: 
+         - /usr/local/bin/sender-serve
+         - serve
+         - -c
+         - /usr/local/config/config.yaml
+         - grpc
+         - --verbose
+        ports:
+        - containerPort: 6000
+        volumeMounts:
+        - name: sessms-config
+          mountPath: /usr/local/config/config.yaml
+          subPath: config.yaml
+      volumes:
+        - name: sessms-config
+          configMap:
+            name: sessms-config
+      imagePullSecrets:
+      - name: registry.gitlab.com

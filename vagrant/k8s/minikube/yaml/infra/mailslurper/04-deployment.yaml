@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mailslurper
+  namespace: infra
+spec:
+  selector:
+    matchLabels:
+      app: mailslurper
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mailslurper
+    spec:
+      containers:
+      - name: mailslurper
+        image: oryd/mailslurper:latest-smtps
+        ports:
+        - containerPort: 4436
+        - containerPort: 4437
+        volumeMounts:
+        - name: mailslurper-config
+          mountPath: /go/src/github.com/mailslurper/mailslurper/cmd/mailslurper/config.json
+          subPath: config.json
+      volumes:
+        - name: mailslurper-config
+          configMap:
+            name: mailslurper-config

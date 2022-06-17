@@ -1,0 +1,108 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ac-config
+  namespace: grassroot
+data:
+  config.yaml: |
+    version: 1.0.0
+
+    rest:
+      port: 7002
+      cors:
+        enabled: true
+        max_age: 12h
+        allowed_origins:
+          - '*'
+        allowed_methods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - HEAD
+          - OPTIONS
+        allowed_headers:
+          - '*'
+        allow_credentials: true
+      grpc:
+        endpoint: acgrpc.grassroot:7001
+        max_retries: 3
+        retry_timeout: 10s
+        insecure: true
+        #ca: ca.crt
+        #cert: server.crt
+        #key: server.key
+        #server_name: 
+      oidc:
+        address: http://dex.grassroot:5556
+        client_id: "access-control"
+        client_secret: "ZXhhbXBsZS1hcHAtc2VjcmV0"
+        state: acconsole
+        redirect_url: http://localhost:7002/ui/oauth2
+        grpc:
+          endpoint: dex.sso:5557
+          max_retries: 3
+          retry_timeout: 10s
+          insecure: true
+          #ca: ca.crt
+          #cert: server.crt
+          #key: server.key
+          #server_name: 
+      ui:
+        dir: /ui
+        endpoint: http://127.0.0.1:7002
+        timeout: 20s
+        cookie_expired: 2h
+
+    grpc:
+      port: 7001
+      #ca: ca.crt
+      #cert: server.crt
+      #key: server.key
+
+    db:
+      # DB_DSN
+      dsn: postgres://postgres:password@postgres.infra:5432/ac?sslmode=disable
+      # DB_MAX_IDLE_CONNS
+      max_idle_conns: 100
+      # DB_MAX_IDLE_CONNS
+      max_open_conns: 100
+      #conn_max_life_time: 2h
+      #conn_max_idle_time: 2h
+      #migration_path: migrations/sql
+
+    system_admins:
+      - CiQwOGE4Njg0Yi1kYjg4LTRiNzMtOTBhOS0zY2QxNjYxZjU0NjYSBWxvY2Fs
+
+    enable_match_regex_subject: true
+
+    cache:
+      strategy: memory
+      expired: 6h
+      memory:
+        maxsize: 10240
+        rabbitmq_dsn: amqp://guest:guest@rabbitmq.infra:5672/
+        rabbitmq_exchange: ac.ex
+      redis:
+        # REDIS_ADDRESS
+        address: redis.infra:6379
+        # REDIS_USERNAME
+        username: 
+        # REDIS_PASSWORD
+        password: 
+        # REDIS_DB
+        db: 0
+        # REDIS_PREFIX
+        prefix: ac
+
+    audit_logger:
+      enable: false
+      es_endpoints:
+        - http://localhost:9200
+      es_index_prefix: ac
+      es_pit_enable: false
+      es_pit_keepalive: 5m
+      es_username: 
+      es_password: 
+      es_buffer_size: 20

@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sso-private-key
+  namespace: grassroot
+data:
+  private.pem: |
+    -----BEGIN PRIVATE KEY-----
+    MIIEowIBAAKCAQEAsyUXGSSzb2lSEd+g1RS4akRVOZZ+h3Qa1e5nWHSnSbFy+uag
+    c0kCsu70OroFAGl5bun7C0PK/XAzukhctjCu+7+JafdcGWRNRuJ6q9JYz+9pRu9N
+    SMlza8yVKjqg9uZTSWYjx2DuBszOlNbuBaDeYR33eQ4G2JZ16fXpjUC/GEmT1+Ie
+    KgmA0V1QU45DzkKQ3PASCzX/5HyoK3BrYU5vMMGjzidgw9webOkC3IzRQ0BJJ6LN
+    sDPqmC+/6Cr7eeFvbmV36kMYVohMv6h6Bm54ICrsEDAOGY+kxXB4be1fFHpP63D4
+    nK8NY5V82TQm58HRvN6bFVYzKI7xQyx5ymlpAQIDAQABAoIBAQCRAOmkYW+YM4DJ
+    lOCC+QWYhn0RYv5Bt7ntBc7C65Fo9egirECdcDBuEzq+uklIHxe6rkuUv6fz4jkM
+    hHv+wIMypMOecSksKGLgiHtQzq8yiBAH6bT9wInbbLokd1ZI4v/xPmqhfJTODkL8
+    eMgq6B54L6BbbP4fnBIPcQw9WHYVOkZAqG9R5RQ5KQcAWD0NYRg7nF1bBnvs1vHv
+    gNSl+v127F/e+UtZkkThmc/kIJEhknSmSgvCqlTpybajkzjvH0VLbkTPyyzdyuYE
+    Pmm9Q8T9c6NdsXnZWB0y1elkY3ODJwSvGyzglzHfpls7vEB1wes/OP6wtvWzt7hj
+    meW5Za7RAoGBAN1YT4VrJd7wrT/1VD1LHCQ5o2JjiNzwMR+eR3BrlTS8qi+wtTwS
+    HTeHWWhcTYCf2LLhZrC6odqoUlBYA82ZQQskiumqPPhc3DiEVp32IwqsebjUl7hx
+    WomB5whWAVp/QYqitEn78nUQUcHMkG1Nq+zX8jHK9jzBkcPQ8+qVKrFdAoGBAM8x
+    XY9eCT11ggdgJ+b41YFhjaXbRBxK/3poydAKBKtscX3WaZrQXPU69PbsGDMjCFn4
+    lSQpMV9T0i4BrauF7WqD7kre1cLjczOoSCoZo9UHgvbG63kFrj+pO5NXJtndqTIg
+    iHdEJEIVCcbhzqkBa788qsAZspW7MvT6BoSaoqf1AoGAbmdrGsBMHnxr3hgPUZdS
+    TRtWzG+bR6Ci0AOR3Jg8zxY/yRPaAkGCwzzGstA/dCXG38qf/wzISJlmnV6ZXwbP
+    M7ChfVWFndgrnCEeVyH7boqDGFcp6jzYDPh3dWf4utv4pB7t0G1UDWH7dbAEZhC0
+    7aj0zDNRSRLAEyz5TQvkRJ0CgYAj/Xc7CCKiwl6r2VAVFvQ/XSq1vLjAEWb/ZGRp
+    9tOI03WDXlNJyRfcoTkcCzbI6zTwK/X8Kguhe3Xu9+uq98Cd1/z0lHCdQdUpC/o9
+    FecXgg6Fv1f31bzG4iavGVxuS8qwImaSEQwbTnw8R80WHmEQ/wDKDayvxay8URIA
+    xruqYQKBgCVlwj6+HKbktVX0l+bGCqZMVOCHdnPR26MPIS6vGyBxNxLTkru9DuQc
+    zpb3Gpr8Vop+iUpKKmO9rrhq6KrxDg1FcDc8/jU60ZfFcSiNJM1xpRGztIiwi/in
+    7YenK+/mc/IjLFhNdFJ1JKrosWkS3Di2DljqeFJ4tcs2IfXcbj78
+    -----END PRIVATE KEY-----
+

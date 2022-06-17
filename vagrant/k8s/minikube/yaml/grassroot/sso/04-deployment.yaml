@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dex
+  namespace: grassroot
+spec:
+  selector:
+    matchLabels:
+      app: dex
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: dex
+    spec:
+      containers:
+      - name: dex
+        image: registry.gitlab.com/target-digital-transformation/sso:3.13.3
+        command: 
+         - dex
+         - serve 
+         - /usr/local/config/config.yaml
+        ports:
+        - containerPort: 5556
+        - containerPort: 5557
+        volumeMounts:
+        - name: sso-config
+          mountPath: /usr/local/config/config.yaml
+          subPath: config.yaml
+        - name: sso-private-key
+          mountPath: /usr/local/config/private.pem
+          subPath: private.pem
+      volumes:
+        - name: sso-config
+          configMap:
+            name: sso-config
+        - name: sso-private-key
+          configMap:
+            name: sso-private-key
+      imagePullSecrets:
+      - name: registry.gitlab.com

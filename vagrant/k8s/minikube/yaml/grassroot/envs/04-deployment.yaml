@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: envs
+  namespace: grassroot
+spec:
+  selector:
+    matchLabels:
+      app: envs
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: envs
+    spec:
+      containers:
+      - name: envs
+        image: registry.tespkg.in/library/envs:alpine3.10
+        command:
+         - /usr/local/envs/bin/envs
+         - --address=:9112
+         - --dsn=http://consul.infra:8500/envs
+         - --asset-dir=/usr/local/envs/static
+        ports:
+        - containerPort: 9112
+  

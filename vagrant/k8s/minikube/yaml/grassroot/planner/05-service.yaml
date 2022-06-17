@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: planner
+  namespace: grassroot
+  labels:
+    svc: planner
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 9313
+    targetPort: 9313
+    protocol: TCP
+    name: grpc
+  - port: 9312
+    targetPort: 9312
+    protocol: TCP
+    name: http
+  selector:
+    app: planner
