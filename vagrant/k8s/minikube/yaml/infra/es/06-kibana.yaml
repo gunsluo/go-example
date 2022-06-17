@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana
+  namespace: infra
+spec:
+  selector:
+    matchLabels:
+      app: kibana # has to match .spec.template.metadata.labels
+  replicas: 1 # by default is 1
+  template:
+    metadata:
+      labels:
+        app: kibana # has to match .spec.selector.matchLabels
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: kibana
+        image: docker.elastic.co/kibana/kibana:7.11.1
+        env:
+        - name: SERVER_NAME
+          value: "kibana"
+        - name: ELASTICSEARCH_HOSTS
+          value: "http://es:9200"
+        - name: MONITORING_ENABLED
+          value: "false"
+        ports:
+        - containerPort: 5601
+          name: tcp
+          protocol: TCP
