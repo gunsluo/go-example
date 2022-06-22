@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	accessKeyId     = ""
-	accessKeySecret = ""
+	accessKeyId     = "LTAI5tHkCvrvTMBGHQbWUHjm"
+	accessKeySecret = "3V6orVzIOMdLF5Ptq6BTHsImBNHVuM"
 )
 
 func main() {
@@ -72,8 +72,9 @@ func main() {
 	}
 
 	sendSmsRequest := &dysmsapi20170525.SendSmsRequest{
-		SignName:      tea.String("短信测试"),
-		TemplateCode:  tea.String(newAddedTemps[0]),
+		SignName:     tea.String("阿里云短信测试"),
+		TemplateCode: tea.String("SMS_154950909"),
+		//TemplateCode:  tea.String(newAddedTemps[0]),
 		PhoneNumbers:  tea.String("18980501737"),
 		TemplateParam: tea.String("{\"code\":\"1234\"}"),
 	}

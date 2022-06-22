@@ -8,6 +8,10 @@ import (
 )
 
 func main() {
+	test()
+}
+
+func test() {
 	/*
 		template := "http://{{host}}/?foo={{bar}}{{bar}}&q={{query}}&baz={{baz}}"
 		t := New(template, "{{", "}}")
@@ -33,6 +37,19 @@ func main() {
 	template := "http://{{host}}/?q={{query}}&foo={{bar}}{{bar}}"
 	//template := "<html><header></header><body>this is {{bar}}{{bar}}</body></html>"
 	t := fasttemplate.New(template, "{{", "}}")
+	s := t.ExecuteString(map[string]interface{}{
+		"host":  "google.com",
+		"query": url.QueryEscape("hello=world"),
+		//"query": "hello=world",
+		"bar": "foobar",
+	})
+	fmt.Printf("%s\n", s)
+}
+
+func test2() {
+	template := "http://${host}/?q=${query}&foo=${bar}${bar}"
+	//template := "<html><header></header><body>this is {{bar}}{{bar}}</body></html>"
+	t := fasttemplate.New(template, "${", "}")
 	s := t.ExecuteString(map[string]interface{}{
 		"host":  "google.com",
 		"query": url.QueryEscape("hello=world"),
