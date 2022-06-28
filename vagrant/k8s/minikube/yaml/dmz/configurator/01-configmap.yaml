@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cfgv2-config
+  namespace: dmz
+data:
+  config.yaml: |
+    version: 1.0.0
+
+    rest:
+      # REST_PORT
+      port: 9302
+      # REST_RUN_MODE
+      mode: debug
+      basic:
+        user: "admin"
+        pass: "configurator"
+      cors:
+        # REST_CORS_ENABLED
+        enabled: true
+        # REST_CORS_MAX_AGE
+        max_age: 12h
+        # REST_CORS_ALLOWED_ORIGINS
+        allowed_origins:
+          - '*'
+        # REST_CORS_ALLOWED_METHODS="GET POST"
+        allowed_methods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - HEAD
+          - OPTIONS
+        # REST_CORS_ALLOWED_HEADERS
+        allowed_headers:
+          - '*'
+          - 'Authorization'
+        # REST_CORS_ALLOW_CREDENTIALS
+        allow_credentials: true
+    serve:
+      postgres_dsn: "postgres://postgres:password@postgres.infra:5432/dmzconfigurator?sslmode=disable"
+      ac:
+        address: "acgrpc.dmz:7001"
+        ca_path: ""
+        crt_path: ""
+        key_path: ""
+        server_name: ""
+      profile:
+        address: "pfgrpc.dmz:5051"
+        ca_path: ""
+        crt_path: ""
+        key_path: ""
+        server_name: ""
+      ses: "sessmsgrpc.grassroot:6000"
+      oidc: http://dex.dmz:5556
+      sso: "dex.dmz:5557"
+      license: "license.dmz:16000"
+      notification: "localhost:6565"
+      redis: "redis.infra:6379"
+      rabbitmq: "amqp://rabbitmq.infra:5672"
+    switch:
+      enable_qiyili_storage: true
+      enable_qiyili_template: true
+      enable_fluxble_template: false
+      enable_payment: false
+    plan:
+      trial_package: 6
+      org_default_user_num: 100
+      org_default_net_space: 100
+      trial_in_month: 3

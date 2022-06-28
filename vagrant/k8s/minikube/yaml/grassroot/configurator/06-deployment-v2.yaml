@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: configuratorv2
+  namespace: grassroot
+spec:
+  selector:
+    matchLabels:
+      app: configuratorv2
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: configuratorv2
+    spec:
+      containers:
+      - name: configuratorv2
+        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/configurator-be:0.4.0
+        command: 
+         - /usr/local/bin/configurator-be
+         - rest
+         - -c
+         - /usr/local/config/config.yaml
+         - all
+         - --verbose
+        ports:
+        - containerPort: 9302
+        volumeMounts:
+        - name: cfgv2-config
+          mountPath: /usr/local/config/config.yaml
+          subPath: config.yaml
+      volumes:
+        - name: cfgv2-config
+          configMap:
+            name: cfgv2-config
+      imagePullSecrets:
+      - name: registry.gitlab.com
