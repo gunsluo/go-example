@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: configurator
+  namespace: dmz
+spec:
+  selector:
+    matchLabels:
+      app: configurator
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: configurator
+    spec:
+      containers:
+      - name: configurator
+        image: registry.gitlab.com/target-digital-transformation/subscription-store:4.27.1
+        command: 
+         - /usr/local/bin/subscription-store 
+         - serve
+         - --address=:9302
+         - --grpc-address=:9301
+         - --ac-grpc=acgrpc.dmz:7001
+         - --profile-grpc=pfgrpc.dmz:5051
+         - --dsn=postgres://postgres:password@postgres.infra/dmzconfigurator?sslmode=disable
+         - --oidc=http://dex.dmz:5556
+         - --cors-hosts=*
+         - --redis-addr=redis.infra:6379
+         - --license-grpc=license.dmz:16000
+         - --rabbitmq-dsn=amqp://guest:guest@rabbitmq.infra:5672/
+        ports:
+        - containerPort: 9301
+        - containerPort: 9302
+        env:
+        - name: MEERA_APP_PRODUCT_WORKSPACE_URL
+          value: "http://127.0.0.1:9302"
+        - name: TARGET_CONFIGURATOR_SUPER_ADMIN
+          value: "CiQwOGE4Njg0Yi1kYjg4LTRiNzMtOTBhOS0zY2QxNjYxZjU0NjYSBWxvY2Fs"
+        - name: CLIENT_ID
+          value: "configurator"
+        - name: CLIENT_SECRET
+          value: "CEmDmDPI10s3gaKKID4tFhqgW8V3wjAa"
+      imagePullSecrets:
+      - name: registry.gitlab.com

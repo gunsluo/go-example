@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meerastorage
+  namespace: dmz
+spec:
+  selector:
+    matchLabels:
+      app: meerastorage
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: meerastorage
+    spec:
+      containers:
+      - name: meerastorage
+        image: registry.gitlab.com/target-digital-transformation/meerastorage:4.21.1
+        command: 
+         - /usr/local/bin/meerastorage
+         - --redis-addr=redis.infra:6379
+         - --metrics-listen-addr=:7171
+         - --s3-listen-addr=:9191
+         - --http-listen-addr=:8181
+         - --jwt-key=Tes9tinas2kmskajirn
+         - --backend-storage-endpoint=http://minio.infra:9000
+         - --backend-storage-access-key=minio_access
+         - --backend-storage-secret-key=minio_secret
+         - --database-dsn=postgres://postgres:password@postgres.infra:5432/dmzmeerastorage?sslmode=disable
+         - --rabbitmq-dsn=amqp://guest:guest@rabbitmq.infra:5672/
+         - --behind-proxy=false
+         - --service-name=dmzmeerastorage
+         - --memcache-total-size=1073741824
+         - --memcache-per-max-size=10485760
+         - --memcache-file-types=png,jpeg,jpg,webp,gif
+         - --ac-grpc-addr=acgrpc.dmz:7001
+         - --configurator-grpc-addr=configurator.dmz:9301
+         - --oidc-provider-addr=http://dex.dmz:5556
+         - --standalone-deploy-mode=false
+        ports:
+        - containerPort: 8181
+      imagePullSecrets:
+      - name: registry.gitlab.com
