@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	accessKeyId     = "LTAI5tHkCvrvTMBGHQbWUHjm"
-	accessKeySecret = "3V6orVzIOMdLF5Ptq6BTHsImBNHVuM"
+	accessKeyId     = "LTAI5tGEeYH6ZJ6qrzwTiZDb"
+	accessKeySecret = "yki0OCKaC4TecG8p2zCkT0AtXeKdqR"
 )
 
 func main() {
@@ -20,60 +20,62 @@ func main() {
 		panic(err)
 	}
 
-	needAddedTemps := []string{}
-	newAddedTemps := []string{"SMS_243566548"}
-	for _, code := range newAddedTemps {
-		querySmsTemplateRequest := &dysmsapi20170525.QuerySmsTemplateRequest{
-			TemplateCode: tea.String(code),
-		}
+	/*
+		needAddedTemps := []string{}
+		newAddedTemps := []string{"SMS_243566548"}
+		for _, code := range newAddedTemps {
+			querySmsTemplateRequest := &dysmsapi20170525.QuerySmsTemplateRequest{
+				TemplateCode: tea.String(code),
+			}
 
-		resp, err := client.QuerySmsTemplateWithOptions(querySmsTemplateRequest, &util.RuntimeOptions{})
-		if err != nil {
-			panic(err)
-		}
+			resp, err := client.QuerySmsTemplateWithOptions(querySmsTemplateRequest, &util.RuntimeOptions{})
+			if err != nil {
+				panic(err)
+			}
 
-		if resp.Body.Code == nil {
-			panic(fmt.Errorf("invalid code"))
-		}
+			if resp.Body.Code == nil {
+				panic(fmt.Errorf("invalid code"))
+			}
 
-		if *resp.Body.Code != "OK" {
-			if *resp.Body.Code == "isv.SMS_TEMPLATE_ILLEGAL" {
-				needAddedTemps = append(needAddedTemps, code)
+			if *resp.Body.Code != "OK" {
+				if *resp.Body.Code == "isv.SMS_TEMPLATE_ILLEGAL" {
+					needAddedTemps = append(needAddedTemps, code)
+					continue
+				}
+				panic(fmt.Errorf("invalid code"))
+			}
+
+			if resp.Body.TemplateStatus == nil {
 				continue
 			}
-			panic(fmt.Errorf("invalid code"))
+
+			if *resp.Body.TemplateStatus != 0 {
+				fmt.Printf("code: %s audit failure\n", code)
+			}
+
 		}
 
-		if resp.Body.TemplateStatus == nil {
-			continue
+		fmt.Printf("--%#v\n", needAddedTemps)
+
+		for _, code := range needAddedTemps {
+			_ = code
+			addSmsTemplateRequest := &dysmsapi20170525.AddSmsTemplateRequest{
+				TemplateType:    tea.Int32(0),
+				TemplateName:    tea.String("test1"),
+				TemplateContent: tea.String("this s a test, code: ${code}."),
+				Remark:          tea.String("testing"),
+			}
+
+			_, err = client.AddSmsTemplateWithOptions(addSmsTemplateRequest, &util.RuntimeOptions{})
+			if err != nil {
+				panic(err)
+			}
 		}
-
-		if *resp.Body.TemplateStatus != 0 {
-			fmt.Printf("code: %s audit failure\n", code)
-		}
-
-	}
-
-	fmt.Printf("--%#v\n", needAddedTemps)
-
-	for _, code := range needAddedTemps {
-		_ = code
-		addSmsTemplateRequest := &dysmsapi20170525.AddSmsTemplateRequest{
-			TemplateType:    tea.Int32(0),
-			TemplateName:    tea.String("test1"),
-			TemplateContent: tea.String("this s a test, code: ${code}."),
-			Remark:          tea.String("testing"),
-		}
-
-		_, err = client.AddSmsTemplateWithOptions(addSmsTemplateRequest, &util.RuntimeOptions{})
-		if err != nil {
-			panic(err)
-		}
-	}
+	*/
 
 	sendSmsRequest := &dysmsapi20170525.SendSmsRequest{
-		SignName:     tea.String("阿里云短信测试"),
-		TemplateCode: tea.String("SMS_154950909"),
+		SignName:     tea.String("企易立通知"),
+		TemplateCode: tea.String("SMS_243566548"),
 		//TemplateCode:  tea.String(newAddedTemps[0]),
 		PhoneNumbers:  tea.String("18980501737"),
 		TemplateParam: tea.String("{\"code\":\"1234\"}"),

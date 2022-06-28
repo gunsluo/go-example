@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	test()
+	test3()
 }
 
 func test() {
@@ -57,4 +57,14 @@ func test2() {
 		"bar": "foobar",
 	})
 	fmt.Printf("%s\n", s)
+}
+
+func test3() {
+	template := "this s a test, code: ${code}."
+	t := fasttemplate.New(template, "${", "}")
+	s := t.ExecuteString(map[string]interface{}{
+		"code": "1234",
+	})
+	fmt.Printf("%s\n", s)
+
 }

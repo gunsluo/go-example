@@ -2,13 +2,13 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: sso-config
-  namespace: grassroot
+  namespace: dmz
 data:
   config.yaml: |
     # The base path of dex and the external name of the OpenID Connect service.
     # This is the canonical URL that all clients MUST use to refer to dex. If a
     # path is provided, dex's HTTP service will listen at a non-root URL.
-    issuer: http://dex.grassroot:5556
+    issuer: http://dex.dmz:5556
 
     # The storage configuration determines where dex stores its state. Supported
     # options include SQL flavors and Kubernetes third party resources.
@@ -17,7 +17,7 @@ data:
     storage:
       type: postgres
       config:
-        dsn: postgres://postgres:password@postgres.infra:5432/sso?sslmode=disable
+        dsn: postgres://postgres:password@postgres.infra:5432/dmzsso?sslmode=disable
 
     # Configuration for the HTTP endpoints.
     web:
@@ -68,7 +68,7 @@ data:
 
     regions:
       enableSyncStaticPassword: true
-      syncAddr: amqp://guest:guest@rabbitmq.infra:5672/
+      syncAddr: amqp://guest:guest@rabbitmq.dmz:5672/
       # syncAddr: "amqps://rabbitmq-tls:5671/"
       # serverName: "localhost"
       # tlsCA: "/certs/ca_cert.pem"
@@ -102,10 +102,9 @@ data:
         redirectURIs:
         - 'http://localhost:4444/callback'
         - 'http://127.0.0.1:4444/callback'
-        - 'http://gettoken.grassroot:4444/callback'
+        - 'http://gettoken.dmz:4444/callback'
         name: 'example app'
         secret: ZXhhbXBsZS1hcHAtc2VjcmV0
-
 
     connectors:
     #- type: mockCallback

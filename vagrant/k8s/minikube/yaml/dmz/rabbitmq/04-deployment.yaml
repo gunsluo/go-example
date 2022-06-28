@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  namespace: dmz
+spec:
+  selector:
+    matchLabels:
+      app: rabbitmq
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+      - name: rabbitmq
+        image: rabbitmq:3.9.13-management
+        env:
+        - name: RABBITMQ_NODE_PORT
+          value: "5672"
+        ports:
+        - containerPort: 5672
+        - containerPort: 15672
+        - containerPort: 61613
+        volumeMounts:
+        - name: rabbitmq-dmz-pvc
+          mountPath: /var/lib/rabbitmq
+      volumes:
+        - name: rabbitmq-dmz-pvc
+          persistentVolumeClaim:
+            claimName: rabbitmq-dmz-pvc-rabbitmq-0
+  

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: acrest
+  namespace: dmz
+  labels:
+    svc: acrest
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 7002
+    targetPort: 7002
+    protocol: TCP
+    name: http
+  selector:
+    app: acrest

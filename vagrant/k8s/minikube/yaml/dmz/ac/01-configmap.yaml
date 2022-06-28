@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: ac-config
-  namespace: grassroot
+  namespace: dmz
 data:
   config.yaml: |
     version: 1.0.0
@@ -26,7 +26,7 @@ data:
           - '*'
         allow_credentials: true
       grpc:
-        endpoint: acgrpc.grassroot:7001
+        endpoint: acgrpc.dmz:7001
         max_retries: 3
         retry_timeout: 10s
         insecure: true
@@ -35,13 +35,13 @@ data:
         #key: server.key
         #server_name: 
       oidc:
-        address: http://dex.grassroot:5556
+        address: http://dex.dmz:5556
         client_id: "access-control"
         client_secret: "ZXhhbXBsZS1hcHAtc2VjcmV0"
         state: acconsole
-        redirect_url: http://acrest.grassroot:7002/ui/oauth2
+        redirect_url: http://acrest.dmz:7002/ui/oauth2
         grpc:
-          endpoint: dex.sso:5557
+          endpoint: dex.dmz:5557
           max_retries: 3
           retry_timeout: 10s
           insecure: true
@@ -51,7 +51,7 @@ data:
           #server_name: 
       ui:
         dir: /ui
-        endpoint: http://acrest.grassroot:7002
+        endpoint: http://acrest.dmz:7002
         timeout: 20s
         cookie_expired: 2h
 
@@ -63,7 +63,7 @@ data:
 
     db:
       # DB_DSN
-      dsn: postgres://postgres:password@postgres.infra:5432/ac?sslmode=disable
+      dsn: postgres://postgres:password@postgres.infra:5432/dmzac?sslmode=disable
       # DB_MAX_IDLE_CONNS
       max_idle_conns: 100
       # DB_MAX_IDLE_CONNS
@@ -83,7 +83,7 @@ data:
       memory:
         maxsize: 10240
         rabbitmq_dsn: amqp://guest:guest@rabbitmq.infra:5672/
-        rabbitmq_exchange: ac.ex
+        rabbitmq_exchange: dmzac.ex
       redis:
         # REDIS_ADDRESS
         address: redis.infra:6379
@@ -94,13 +94,13 @@ data:
         # REDIS_DB
         db: 0
         # REDIS_PREFIX
-        prefix: ac
+        prefix: dmzac
 
     audit_logger:
       enable: false
       es_endpoints:
         - http://localhost:9200
-      es_index_prefix: ac
+      es_index_prefix: dmzac
       es_pit_enable: false
       es_pit_keepalive: 5m
       es_username: 
