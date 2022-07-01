@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sessms-console-config
+  namespace: grassroot
+data:
+  config.js: |
+    var senderConfig = {
+      appApiEndpoint: 'http://sessmsrest.grassroot:6100',
+      appClientID: 'sender-console',
+      appClientSecret: 'ZXhhbXBsZS1hcHAtc2VjcmV0',
+      appState: 'senderconsole',
+      appTokenURL: 'http://dex.grassroot:5556/token',
+      appAuthURL: 'http://dex.grassroot:5556/auth',
+      appRedirectURL: 'http://sessmsconsole.grassroot:8080/oauth2'
+    }
+    

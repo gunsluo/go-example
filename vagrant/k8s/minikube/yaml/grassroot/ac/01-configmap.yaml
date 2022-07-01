@@ -41,7 +41,7 @@ data:
         state: acconsole
         redirect_url: http://acrest.grassroot:7002/ui/oauth2
         grpc:
-          endpoint: dex.sso:5557
+          endpoint: dex.grassroot:5557
           max_retries: 3
           retry_timeout: 10s
           insecure: true

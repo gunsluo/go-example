@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: sessmsrest
-        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms:2.1.0
+        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms:2.2.0
         command: 
          - /usr/local/bin/sender-serve
          - serve
@@ -33,5 +33,39 @@ spec:
         - name: sessms-config
           configMap:
             name: sessms-config
+      imagePullSecrets:
+      - name: registry.gitlab.com
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sessmsconsole
+  namespace: grassroot
+spec:
+  selector:
+    matchLabels:
+      app: sessmsconsole
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sessmsconsole
+    spec:
+      containers:
+      - name: sessmsconsole
+        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms-console:857f4007
+        ports:
+        - containerPort: 6100
+        env:
+        - name: ENVA_ENV_FILES
+          value: ""
+        volumeMounts:
+        - name: sessms-console-config
+          mountPath: /usr/share/nginx/html/config.js
+          subPath: config.js
+      volumes:
+        - name: sessms-console-config
+          configMap:
+            name: sessms-console-config
       imagePullSecrets:
       - name: registry.gitlab.com

@@ -78,7 +78,7 @@ data:
       providers:
         - type: aws
           # SES_PROVIDERS_AWS_ENABLE
-          enable: true
+          enable: false
           # SES_PROVIDERS_AWS_CONFIG=a json string
           config:
             - region: us-east-1
@@ -99,13 +99,13 @@ data:
               domain:
         - type: smtp
           # SES_PROVIDERS_SMTP_ENABLE
-          enable: false
+          enable: true
           # SES_PROVIDERS_SMTP_CONFIG=a json string
           config:
-            - auth_type: LOGIN
-              username: yourusername
-              password: yourpassword
-              srv_address: stmpaddress.com:587
+            - auth_type: NONE
+              username: test
+              password: test
+              srv_address: mailslurper.infra:2500
               ntlm_domain:
               ntlm_workstation:
       blacklist:
