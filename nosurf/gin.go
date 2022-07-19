@@ -5,8 +5,8 @@ import (
 	"html/template"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gunsluo/nosurf"
 	adapter "github.com/gwatts/gin-adapter"
-	"github.com/justinas/nosurf"
 )
 
 var templateString string = `

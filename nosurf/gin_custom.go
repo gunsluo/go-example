@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"fmt"
 	"html/template"
@@ -78,3 +79,4 @@ func NosurfHandler() gin.HandlerFunc {
 		h.ServeHTTP(c.Writer, c.Request)
 	}
 }
+*/

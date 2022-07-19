@@ -5,7 +5,7 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/justinas/nosurf"
+	"github.com/gunsluo/nosurf"
 )
 
 var templateString string = `
@@ -41,5 +41,7 @@ func myFunc(w http.ResponseWriter, r *http.Request) {
 func main() {
 	myHandler := http.HandlerFunc(myFunc)
 	fmt.Println("Listening on http://127.0.0.1:8000/")
-	http.ListenAndServe(":8000", nosurf.New(myHandler))
+	csrfHandler := nosurf.New(myHandler)
+	csrfHandler.IgnorePath("/abc")
+	http.ListenAndServe(":8000", csrfHandler)
 }
