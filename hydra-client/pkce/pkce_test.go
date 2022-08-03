@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func Test(t *testing.T) {
+func TestPKEC(t *testing.T) {
 	cases := []struct {
 		method string
 		pass   bool
