@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -9,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -20,7 +20,7 @@ func main() {
 			Sender:   "OIA",
 			ClientId: "a3a26d70-2b7d-4ff4-b840-c228e643593b",
 			ApiKey:   "Shc9/xtBjwUpTyhA96vFCBnIuENMQeBS/kiF91P3JT0=",
-			SkipTLS:  false,
+			SkipTLS:  true,
 		},
 	)
 	if err != nil {
@@ -28,9 +28,10 @@ func main() {
 	}
 
 	ctx := context.Background()
-	data, err := c.Send(ctx, []string{"96821213333", "8618980501737"}, "test")
+	data, err := c.Send(ctx, []string{"96821213333"}, "test")
 	if err != nil {
-		panic(err)
+		fmt.Printf("failed to send: %v\n", err)
+		return
 	}
 
 	for _, item := range data {
@@ -119,28 +120,44 @@ type oiaOwnerSendResponseData struct {
 }
 
 func (c *oiaOwnerClient) Send(ctx context.Context, to []string, message string) ([]oiaOwnerSendResponseData, error) {
-	param := &oiaOwnerSendRequest{
-		SenderId:      c.config.Sender,
-		IsUnicode:     true,
-		IsFlash:       false,
-		SchedTime:     "",
-		GroupId:       "",
-		Message:       message,
-		MobileNumbers: strings.Join(to, ","),
-		ApiKey:        c.config.ApiKey,
-		ClientId:      c.config.ClientId,
-	}
-	bb, err := json.Marshal(param)
+	v := url.Values{}
+	v.Add("SenderId", c.config.Sender)
+	v.Add("Is_Unicode", "false")
+	v.Add("Is_Flash", "false")
+	v.Add("Message", message)
+	v.Add("MobileNumbers", strings.Join(to, ","))
+	v.Add("ApiKey", c.config.ApiKey)
+	v.Add("ClientId", c.config.ClientId)
+	fmt.Println("-->", v.Encode())
+
+	apiUrl := fmt.Sprintf("%s/api/v2/SendSMS?%s", c.config.Endpoint, v.Encode())
+	req, err := http.NewRequest("GET", apiUrl, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	apiUrl := fmt.Sprintf("%s/api/v2/SendSMS", c.config.Endpoint)
-	req, err := http.NewRequest("POST", apiUrl, bytes.NewReader(bb))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
+	// param := &oiaOwnerSendRequest{
+	// 	SenderId:      c.config.Sender,
+	// 	IsUnicode:     false,
+	// 	IsFlash:       false,
+	// 	SchedTime:     "",
+	// 	GroupId:       "",
+	// 	Message:       message,
+	// 	MobileNumbers: strings.Join(to, ","),
+	// 	ApiKey:        c.config.ApiKey,
+	// 	ClientId:      c.config.ClientId,
+	// }
+	// bb, err := json.Marshal(param)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// apiUrl := fmt.Sprintf("%s/api/v2/SendSMS", c.config.Endpoint)
+	// req, err := http.NewRequest("POST", apiUrl, bytes.NewReader(bb))
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// req.Header.Set("Content-Type", "application/json")
 
 	httpResp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -167,6 +184,7 @@ func (c *oiaOwnerClient) Send(ctx context.Context, to []string, message string) 
 		return nil, fmt.Errorf("Error code %d, description: %s", errResp.ErrorCode, errResp.ErrorDescription)
 	}
 
+	fmt.Println("---->", string(respBytes))
 	resp := &oiaOwnerSendResponse{}
 	if err := json.Unmarshal(respBytes, resp); err != nil {
 		return nil, fmt.Errorf("Code %d, body: %s, err: %w", httpResp.StatusCode, string(respBytes), err)

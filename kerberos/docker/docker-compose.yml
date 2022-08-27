@@ -1,0 +1,19 @@
+version: "3.7"
+services:
+
+  kdc:
+    image: gunsluo/gokrb5:kdc-centos-default
+    container_name: kdc
+    environment:
+      - KRB5_REALM=TEST.GOKRB5
+      - KRB5_DOMAIN=test.gokrb5
+      - SPNS=sso.test.gokrb5
+      - USERS=luoji
+    ports:
+      - 88:88
+      - 88:88/udp
+      - 464:464
+      - 464:464/udp
+    volumes:
+      - ./keytabs/:/keytabs
+

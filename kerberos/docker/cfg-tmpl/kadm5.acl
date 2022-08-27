@@ -1,0 +1,4 @@
+testuser1@$REALM	*
+*/admin@$REALM	*
+*/*@$REALM		i
+*@$REALM		i
