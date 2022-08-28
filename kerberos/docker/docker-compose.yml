@@ -5,9 +5,9 @@ services:
     image: gunsluo/gokrb5:kdc-centos-default
     container_name: kdc
     environment:
-      - KRB5_REALM=TEST.GOKRB5
-      - KRB5_DOMAIN=test.gokrb5
-      - SPNS=sso.test.gokrb5
+      - KRB5_REALM=TEST.KRB5.COM
+      - KRB5_DOMAIN=test.krb5.com
+      - SPNS=sso.test.krb5.com
       - USERS=luoji
     ports:
       - 88:88

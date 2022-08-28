@@ -20,9 +20,9 @@ import (
 )
 
 const (
-	realm  = "TEST.GOKRB5"
-	domain = "test.gokrb5"
-	spn    = "sso.test.gokrb5"
+	realm  = "TEST.KRB5.COM"
+	domain = "test.krb5.com"
+	spn    = "sso.test.krb5.com"
 	port   = ":80"
 )
 

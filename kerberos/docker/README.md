@@ -1,4 +1,4 @@
-# KDC Intergation Test Instance for TEST.GOKRB5
+# KDC Intergation Test Instance for TEST.KRB5.COM
 
 DO NOT USE THIS CONTAINER FOR ANY PRODUCTION USE!!!
 
@@ -19,7 +19,7 @@ Command
 1. For User
 
 Add User
-(luoji@TEST.GOKRB5)
+(luoji@TEST.KRB5.COM)
 
 kadmin.local -q "add_principal -pw luoji123 -kvno 1 luoji"
 
@@ -27,11 +27,11 @@ kadmin.local -q "add_principal -pw luoji123 -kvno 1 luoji"
 1.1 Creating keytab
 
 ktutil
-ktutil: addent -password -p luoji@TEST.GOKRB5 -k 1 -e aes256-cts-hmac-sha1-96
+ktutil: addent -password -p luoji@TEST.KRB5.COM -k 1 -e aes256-cts-hmac-sha1-96
 ktutil: wkt /keytabs/luoji.keytab 
 ktutil: l
 
--- addent -password -p luoji1@TEST.GOKRB5 -k 1 -f
+-- addent -password -p luoji1@TEST.KRB5.COM -k 1 -f
 
 
 1.2 Query User
@@ -41,7 +41,7 @@ kadmin.local -q "listprincs"
 
 1.3 Cache file
 
-kinit -kt /keytabs/luoji.keytab luoji@TEST.GOKRB5
+kinit -kt /keytabs/luoji.keytab luoji@TEST.KRB5.COM
 
 klist -Aef
 
@@ -58,10 +58,10 @@ kadmin.local -q "addprinc -pw luoji123 -kvno 1  HTTP/sso.test.gokrb5"
 
 2.2 Creating keytab
 
-kadmin.local -q "ktadd -k /keytabs/sso.test.gokrb5.srv.keytab HTTP/sso.test.gokrb5@TEST.GOKRB5"
+kadmin.local -q "ktadd -k /keytabs/sso.test.gokrb5.srv.keytab HTTP/sso.test.gokrb5@TEST.KRB5.COM"
 
 
-kadmin.local -q "ktadd -k /keytabs/host.test.gokrb5.srv.keytab HTTP/host.test.gokrb5@TEST.GOKRB5"
+kadmin.local -q "ktadd -k /keytabs/host.test.gokrb5.srv.keytab HTTP/host.test.gokrb5@TEST.KRB5.COM"
 
 
 note: this way can't login by password

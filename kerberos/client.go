@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	realm = "TEST.GOKRB5"
-	spn   = "sso.test.gokrb5"
+	realm = "TEST.KRB5.COM"
+	spn   = "sso.test.krb5.com"
 	port  = ":80"
 )
 
@@ -32,8 +32,8 @@ func main() {
 		panic(err)
 	}
 
-	// testKeytab(conf)
-	testCache(conf)
+	testKeytab(conf)
+	// testCache(conf)
 }
 
 func testKeytab(conf *config.Config) {
