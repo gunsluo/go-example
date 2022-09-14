@@ -23,7 +23,7 @@ const (
 	realm  = "TEST.KRB5.COM"
 	domain = "test.krb5.com"
 	spn    = "sso.test.krb5.com"
-	port   = ":80"
+	port   = ":5556"
 )
 
 var (
@@ -32,7 +32,8 @@ var (
 )
 
 func main() {
-	krb5ConfPath := "./docker/keytabs/krb5.conf"
+	// krb5ConfPath := "./docker/keytabs/krb5.conf"
+	krb5ConfPath := "/Users/luoji/gopath/src/tespkg.in/sso/docker/kdc/keytabs/krb5.conf"
 	b1, err := ioutil.ReadFile(krb5ConfPath)
 	if err != nil {
 		panic(err)
@@ -46,7 +47,8 @@ func main() {
 	krb5Conf = conf
 
 	// service keytab
-	filename := fmt.Sprintf("./docker/keytabs/%s.svc.keytab", spn)
+	// filename := fmt.Sprintf("./docker/keytabs/%s.svc.keytab", spn)
+	filename := fmt.Sprintf("/Users/luoji/gopath/src/tespkg.in/sso/docker/kdc/keytabs/%s.svc.keytab", spn)
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
 		panic(err)

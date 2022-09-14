@@ -29,20 +29,6 @@ spec:
         - name: ac-config
           mountPath: /usr/local/config/config.yaml
           subPath: config.yaml
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 7002
-          initialDelaySeconds: 30
-          periodSeconds: 30
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /healthz
-            port: 7002
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          failureThreshold: 3
       volumes:
         - name: ac-config
           configMap:

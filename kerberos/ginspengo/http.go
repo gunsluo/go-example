@@ -313,6 +313,7 @@ func getAuthorizationNegotiationHeaderAsSPNEGOToken(spnego *SPNEGO, r *http.Requ
 		http.Error(w, UnauthorizedMsg, http.StatusUnauthorized)
 		return nil, errors.New("client did not provide a negotiation authorization header")
 	}
+	fmt.Println("2----->", s)
 
 	// Decode the header into an SPNEGO context token
 	b, err := base64.StdEncoding.DecodeString(s[1])

@@ -29,22 +29,6 @@ spec:
         - name: ac-config
           mountPath: /usr/local/config/config.yaml
           subPath: config.yaml
-        livenessProbe:
-          exec:
-            command: 
-            - /usr/local/bin/grpc_health_probe
-            - -addr=:7001
-          initialDelaySeconds: 30
-          periodSeconds: 30
-          failureThreshold: 3
-        readinessProbe:
-          exec:
-            command: 
-            - /usr/local/bin/grpc_health_probe
-            - -addr=:7001
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          failureThreshold: 3
       volumes:
         - name: ac-config
           configMap:
