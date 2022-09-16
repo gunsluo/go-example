@@ -24,7 +24,7 @@ spec:
          - rest
          - --verbose
         ports:
-        - containerPort: 7002
+        - containerPort: 27002
         volumeMounts:
         - name: ac-config
           mountPath: /usr/local/config/config.yaml

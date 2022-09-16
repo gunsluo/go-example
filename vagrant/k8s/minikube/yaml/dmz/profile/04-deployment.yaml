@@ -20,13 +20,13 @@ spec:
          - /usr/local/bin/profile-serve
          - profile
          - grpc
-         - --address=:5051
+         - --address=:25051
          - --dsn=postgres://postgres:password@postgres.infra/dmzprofile?sslmode=disable
-         - --oidc=http://dex.dmz:5556
-         - --sso-dex-grpc-addr=dex.dmz:5557
+         - --oidc=http://dex.dmz:25556
+         - --sso-dex-grpc-addr=dex.dmz:25557
          - --redis=redis.infra:6379
-         - --sso-sync-addr=amqp://guest:guest@rabbitmq.dmz:5672/
+         - --sso-sync-addr=amqp://guest:guest@rabbitmq.dmz:25672/
         ports:
-        - containerPort: 5051
+        - containerPort: 25051
       imagePullSecrets:
       - name: registry.gitlab.com

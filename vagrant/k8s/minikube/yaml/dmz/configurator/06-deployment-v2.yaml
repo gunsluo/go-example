@@ -24,7 +24,7 @@ spec:
          - all
          - --verbose
         ports:
-        - containerPort: 9302
+        - containerPort: 39302
         volumeMounts:
         - name: cfgv2-config
           mountPath: /usr/local/config/config.yaml

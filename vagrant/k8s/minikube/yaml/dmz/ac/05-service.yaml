@@ -8,8 +8,8 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 7001
-    targetPort: 7001
+  - port: 27001
+    targetPort: 27001
     protocol: TCP
     name: acgrpc
   selector:

@@ -8,12 +8,12 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 9302
-    targetPort: 9302
+  - port: 29302
+    targetPort: 29302
     protocol: TCP
     name: http
-  - port: 9301
-    targetPort: 9301
+  - port: 29301
+    targetPort: 29301
     protocol: TCP
     name: grpc
   selector:

@@ -20,8 +20,8 @@ spec:
          - /usr/local/bin/meerastorage
          - --redis-addr=redis.infra:6379
          - --metrics-listen-addr=:7171
-         - --s3-listen-addr=:9191
-         - --http-listen-addr=:8181
+         - --s3-listen-addr=:29191
+         - --http-listen-addr=:28181
          - --jwt-key=Tes9tinas2kmskajirn
          - --backend-storage-endpoint=http://minio.infra:9000
          - --backend-storage-access-key=minio_access
@@ -33,11 +33,11 @@ spec:
          - --memcache-total-size=1073741824
          - --memcache-per-max-size=10485760
          - --memcache-file-types=png,jpeg,jpg,webp,gif
-         - --ac-grpc-addr=acgrpc.dmz:7001
-         - --configurator-grpc-addr=configurator.dmz:9301
-         - --oidc-provider-addr=http://dex.dmz:5556
+         - --ac-grpc-addr=acgrpc.dmz:27001
+         - --configurator-grpc-addr=configurator.dmz:29301
+         - --oidc-provider-addr=http://dex.dmz:25556
          - --standalone-deploy-mode=false
         ports:
-        - containerPort: 8181
+        - containerPort: 28181
       imagePullSecrets:
       - name: registry.gitlab.com

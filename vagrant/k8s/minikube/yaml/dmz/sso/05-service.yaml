@@ -8,12 +8,12 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 5556
-    targetPort: 5556
+  - port: 25556
+    targetPort: 25556
     protocol: TCP
     name: http
-  - port: 5557
-    targetPort: 5557
+  - port: 25557
+    targetPort: 25557
     protocol: TCP
     name: grpc
   selector:

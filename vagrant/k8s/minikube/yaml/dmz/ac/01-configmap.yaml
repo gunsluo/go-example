@@ -8,7 +8,7 @@ data:
     version: 1.0.0
 
     rest:
-      port: 7002
+      port: 27002
       cors:
         enabled: true
         max_age: 12h
@@ -26,7 +26,7 @@ data:
           - '*'
         allow_credentials: true
       grpc:
-        endpoint: acgrpc.dmz:7001
+        endpoint: acgrpc.dmz:27001
         max_retries: 3
         retry_timeout: 10s
         insecure: true
@@ -35,13 +35,13 @@ data:
         #key: server.key
         #server_name: 
       oidc:
-        address: http://dex.dmz:5556
+        address: http://dex.dmz:25556
         client_id: "access-control"
         client_secret: "ZXhhbXBsZS1hcHAtc2VjcmV0"
         state: acconsole
-        redirect_url: http://acrest.dmz:7002/ui/oauth2
+        redirect_url: http://acrest.dmz:27002/ui/oauth2
         grpc:
-          endpoint: dex.dmz:5557
+          endpoint: dex.dmz:25557
           max_retries: 3
           retry_timeout: 10s
           insecure: true
@@ -51,12 +51,12 @@ data:
           #server_name: 
       ui:
         dir: /ui
-        endpoint: http://acrest.dmz:7002
+        endpoint: http://acrest.dmz:27002
         timeout: 20s
         cookie_expired: 2h
 
     grpc:
-      port: 7001
+      port: 27001
       #ca: ca.crt
       #cert: server.crt
       #key: server.key

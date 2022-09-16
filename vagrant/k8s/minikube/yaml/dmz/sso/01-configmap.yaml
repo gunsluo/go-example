@@ -8,7 +8,7 @@ data:
     # The base path of dex and the external name of the OpenID Connect service.
     # This is the canonical URL that all clients MUST use to refer to dex. If a
     # path is provided, dex's HTTP service will listen at a non-root URL.
-    issuer: http://dex.dmz:5556
+    issuer: http://dex.dmz:25556
 
     # The storage configuration determines where dex stores its state. Supported
     # options include SQL flavors and Kubernetes third party resources.
@@ -21,7 +21,7 @@ data:
 
     # Configuration for the HTTP endpoints.
     web:
-      http: 0.0.0.0:5556
+      http: 0.0.0.0:25556
       allowedOrigins: ["*"]
       # Uncomment for HTTPS options.
       # https: 127.0.0.1:5554
@@ -39,12 +39,12 @@ data:
 
     # Configuration for telemetry
     telemetry:
-      http: 0.0.0.0:5558
+      http: 0.0.0.0:25558
 
     # Uncomment this block to enable the gRPC API. This values MUST be different
     # from the HTTP endpoints.
     grpc:
-      addr: :5557
+      addr: :25557
     #  tlsCert: examples/grpc-client/server.crt
     #  tlsKey: examples/grpc-client/server.key
     #  tlsClientCA: /etc/dex/client.crt
@@ -68,7 +68,7 @@ data:
 
     regions:
       enableSyncStaticPassword: true
-      syncAddr: amqp://guest:guest@rabbitmq.dmz:5672/
+      syncAddr: amqp://guest:guest@rabbitmq.dmz:25672/
       # syncAddr: "amqps://rabbitmq-tls:5671/"
       # serverName: "localhost"
       # tlsCA: "/certs/ca_cert.pem"
@@ -100,9 +100,9 @@ data:
     staticClients:
       - id: example-app
         redirectURIs:
-        - 'http://localhost:4444/callback'
-        - 'http://127.0.0.1:4444/callback'
-        - 'http://gettoken.dmz:4444/callback'
+        - 'http://localhost:24444/callback'
+        - 'http://127.0.0.1:24444/callback'
+        - 'http://gettoken.dmz:24444/callback'
         name: 'example app'
         secret: ZXhhbXBsZS1hcHAtc2VjcmV0
 

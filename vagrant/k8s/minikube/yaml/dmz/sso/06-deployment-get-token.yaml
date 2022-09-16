@@ -18,12 +18,12 @@ spec:
         image: registry.gitlab.com/target-digital-transformation/sso/example_client/master
         command: 
          - /usr/local/bin/dex-client
-         - --issuer=http://dex.dmz:5556
-         - --listen=http://0.0.0.0:4444
+         - --issuer=http://dex.dmz:25556
+         - --listen=http://0.0.0.0:24444
          - --client-id=example-app
          - --client-secret=ZXhhbXBsZS1hcHAtc2VjcmV0
-         - --redirect-uri=http://gettoken.dmz:4444/callback
+         - --redirect-uri=http://gettoken.dmz:24444/callback
         ports:
-        - containerPort: 4444
+        - containerPort: 24444
       imagePullSecrets:
       - name: registry.gitlab.com
