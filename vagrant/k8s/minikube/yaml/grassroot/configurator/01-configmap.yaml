@@ -40,6 +40,7 @@ data:
         allow_credentials: true
     serve:
       postgres_dsn: "postgres://postgres:password@postgres.infra:5432/configurator?sslmode=disable"
+      deploy_regin: ""
       ac:
         address: "acgrpc.grassroot:7001"
         ca_path: ""
@@ -54,11 +55,18 @@ data:
         server_name: ""
       ses: "sessmsgrpc.grassroot:6000"
       oidc: http://dex.grassroot:5556
-      sso: "dex.grassroot:5557"
+      sso: 
+        address: "localhost:5557"
+        ca_path: ""
+        crt_path: ""
+        key_path: ""
+        server_name: ""
       license: "license.grassroot:16000"
       notification: "localhost:6565"
       redis: "redis.infra:6379"
       rabbitmq: "amqp://rabbitmq.infra:5672"
+      org_chart: "localhost:9503"
+      sender_mail: "info@fluxble.com"
     switch:
       enable_qiyili_storage: true
       enable_qiyili_template: true
@@ -69,3 +77,12 @@ data:
       org_default_user_num: 100
       org_default_net_space: 100
       trial_in_month: 3
+    passwordManager:
+      minLength: 8
+      checkRule: "(?=.*[A-Za-z])(?=.*[0-9])"
+      errMsg: "MustBeAlphaNum"
+    uploader:
+      uploaderName: "uploader"
+      uploaderEmail: "uploader@target-energysolutions.com"
+      uploaderPassword: "WhKWPgJNp3Domb1NaufaOfReW"
+      jwtToken: "Tes9tinas2kmskajirn"

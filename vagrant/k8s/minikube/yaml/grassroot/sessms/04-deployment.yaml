@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: sessmsstatus
-        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms:2.2.0
+        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms:2.2.1
         command: 
          - /usr/local/bin/sender-serve
          - serve
@@ -51,7 +51,7 @@ spec:
     spec:
       containers:
       - name: sessmsagent
-        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms:2.2.0
+        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms:2.2.1
         command: 
          - /usr/local/bin/sender-serve
          - serve
@@ -87,7 +87,7 @@ spec:
     spec:
       containers:
       - name: sessmsgrpc
-        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms:2.2.0
+        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms:2.2.1
         command: 
          - /usr/local/bin/sender-serve
          - serve

@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: sessmsrest
-        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms:2.2.0
+        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms:2.2.1
         command: 
          - /usr/local/bin/sender-serve
          - serve
@@ -53,7 +53,7 @@ spec:
     spec:
       containers:
       - name: sessmsconsole
-        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms-console:857f4007
+        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms-console:2.2.1
         ports:
         - containerPort: 6100
         env:

@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: acrest
-        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/access-control:4.0.0
+        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/access-control:4.1.0
         command: 
          - /usr/local/bin/ac-serve 
          - serve 
