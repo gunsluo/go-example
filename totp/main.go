@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"net/url"
+	"strconv"
 
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
@@ -51,6 +53,57 @@ func GeneratePassCode(utf8string string) string {
 	return passcode
 }
 
+func getTOTPValidateOpts(k *otp.Key) totp.ValidateOpts {
+	return totp.ValidateOpts{
+		Period:    uint(k.Period()),
+		Skew:      1,
+		Digits:    getDigits(k),
+		Algorithm: getAlgorithm(k),
+	}
+}
+
+func getDigits(k *otp.Key) otp.Digits {
+	s := k.String()
+
+	u, err := url.Parse(s)
+	if err != nil {
+		return otp.DigitsSix
+	}
+
+	q := u.Query()
+	num, err := strconv.ParseUint(q.Get("digits"), 10, 64)
+	if err != nil {
+		return otp.DigitsSix
+	}
+
+	if num == uint64(otp.DigitsEight) {
+		return otp.DigitsEight
+	}
+	return otp.DigitsSix
+}
+
+func getAlgorithm(k *otp.Key) otp.Algorithm {
+	s := k.String()
+
+	u, err := url.Parse(s)
+	if err != nil {
+		return otp.AlgorithmSHA1
+	}
+
+	q := u.Query()
+	algorithm := q.Get("algorithm")
+	switch algorithm {
+	case "SHA256":
+		return otp.AlgorithmSHA256
+	case "SHA512":
+		return otp.AlgorithmSHA512
+	case "MD5":
+		return otp.AlgorithmMD5
+	}
+
+	return otp.AlgorithmSHA1
+}
+
 func main() {
 	var orig string
 	flag.StringVar(&orig, "orig", "", "a orig value")
@@ -65,8 +118,11 @@ func main() {
 
 func bind() {
 	key, err := totp.Generate(totp.GenerateOpts{
-		Issuer:      "Example.com",
-		AccountName: "alice@example.com",
+		Issuer:      "Target",
+		AccountName: "gunsluo@gmail.com",
+		Digits:      otp.DigitsSix,
+		Period:      30,
+		Algorithm:   otp.AlgorithmSHA256,
 	})
 	if err != nil {
 		panic(err)
@@ -85,7 +141,12 @@ func bind() {
 	// Now Validate that the user's successfully added the passcode.
 	fmt.Println("Validating TOTP...")
 	passcode := promptForPasscode()
-	valid := totp.Validate(passcode, key.Secret())
+	// note: Validate only for AlgorithmSHA1
+	// valid := totp.Validate(passcode, key.Secret())
+	valid, err := totp.ValidateCustom(passcode, key.Secret(), time.Now().UTC(), getTOTPValidateOpts(key))
+	if err != nil {
+		panic(err)
+	}
 	if valid {
 		println("Valid passcode!")
 		os.Exit(0)
@@ -100,11 +161,16 @@ func validate(orig string) {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("secret:", key.Secret())
 
 	// Now Validate that the user's successfully added the passcode.
 	fmt.Println("Validating TOTP...")
 	passcode := promptForPasscode()
-	valid := totp.Validate(passcode, key.Secret())
+	valid, err := totp.ValidateCustom(passcode, key.Secret(), time.Now().UTC(), getTOTPValidateOpts(key))
+	if err != nil {
+		panic(err)
+	}
+
 	if valid {
 		println("Valid passcode!")
 		os.Exit(0)
