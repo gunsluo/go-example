@@ -44,9 +44,9 @@ type ConnectorConfig interface {
 }
 
 func PrintEnvValuesHookFunc(paths map[string]interface{}, k, v string) (string, interface{}) {
-	if strings.HasPrefix(k, "connectors.") {
-		fmt.Println("---->", k, "=", v)
-	}
+	// if strings.HasPrefix(k, "connectors.") {
+	fmt.Println("---->", k, "=", v)
+	// }
 	return "", nil
 }
 

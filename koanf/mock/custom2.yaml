@@ -1,0 +1,24 @@
+
+version: 1.0.0
+
+selfservice:
+  methods:
+    password:
+      enabled: true
+      config:
+        similarity_check: true
+        min_similarity_dist: 4
+        max_substr_threshold: 2
+        min_length: 6
+        require_capital: true
+        require_lower: true
+        require_number: true
+        require_special: false
+    oidc:
+      enabled: false
+    captcha:
+      enabled: true
+      # num or alphabet
+      # method: num
+      # lifespan: 5m
+      # length: 4
