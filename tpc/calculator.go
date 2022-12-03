@@ -20,6 +20,9 @@ func NewTimePeriodCalculator() *TimePeriodCalculator {
 }
 
 func (c *TimePeriodCalculator) TimePeriod(s, e time.Time) {
+	if s.After(e) {
+		s, e = e, s
+	}
 	c.periods = append(c.periods, timePeriod{s: s, e: e})
 }
 

@@ -23,8 +23,8 @@ func TestTimePeriodCalculator(t *testing.T) {
 				s, e time.Time
 			}{
 				{
-					s: time.Date(2010, 1, 1, 0, 0, 0, 0, time.UTC),
-					e: time.Date(2012, 1, 1, 0, 0, 0, 0, time.UTC),
+					s: time.Date(2012, 1, 1, 0, 0, 0, 0, time.UTC),
+					e: time.Date(2010, 1, 1, 0, 0, 0, 0, time.UTC),
 				},
 			},
 			expect: Result{Years: 2, Days: 730},
