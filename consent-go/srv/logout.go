@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/justinas/nosurf"
+	"github.com/gunsluo/nosurf"
 )
 
 func (s *Server) logout(w http.ResponseWriter, req *http.Request) {

@@ -1,11 +1,11 @@
 module github.com/gunsluo/go-example/consent-go
 
-go 1.17
+go 1.19
 
 require (
-	github.com/golang-jwt/jwt/v4 v4.3.0
-	github.com/justinas/nosurf v1.1.1
-	github.com/ory/hydra-client-go v1.11.7
+	github.com/golang-jwt/jwt/v4 v4.4.3
+	github.com/gunsluo/nosurf v1.3.0
+	github.com/ory/hydra-client-go v1.11.8
 )
 
 require (

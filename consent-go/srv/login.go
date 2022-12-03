@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/justinas/nosurf"
+	"github.com/gunsluo/nosurf"
 	client "github.com/ory/hydra-client-go"
 )
 
