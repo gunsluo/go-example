@@ -60,7 +60,7 @@ func (c *TimePeriodCalculator) Calculate() Result {
 	years := math.Round(days / 365)
 
 	// 3. clear
-	c.periods = timePeriods{}
+	c.periods = nil
 
 	return Result{Days: int(days), Years: int(years)}
 }
