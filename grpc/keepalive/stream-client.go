@@ -64,7 +64,7 @@ func stream(client pb.GreeterClient) {
 
 		i++
 		fmt.Println("recv message:", i)
-		if res.Progress == "done" {
+		if res.Progress == 100 {
 			resp = res
 			break
 		}
