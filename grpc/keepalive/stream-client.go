@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/gunsluo/go-example/grpc/keepalive/pb"
@@ -53,22 +55,29 @@ func stream(client pb.GreeterClient) {
 		panic(err)
 	}
 
-	var resp *pb.SayHelloProgressReply
-	var i int
-	for {
-		res, err := hStream.Recv()
-		if err != nil {
-			fmt.Println("recv err:", time.Now().Sub(st))
-			panic(err)
+	func() {
+		var i int
+		var progress int64
+		for {
+			res, err := hStream.Recv()
+			if err != nil {
+				if errors.Is(err, io.EOF) {
+					break
+				}
+
+				fmt.Println("recv err:", time.Now().Sub(st))
+				panic(err)
+			}
+
+			i++
+			progress = res.Progress
+			fmt.Println("recv message:", i, progress)
+			// if res.Progress == 100 {
+			// 	resp = res
+			// 	// break
+			// }
 		}
 
-		i++
-		fmt.Println("recv message:", i)
-		if res.Progress == 100 {
-			resp = res
-			break
-		}
-	}
-
-	fmt.Println("say hello:", i, resp.Message, time.Now().Sub(st))
+		fmt.Println("say hello:", i, progress, time.Now().Sub(st))
+	}()
 }
