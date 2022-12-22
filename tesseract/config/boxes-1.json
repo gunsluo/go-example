@@ -92,6 +92,8 @@
             "eng"
         ],
         "psm":7,
+        "gray":true,
+        "threshold": 50,
         "extractor":{
             "type":"indexOf",
             "value":":"

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"image"
+	"image/draw"
 	"image/gif"
 	"image/jpeg"
 	"image/png"
@@ -19,7 +20,7 @@ import (
 )
 
 func main() {
-
+	// for _, alias := range []string{"4"} {
 	for _, alias := range []string{"1", "2", "3", "4"} {
 		cfgPath := fmt.Sprintf("config/boxes-%s.json", alias)
 		imagePath := fmt.Sprintf("input/%s.jpeg", alias)
@@ -55,11 +56,13 @@ func readConfig(filename string) (BoxesConfig, error) {
 type BoxesConfig []BoxConfig
 
 type BoxConfig struct {
-	Property string      `json:"property"`
-	Lang     []string    `json:"lang"`
-	Psm      int         `json:"psm"`
-	Top      Coordinates `json:"top"`
-	Bottom   Coordinates `json:"bottom"`
+	Property  string      `json:"property"`
+	Lang      []string    `json:"lang"`
+	Psm       int         `json:"psm"`
+	Gray      bool        `json:"gray"`
+	Threshold int         `json:"threshold"`
+	Top       Coordinates `json:"top"`
+	Bottom    Coordinates `json:"bottom"`
 }
 
 type Coordinates struct {
@@ -98,11 +101,17 @@ func recognizeImage(imagePath string, conf BoxesConfig) {
 			panic(err)
 		}
 
+		if box.Gray {
+			img = grayImage(img, box.Threshold)
+			// saveImage("out.jpeg", img, ext)
+			// break
+		}
+
 		b := &bytes.Buffer{}
 		if err := copyImage(bufio.NewWriter(b), img, ext); err != nil {
 			panic(err)
 		}
-		// fmt.Println("--->", len(b.Bytes()))
+
 		client.SetImageFromBytes(b.Bytes())
 
 		text, err := client.Text()
@@ -134,7 +143,6 @@ func readImage(path string) (img image.Image, width, height int, ext string, err
 func cropImage(src image.Image, x, y, w, h int) (image.Image, error) {
 	var subImg image.Image
 	if rgbImg, ok := src.(*image.YCbCr); ok {
-		// fmt.Println("->", x, y, x+w, y+h)
 		subImg = rgbImg.SubImage(image.Rect(x, y, x+w, y+h)).(*image.YCbCr)
 	} else if rgbImg, ok := src.(*image.RGBA); ok {
 		subImg = rgbImg.SubImage(image.Rect(x, y, x+w, y+h)).(*image.RGBA)
@@ -156,4 +164,44 @@ func copyImage(w io.Writer, src image.Image, ext string) (err error) {
 		err = gif.Encode(w, src, &gif.Options{NumColors: 256})
 	}
 	return err
+}
+
+func saveImage(p string, src image.Image, ext string) error {
+	f, err := os.OpenFile(p, os.O_SYNC|os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	return copyImage(f, src, ext)
+}
+
+func grayImage(m image.Image, threshold int) image.Image {
+	grayImage := image.NewGray(m.Bounds())
+	draw.Draw(grayImage, m.Bounds(), m, m.Bounds().Min, draw.Src)
+
+	if threshold > 0 && threshold < 256 {
+		grayImage = binarisationImage(grayImage, uint8(threshold))
+	}
+
+	return grayImage
+}
+
+// image binarisation and convert to black/white image
+func binarisationImage(o *image.Gray, threshold uint8) *image.Gray {
+	b := new(image.Gray)
+	b.Stride = o.Stride
+	b.Rect = o.Rect
+	b.Pix = make([]uint8, len(o.Pix))
+	copy(b.Pix, o.Pix)
+
+	for i := 0; i < len(b.Pix); i++ {
+		if b.Pix[i] > threshold {
+			b.Pix[i] = 255
+		} else {
+			b.Pix[i] = 0
+		}
+	}
+
+	return b
 }

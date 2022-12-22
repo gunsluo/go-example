@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"image/gif"
@@ -11,7 +12,7 @@ import (
 )
 
 func main() {
-	imagePath := "a.jpg"
+	imagePath := "out.jpeg"
 
 	file, err := os.Open(imagePath)
 
@@ -22,14 +23,17 @@ func main() {
 	}
 
 	decode, _, err := image.Decode(file)
-
 	if err != nil {
 		panic(err)
 	}
 
+	fmt.Printf("--->%T\n", decode)
+
 	rgba := grayingImage(decode)
 
-	newFileName := "a.grap.jpg"
+	fmt.Printf("--->%T\n", rgba)
+
+	newFileName := "out.grap.jpeg"
 
 	outFile, _ := os.Create(newFileName)
 
