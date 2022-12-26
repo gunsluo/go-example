@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/golang-jwt/jwt/v4 v4.4.3
 	github.com/gunsluo/nosurf v1.3.0
-	github.com/ory/hydra-client-go v1.11.8
+	github.com/ory/hydra-client-go/v2 v2.0.3
 )
 
 require (

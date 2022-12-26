@@ -9,7 +9,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gunsluo/nosurf"
-	client "github.com/ory/hydra-client-go"
+	client "github.com/ory/hydra-client-go/v2"
 )
 
 const (
@@ -76,7 +76,7 @@ func (s *Server) Run() {
 	http.ListenAndServe(":3000", s.mux)
 }
 
-func oidcConformityMaybeFakeAcr(loginRequest *client.LoginRequest, defaultValue string) string {
+func oidcConformityMaybeFakeAcr(loginRequest *client.OAuth2LoginRequest, defaultValue string) string {
 	if loginRequest == nil || loginRequest.OidcContext == nil {
 		return defaultValue
 	}
@@ -88,8 +88,8 @@ func oidcConformityMaybeFakeAcr(loginRequest *client.LoginRequest, defaultValue 
 	return loginRequest.OidcContext.AcrValues[len(loginRequest.OidcContext.AcrValues)-1]
 }
 
-func oidcConformityMaybeFakeSession(consentRequest *client.ConsentRequest, grantScopes []string) client.ConsentRequestSession {
-	session := client.ConsentRequestSession{}
+func oidcConformityMaybeFakeSession(consentRequest *client.OAuth2ConsentRequest, grantScopes []string) client.AcceptOAuth2ConsentRequestSession {
+	session := client.AcceptOAuth2ConsentRequestSession{}
 
 	idToken := make(map[string]interface{})
 

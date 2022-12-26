@@ -8,6 +8,7 @@ import (
 )
 
 func (s *Server) logout(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
 	if req.Method == http.MethodPost {
 		// Parse the form
 		if err := req.ParseForm(); err != nil {
@@ -19,7 +20,7 @@ func (s *Server) logout(w http.ResponseWriter, req *http.Request) {
 		action := req.Form.Get("submit")
 
 		if action == "No" {
-			_, err := s.apiClient.AdminApi.RejectLogoutRequest(req.Context()).
+			_, err := s.apiClient.OAuth2Api.RejectOAuth2LogoutRequest(ctx).
 				LogoutChallenge(challenge).
 				Execute()
 			if err != nil {
@@ -30,7 +31,7 @@ func (s *Server) logout(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		logoutResp, _, err := s.apiClient.AdminApi.GetLogoutRequest(req.Context()).
+		logoutResp, _, err := s.apiClient.OAuth2Api.GetOAuth2LogoutRequest(ctx).
 			LogoutChallenge(challenge).
 			Execute()
 		if err != nil {
@@ -43,7 +44,7 @@ func (s *Server) logout(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		completedReqResp, _, err := s.apiClient.AdminApi.AcceptLogoutRequest(req.Context()).
+		oauth2RedirectTo, _, err := s.apiClient.OAuth2Api.AcceptOAuth2LogoutRequest(ctx).
 			LogoutChallenge(challenge).
 			Execute()
 		if err != nil {
@@ -51,7 +52,7 @@ func (s *Server) logout(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		if completedReqResp == nil || completedReqResp.RedirectTo == "" {
+		if oauth2RedirectTo == nil || oauth2RedirectTo.RedirectTo == "" {
 			http.Error(w, "invalid response from accept", http.StatusInternalServerError)
 			return
 		}
@@ -64,7 +65,7 @@ func (s *Server) logout(w http.ResponseWriter, req *http.Request) {
 
 		fmt.Println("logout--->", clientId)
 		if clientId != "" {
-			_, err = s.apiClient.AdminApi.RevokeConsentSessions(req.Context()).
+			_, err = s.apiClient.OAuth2Api.RevokeOAuth2ConsentSessions(ctx).
 				Subject(*logoutResp.Subject).
 				Client(clientId).
 				Execute()
@@ -75,7 +76,7 @@ func (s *Server) logout(w http.ResponseWriter, req *http.Request) {
 		}
 
 		// redirect
-		redirectUrl := completedReqResp.RedirectTo
+		redirectUrl := oauth2RedirectTo.RedirectTo
 		http.Redirect(w, req, redirectUrl, http.StatusFound)
 		return
 	}
@@ -83,7 +84,7 @@ func (s *Server) logout(w http.ResponseWriter, req *http.Request) {
 	csrfToken := nosurf.Token(req)
 	challenge := req.URL.Query().Get("logout_challenge")
 
-	logoutResp, _, err := s.apiClient.AdminApi.GetLogoutRequest(req.Context()).
+	logoutResp, _, err := s.apiClient.OAuth2Api.GetOAuth2LogoutRequest(ctx).
 		LogoutChallenge(challenge).
 		Execute()
 	if err != nil {

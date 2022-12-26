@@ -4,10 +4,11 @@ import (
 	"net/http"
 
 	"github.com/gunsluo/nosurf"
-	client "github.com/ory/hydra-client-go"
+	client "github.com/ory/hydra-client-go/v2"
 )
 
 func (s *Server) consent(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
 	if req.Method == http.MethodPost {
 		// Parse the form
 		if err := req.ParseForm(); err != nil {
@@ -22,29 +23,30 @@ func (s *Server) consent(w http.ResponseWriter, req *http.Request) {
 
 		if action != "Allow access" {
 			// reject
-			rejectRequest := client.NewRejectRequest()
+			rejectRequest := client.NewRejectOAuth2Request()
 			rejectRequest.SetError("access_denied")
 			rejectRequest.SetErrorDescription("The resource owner denied the request")
 			rejectRequest.SetStatusCode(http.StatusForbidden)
-			completedReqResp, _, err := s.apiClient.AdminApi.RejectConsentRequest(req.Context()).
+
+			oauth2RedirectTo, _, err := s.apiClient.OAuth2Api.RejectOAuth2ConsentRequest(ctx).
 				ConsentChallenge(challenge).
-				RejectRequest(*rejectRequest).
+				RejectOAuth2Request(*rejectRequest).
 				Execute()
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			if completedReqResp == nil || completedReqResp.RedirectTo == "" {
+			if oauth2RedirectTo == nil || oauth2RedirectTo.RedirectTo == "" {
 				http.Error(w, "invalid response from reject", http.StatusInternalServerError)
 				return
 			}
 
-			redirectUrl := completedReqResp.RedirectTo
+			redirectUrl := oauth2RedirectTo.RedirectTo
 			http.Redirect(w, req, redirectUrl, http.StatusFound)
 			return
 		}
 
-		consentResp, _, err := s.apiClient.AdminApi.GetConsentRequest(req.Context()).
+		consentResp, _, err := s.apiClient.OAuth2Api.GetOAuth2ConsentRequest(ctx).
 			ConsentChallenge(challenge).
 			Execute()
 		if err != nil {
@@ -62,28 +64,29 @@ func (s *Server) consent(w http.ResponseWriter, req *http.Request) {
 			remember = true
 		}
 
-		acceptConsentRequest := client.NewAcceptConsentRequest()
+		acceptConsentRequest := client.NewAcceptOAuth2ConsentRequest()
 		acceptConsentRequest.SetGrantScope(grantScopes)
 		acceptConsentRequest.SetRemember(remember)
 		acceptConsentRequest.SetRememberFor(3600)
 		acceptConsentRequest.SetSession(oidcConformityMaybeFakeSession(consentResp, grantScopes))
 		acceptConsentRequest.SetGrantAccessTokenAudience(consentResp.RequestedAccessTokenAudience)
-		completedReqResp, _, err := s.apiClient.AdminApi.AcceptConsentRequest(req.Context()).
+
+		oauth2RedirectTo, _, err := s.apiClient.OAuth2Api.AcceptOAuth2ConsentRequest(ctx).
 			ConsentChallenge(challenge).
-			AcceptConsentRequest(*acceptConsentRequest).
+			AcceptOAuth2ConsentRequest(*acceptConsentRequest).
 			Execute()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		if completedReqResp == nil || completedReqResp.RedirectTo == "" {
+		if oauth2RedirectTo == nil || oauth2RedirectTo.RedirectTo == "" {
 			http.Error(w, "invalid response from accept", http.StatusInternalServerError)
 			return
 		}
 
 		// redirect
-		redirectUrl := completedReqResp.RedirectTo
+		redirectUrl := oauth2RedirectTo.RedirectTo
 		http.Redirect(w, req, redirectUrl, http.StatusFound)
 
 		return
@@ -92,7 +95,7 @@ func (s *Server) consent(w http.ResponseWriter, req *http.Request) {
 	csrfToken := nosurf.Token(req)
 	challenge := req.URL.Query().Get("consent_challenge")
 
-	consentResp, _, err := s.apiClient.AdminApi.GetConsentRequest(req.Context()).
+	consentResp, _, err := s.apiClient.OAuth2Api.GetOAuth2ConsentRequest(ctx).
 		ConsentChallenge(challenge).
 		Execute()
 	if err != nil {
@@ -108,15 +111,15 @@ func (s *Server) consent(w http.ResponseWriter, req *http.Request) {
 	if consentResp.Skip != nil && *consentResp.Skip {
 		grantScopes := consentResp.RequestedScope
 
-		acceptConsentRequest := client.NewAcceptConsentRequest()
+		acceptConsentRequest := client.NewAcceptOAuth2ConsentRequest()
 		acceptConsentRequest.SetGrantScope(grantScopes)
 		acceptConsentRequest.SetRemember(true)
 		acceptConsentRequest.SetRememberFor(3600)
 		acceptConsentRequest.SetSession(oidcConformityMaybeFakeSession(consentResp, grantScopes))
 		acceptConsentRequest.SetGrantAccessTokenAudience(consentResp.RequestedAccessTokenAudience)
-		completedReqResp, _, err := s.apiClient.AdminApi.AcceptConsentRequest(req.Context()).
+		completedReqResp, _, err := s.apiClient.OAuth2Api.AcceptOAuth2ConsentRequest(ctx).
 			ConsentChallenge(challenge).
-			AcceptConsentRequest(*acceptConsentRequest).
+			AcceptOAuth2ConsentRequest(*acceptConsentRequest).
 			Execute()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)

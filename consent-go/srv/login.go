@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gunsluo/nosurf"
-	client "github.com/ory/hydra-client-go"
+	client "github.com/ory/hydra-client-go/v2"
 )
 
 func (s *Server) login(w http.ResponseWriter, req *http.Request) {
@@ -23,26 +23,28 @@ func (s *Server) login(w http.ResponseWriter, req *http.Request) {
 		password := req.Form.Get("password")
 		action := req.Form.Get("submit")
 
+		ctx := req.Context()
 		if action != "Log in" {
 			// reject
-			rejectRequest := client.NewRejectRequest()
+			rejectRequest := client.NewRejectOAuth2Request()
 			rejectRequest.SetError("access_denied")
 			rejectRequest.SetErrorDescription("The resource owner denied the request")
 			rejectRequest.SetStatusCode(http.StatusForbidden)
-			completedReqResp, _, err := s.apiClient.AdminApi.RejectLoginRequest(req.Context()).
+			oauth2RedirectTo, _, err := s.apiClient.OAuth2Api.RejectOAuth2LoginRequest(ctx).
 				LoginChallenge(challenge).
-				RejectRequest(*rejectRequest).
+				RejectOAuth2Request(*rejectRequest).
 				Execute()
+
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			if completedReqResp == nil || completedReqResp.RedirectTo == "" {
+			if oauth2RedirectTo == nil || oauth2RedirectTo.RedirectTo == "" {
 				http.Error(w, "invalid response from reject", http.StatusInternalServerError)
 				return
 			}
 
-			redirectUrl := completedReqResp.RedirectTo
+			redirectUrl := oauth2RedirectTo.RedirectTo
 			http.Redirect(w, req, redirectUrl, http.StatusFound)
 			return
 		}
@@ -52,9 +54,9 @@ func (s *Server) login(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		loginResp, _, err := s.apiClient.AdminApi.
-			GetLoginRequest(req.Context()).
-			LoginChallenge(challenge).Execute()
+		loginResp, _, err := s.apiClient.OAuth2Api.GetOAuth2LoginRequest(ctx).
+			LoginChallenge(challenge).
+			Execute()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -73,37 +75,41 @@ func (s *Server) login(w http.ResponseWriter, req *http.Request) {
 		if rememberFrom == "1" {
 			remember = true
 		}
-		acceptRequest := client.NewAcceptLoginRequest(email)
+
+		acceptRequest := client.NewAcceptOAuth2LoginRequest(email)
 		acceptRequest.SetRemember(remember)
 		acceptRequest.SetRememberFor(3600)
 		acceptRequest.SetAcr(oidcConformityMaybeFakeAcr(loginResp, "0"))
-		completedReqResp, _, err := s.apiClient.AdminApi.AcceptLoginRequest(req.Context()).
+
+		oauth2RedirectTo, _, err := s.apiClient.OAuth2Api.AcceptOAuth2LoginRequest(ctx).
 			LoginChallenge(challenge).
-			AcceptLoginRequest(*acceptRequest).
+			AcceptOAuth2LoginRequest(*acceptRequest).
 			Execute()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		if completedReqResp == nil || completedReqResp.RedirectTo == "" {
+		if oauth2RedirectTo == nil || oauth2RedirectTo.RedirectTo == "" {
 			http.Error(w, "invalid response from accept", http.StatusInternalServerError)
 			return
 		}
 
 		// redirect
-		redirectUrl := completedReqResp.RedirectTo
+		redirectUrl := oauth2RedirectTo.RedirectTo
 		http.Redirect(w, req, redirectUrl, http.StatusFound)
 
 		return
 	}
 
+	ctx := req.Context()
 	csrfToken := nosurf.Token(req)
 	challenge := req.URL.Query().Get("login_challenge")
+	loginResp, _, err := s.apiClient.OAuth2Api.
+		GetOAuth2LoginRequest(ctx).
+		LoginChallenge(challenge).
+		Execute()
 
-	loginResp, _, err := s.apiClient.AdminApi.
-		GetLoginRequest(req.Context()).
-		LoginChallenge(challenge).Execute()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -116,22 +122,22 @@ func (s *Server) login(w http.ResponseWriter, req *http.Request) {
 
 	if loginResp.Skip {
 		// accept login
-		completedReqResp, _, err := s.apiClient.AdminApi.AcceptLoginRequest(req.Context()).
+		oauth2RedirectTo, _, err := s.apiClient.OAuth2Api.AcceptOAuth2LoginRequest(ctx).
 			LoginChallenge(challenge).
-			AcceptLoginRequest(*client.NewAcceptLoginRequest(loginResp.Subject)).
+			AcceptOAuth2LoginRequest(*client.NewAcceptOAuth2LoginRequest(loginResp.Subject)).
 			Execute()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		if completedReqResp == nil || completedReqResp.RedirectTo == "" {
+		if oauth2RedirectTo == nil || oauth2RedirectTo.RedirectTo == "" {
 			http.Error(w, "invalid response from accept", http.StatusInternalServerError)
 			return
 		}
 
 		// redirect
-		redirectUrl := completedReqResp.RedirectTo
+		redirectUrl := oauth2RedirectTo.RedirectTo
 		fmt.Println("2---->", redirectUrl)
 		http.Redirect(w, req, redirectUrl, http.StatusFound)
 
