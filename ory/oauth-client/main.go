@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/gunsluo/go-example/hydra-client/pkce"
+	"github.com/gunsluo/go-example/ory/oauth-client/pkce"
 	"github.com/julienschmidt/httprouter"
 	"golang.org/x/oauth2"
 )

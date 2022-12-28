@@ -63,9 +63,9 @@ func New() (*Server, error) {
 	s.apiClient = client.NewAPIClient(cfg)
 
 	mux := http.NewServeMux()
-	mux.Handle("/oauth2/login", nosurf.New(http.HandlerFunc(s.login)))
-	mux.Handle("/oauth2/consent", nosurf.New(http.HandlerFunc(s.consent)))
-	mux.Handle("/oauth2/logout", nosurf.New(http.HandlerFunc(s.logout)))
+	mux.Handle("/login", nosurf.New(http.HandlerFunc(s.login)))
+	mux.Handle("/consent", nosurf.New(http.HandlerFunc(s.consent)))
+	mux.Handle("/logout", nosurf.New(http.HandlerFunc(s.logout)))
 	s.mux = mux
 
 	return s, nil
