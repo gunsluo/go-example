@@ -1,4 +1,4 @@
-module github.com/gunsluo/go-example/consent-go
+module github.com/gunsluo/go-example/ory/consent-ui
 
 go 1.19
 

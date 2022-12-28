@@ -1,6 +1,6 @@
 package main
 
-import "github.com/gunsluo/go-example/consent-go/srv"
+import "github.com/gunsluo/go-example/ory/consent-ui/srv"
 
 func main() {
 	s, err := srv.New()
