@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  {{ template "standard.html" . }}
+  <title>Index</title>
+  <link type="text/css" rel="stylesheet" href="/assets/css/content-layout.css" />
+</head>
+
+<body>
+  <main data-testid="app-express">
+    <div class="app-container">
+
+      <!-- nav start  -->
+      {{ template "nav.html" . }}
+      <!-- nav end  -->
+
+      <!-- container start  -->
+      <div class="container spacing-32">
+        <div class="content">
+          {{ if .authed -}}
+            You are logged in
+          {{ else -}}
+            You are Unauthorized
+          {{ end -}}
+        </div>
+      </div>
+      <!-- container end  -->
+
+    </div>
+  </main>
+</body>
+
+</html>

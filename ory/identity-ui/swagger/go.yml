@@ -1,0 +1,5 @@
+disallowAdditionalPropertiesIfNotPresent: true
+packageName: identityclient
+generateInterfaces: true
+structPrefix: true
+enumClassPrefix: true

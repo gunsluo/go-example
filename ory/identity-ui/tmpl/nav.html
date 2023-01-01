@@ -1,0 +1,110 @@
+<nav role="navigation" class="u0o6660 main-nav">
+
+  <div class="u0o6661 vpyugz5 vpyugzm vpyugz9 _13ke3e81">
+    An example for identity ui
+  </div>
+  <ul class="u0o6664 u0o6662 roeg5j0 roeg5j6">
+    <li>
+      <ul class="u0o6662">
+        <li class="u0o6663">
+          <div class="_1mb45s80" name="Overview" selected="">
+            <a class="vpyugz5 vpyugzm vpyugz8 _13ke3e86 _1mb45s82" href="/">
+              <i class="fa fa-house _1mb45s81"></i>Overview</a>
+          </div>
+        </li>
+        <li>
+          <div class="_1mb45s80" name="Session Information">
+            <a class="vpyugz5 vpyugzm vpyugz8 _13ke3e86 _1mb45s82" href="{{ .nav.SessionUrl }}"><i
+                class="fa fa-users-viewfinder _1mb45s81"></i>Session Information</a>
+          </div>
+        </li>
+      </ul>
+    </li>
+
+    <li>
+      <div class="vpyugz5 vpyugzn vpyugz7 _13ke3e85 u0o6661">
+        Default User Interfaces<i class="fa fa-circle-question"></i>
+      </div>
+      <ul class="u0o6662">
+        <li>
+          <div class="_1mb45s80" data-testid="login" name="Sign In">
+            {{ if .authed -}}
+            <a class="vpyugz5 vpyugzm vpyugz8 _13ke3e88 _1mb45s82" aria-disabled="true">
+              <i class="fa fa-arrow-right-to-bracket _1mb45s81"></i>Sign In</a><i
+              class="fa fa-up-right-from-square _13ke3e88"></i>
+            {{ else -}}
+            <a class="vpyugz5 vpyugzm vpyugz8 _13ke3e86 _1mb45s82" aria-disabled="false" href="{{ .nav.SignInUrl }}">
+              <i class="fa fa-arrow-right-to-bracket _1mb45s81"></i>Sign In</a><i
+              class="fa fa-up-right-from-square _13ke3e86"></i>
+            {{ end -}}
+          </div>
+        </li>
+        <li>
+          <div class="_1mb45s80" data-testid="registration" name="Sign Up">
+            {{ if .authed -}}
+            <a class="vpyugz5 vpyugzm vpyugz8 _13ke3e88 _1mb45s82" aria-disabled="true">
+              <i class="fa fa-arrow-right-to-bracket _1mb45s81"></i>Sign Up</a><i
+              class="fa fa-up-right-from-square _13ke3e88"></i>
+            {{ else -}}
+            <a class="vpyugz5 vpyugzm vpyugz8 _13ke3e86 _1mb45s82" aria-disabled="false" href="{{ .nav.SignUpUrl }}">
+              <i class="fa fa-arrow-right-to-bracket _1mb45s81"></i>Sign Up</a><i
+              class="fa fa-up-right-from-square _13ke3e86"></i>
+            {{ end -}}
+          </div>
+        </li>
+        <li>
+          <div class="_1mb45s80" data-testid="recovery" name="Account Recovery">
+            {{ if .authed -}}
+            <a class="vpyugz5 vpyugzm vpyugz8 _13ke3e88 _1mb45s82" aria-disabled="true">
+              <i class="fa fa-user-xmark _1mb45s81"></i>Account Recovery</a><i
+              class="fa fa-up-right-from-square _13ke3e88"></i>
+            {{ else -}}
+            <a class="vpyugz5 vpyugzm vpyugz8 _13ke3e86 _1mb45s82" aria-disabled="false" href="{{ .nav.RecoveryUrl }}">
+              <i class="fa fa-user-xmark _1mb45s81"></i>Account Recovery</a><i
+              class="fa fa-up-right-from-square _13ke3e86"></i>
+            {{ end -}}
+          </div>
+        </li>
+        <li>
+          <div class="_1mb45s80" data-testid="verification" name="Account Verification">
+            {{ if .authed -}}
+            <a class="vpyugz5 vpyugzm vpyugz8 _13ke3e88 _1mb45s82" aria-disabled="true">
+              <i class="fa fa-user-check _1mb45s81"></i>Account Verification</a><i
+              class="fa fa-up-right-from-square _13ke3e88"></i>
+            {{ else -}}
+            <a class="vpyugz5 vpyugzm vpyugz8 _13ke3e86 _1mb45s82" aria-disabled="false" href="{{ .nav.VerifyUrl }}">
+              <i class="fa fa-user-check _1mb45s81"></i>Account Verification</a><i
+              class="fa fa-up-right-from-square _13ke3e86"></i>
+            {{ end -}}
+          </div>
+        </li>
+        <li>
+          <div class="_1mb45s80" data-testid="settings" name="Account Settings">
+            {{ if .authed -}}
+            <a class="vpyugz5 vpyugzm vpyugz8 _13ke3e86 _1mb45s82" aria-disabled="true" href="{{ .nav.SettingsUrl }}">
+              <i class="fa fa-gear _1mb45s81"></i>Account Settings</a><i
+              class="fa fa-up-right-from-square _13ke3e86"></i>
+            {{ else -}}
+            <a class="vpyugz5 vpyugzm vpyugz8 _13ke3e88 _1mb45s82" aria-disabled="false">
+              <i class="fa fa-gear _1mb45s81"></i>Account Settings</a><i
+              class="fa fa-up-right-from-square _13ke3e88"></i>
+            {{ end -}}
+          </div>
+        </li>
+        <li>
+          <div class="_1mb45s80" data-testid="logout" name="Logout">
+            {{ if .authed -}}
+            <a class="vpyugz5 vpyugzm vpyugz8 _13ke3e86 _1mb45s82" aria-disabled="true" href="{{ .nav.LogoutUrl }}">
+              <i class="fa fa-arrow-right-to-bracket _1mb45s81"></i>Logout</a><i
+              class="fa fa-up-right-from-square _13ke3e86"></i>
+            {{ else -}}
+            <a class="vpyugz5 vpyugzm vpyugz8 _13ke3e88 _1mb45s82" aria-disabled="false">
+              <i class="fa fa-arrow-right-to-bracket _1mb45s81"></i>Logout</a><i
+              class="fa fa-up-right-from-square _13ke3e88"></i>
+            {{ end -}}
+          </div>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>
