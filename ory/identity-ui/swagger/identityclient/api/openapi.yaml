@@ -4136,6 +4136,7 @@ components:
       - id
       - name
       - node_type
+      - required
       - type
       type: object
     uiNodeMeta:

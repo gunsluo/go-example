@@ -13,9 +13,7 @@ import (
 )
 
 type Server struct {
-	// loginTemplate   *template.Template
-	// consentTemplate *template.Template
-	// logoutTemplate  *template.Template
+	dev bool
 
 	dir              string
 	identityEndpoint string
@@ -26,7 +24,7 @@ type Server struct {
 }
 
 func New() (*Server, error) {
-	s := &Server{dir: "./tmpl"}
+	s := &Server{dev: true, dir: "./tmpl"}
 
 	identityEndpoint := os.Getenv(envIdentityEndpoint)
 	_, err := url.Parse(identityEndpoint)
@@ -69,6 +67,15 @@ func (s *Server) setRouter() {
 		},
 	}
 	s.engine.GET("/", authmd.Handler(true), s.index)
+
+	// login
+	s.engine.GET("/login", s.login)
+
+	// sessions
+	s.engine.GET("/sessions", authmd.Handler(true), s.index)
+
+	// execption
+	s.engine.GET("/execption", s.execption)
 }
 
 func (s *Server) Run() {

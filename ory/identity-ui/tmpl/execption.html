@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  {{ template "standard.html" . }}
+  <title>Index</title>
+  <link type="text/css" rel="stylesheet" href="/assets/css/auth-layout.css" />
+</head>
+
+<body>
+  <main data-testid="app-express">
+    <div class="auth-container spacing-16">
+      <div class="content">
+        <h2 class="vpyugz5 vpyugz8">Error Message</h2>
+        <p>Code: {{ .code }}</p>
+        <p>Message: {{ .message }}</p>
+      </div>
+    </div>
+  </main>
+</body>
+
+</html>

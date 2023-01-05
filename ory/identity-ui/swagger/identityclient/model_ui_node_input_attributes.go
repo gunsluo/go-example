@@ -32,7 +32,7 @@ type UiNodeInputAttributes struct {
 	// The input's pattern.
 	Pattern *string `json:"pattern,omitempty"`
 	// Mark this input field as required.
-	Required *bool `json:"required,omitempty"`
+	Required bool `json:"required"`
 	Type string `json:"type"`
 	// The input's value.
 	Value interface{} `json:"value,omitempty"`
@@ -42,12 +42,13 @@ type UiNodeInputAttributes struct {
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewUiNodeInputAttributes(disabled bool, id string, name string, nodeType string, type_ string) *UiNodeInputAttributes {
+func NewUiNodeInputAttributes(disabled bool, id string, name string, nodeType string, required bool, type_ string) *UiNodeInputAttributes {
 	this := UiNodeInputAttributes{}
 	this.Disabled = disabled
 	this.Id = id
 	this.Name = name
 	this.NodeType = nodeType
+	this.Required = required
 	this.Type = type_
 	return &this
 }
@@ -284,36 +285,28 @@ func (o *UiNodeInputAttributes) SetPattern(v string) {
 	o.Pattern = &v
 }
 
-// GetRequired returns the Required field value if set, zero value otherwise.
+// GetRequired returns the Required field value
 func (o *UiNodeInputAttributes) GetRequired() bool {
-	if o == nil || o.Required == nil {
+	if o == nil {
 		var ret bool
 		return ret
 	}
-	return *o.Required
+
+	return o.Required
 }
 
-// GetRequiredOk returns a tuple with the Required field value if set, nil otherwise
+// GetRequiredOk returns a tuple with the Required field value
 // and a boolean to check if the value has been set.
 func (o *UiNodeInputAttributes) GetRequiredOk() (*bool, bool) {
-	if o == nil || o.Required == nil {
+	if o == nil  {
 		return nil, false
 	}
-	return o.Required, true
+	return &o.Required, true
 }
 
-// HasRequired returns a boolean if a field has been set.
-func (o *UiNodeInputAttributes) HasRequired() bool {
-	if o != nil && o.Required != nil {
-		return true
-	}
-
-	return false
-}
-
-// SetRequired gets a reference to the given bool and assigns it to the Required field.
+// SetRequired sets field value
 func (o *UiNodeInputAttributes) SetRequired(v bool) {
-	o.Required = &v
+	o.Required = v
 }
 
 // GetType returns the Type field value
@@ -399,7 +392,7 @@ func (o UiNodeInputAttributes) MarshalJSON() ([]byte, error) {
 	if o.Pattern != nil {
 		toSerialize["pattern"] = o.Pattern
 	}
-	if o.Required != nil {
+	if true {
 		toSerialize["required"] = o.Required
 	}
 	if true {

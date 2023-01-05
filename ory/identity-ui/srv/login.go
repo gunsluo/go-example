@@ -2,6 +2,7 @@ package srv
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -11,10 +12,55 @@ import (
 	"github.com/gunsluo/go-example/ory/identity-ui/swagger/identityclient"
 )
 
+func (s *Server) login(c *gin.Context) {
+	flowId := c.Query("flow")
+	if flowId == "" {
+		vs := url.Values{}
+		s.gotoLogin(c, vs)
+		return
+	}
+
+	ctx := c.Request.Context()
+	cookie := c.Request.Header.Get("cookie")
+	flow, _, err := s.apiClient.LoginApi.GetLoginFlowRequest(ctx).
+		Id(flowId).
+		Cookie(cookie).
+		Execute()
+	if err != nil {
+		if e := new(identityclient.GenericOpenAPIError); errors.As(err, &e) {
+			if jer, ok := e.Model().(identityclient.JsonErrorResponse); ok {
+				vs := url.Values{}
+				vs.Add("code", fmt.Sprintf("%v", jer.GetCode()))
+				vs.Add("message", jer.GetMsg())
+				s.gotoExecption(c, vs)
+				return
+			}
+		}
+
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// debug
+	s.debugPrint("login ui", flow.Ui)
+
+	froms := groupLoginUi(flow.Ui)
+	c.HTML(http.StatusOK, "login.html", gin.H{
+		"ui":              froms,
+		"recoveryUrl":     "/recovery",
+		"registrationUrl": "/registration",
+	})
+}
+
 func (s *Server) gotoLogin(c *gin.Context, vs url.Values) {
 	redirectUrl := fmt.Sprintf("%s/self-service/login/browser?%s", s.identityEndpoint, vs.Encode())
 
 	c.Redirect(http.StatusSeeOther, redirectUrl)
+}
+
+func (s *Server) gotoExecption(c *gin.Context, vs url.Values) {
+	execptionUrl := fmt.Sprintf("/execption?%s", vs.Encode())
+	c.Redirect(http.StatusSeeOther, execptionUrl)
 }
 
 var (
@@ -102,4 +148,18 @@ func UnAuth(ctx context.Context) *UnAuthInfo {
 	}
 
 	return uai
+}
+
+func (s *Server) debugPrint(title string, v any) {
+	if !s.dev {
+		return
+	}
+
+	buffer, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		fmt.Printf("debug[%s]: unable to parse -> %v\n", title, err)
+		return
+	}
+
+	fmt.Printf("debug[%s]: \n%s\n\n", title, string(buffer))
 }

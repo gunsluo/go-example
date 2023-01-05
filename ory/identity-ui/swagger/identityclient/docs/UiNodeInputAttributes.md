@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 **NodeType** | **string** | NodeType represents this node&#39;s types. It is a mirror of &#x60;node.type&#x60; and is primarily used to allow compatibility with OpenAPI 3.0.  In this struct it technically always is \&quot;input\&quot;. | 
 **Onclick** | Pointer to **string** | OnClick may contain javascript which should be executed on click. This is primarily used for WebAuthn. | [optional] 
 **Pattern** | Pointer to **string** | The input&#39;s pattern. | [optional] 
-**Required** | Pointer to **bool** | Mark this input field as required. | [optional] 
+**Required** | **bool** | Mark this input field as required. | 
 **Type** | **string** |  | 
 **Value** | Pointer to **interface{}** | The input&#39;s value. | [optional] 
 
@@ -20,7 +20,7 @@ Name | Type | Description | Notes
 
 ### NewUiNodeInputAttributes
 
-`func NewUiNodeInputAttributes(disabled bool, id string, name string, nodeType string, type_ string, ) *UiNodeInputAttributes`
+`func NewUiNodeInputAttributes(disabled bool, id string, name string, nodeType string, required bool, type_ string, ) *UiNodeInputAttributes`
 
 NewUiNodeInputAttributes instantiates a new UiNodeInputAttributes object
 This constructor will assign default values to properties that have it defined,
@@ -234,11 +234,6 @@ and a boolean to check if the value has been set.
 
 SetRequired sets Required field to given value.
 
-### HasRequired
-
-`func (o *UiNodeInputAttributes) HasRequired() bool`
-
-HasRequired returns a boolean if a field has been set.
 
 ### GetType
 

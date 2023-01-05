@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 **NodeType** | **string** | NodeType represents this node&#39;s types. It is a mirror of &#x60;node.type&#x60; and is primarily used to allow compatibility with OpenAPI 3.0. In this struct it technically always is \&quot;script\&quot;. | 
 **Onclick** | Pointer to **string** | OnClick may contain javascript which should be executed on click. This is primarily used for WebAuthn. | [optional] 
 **Pattern** | Pointer to **string** | The input&#39;s pattern. | [optional] 
-**Required** | Pointer to **bool** | Mark this input field as required. | [optional] 
+**Required** | **bool** | Mark this input field as required. | 
 **Type** | **string** | The script MIME type | 
 **Value** | Pointer to **interface{}** | The input&#39;s value. | [optional] 
 **Text** | [**UiText**](UiText.md) |  | 
@@ -31,7 +31,7 @@ Name | Type | Description | Notes
 
 ### NewUiNodeAttributes
 
-`func NewUiNodeAttributes(disabled bool, id string, name string, nodeType string, type_ string, text UiText, height int64, src string, width int64, href string, title UiText, async bool, crossorigin string, integrity string, nonce string, referrerpolicy string, ) *UiNodeAttributes`
+`func NewUiNodeAttributes(disabled bool, id string, name string, nodeType string, required bool, type_ string, text UiText, height int64, src string, width int64, href string, title UiText, async bool, crossorigin string, integrity string, nonce string, referrerpolicy string, ) *UiNodeAttributes`
 
 NewUiNodeAttributes instantiates a new UiNodeAttributes object
 This constructor will assign default values to properties that have it defined,
@@ -245,11 +245,6 @@ and a boolean to check if the value has been set.
 
 SetRequired sets Required field to given value.
 
-### HasRequired
-
-`func (o *UiNodeAttributes) HasRequired() bool`
-
-HasRequired returns a boolean if a field has been set.
 
 ### GetType
 
