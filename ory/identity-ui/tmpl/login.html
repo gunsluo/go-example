@@ -14,10 +14,131 @@
         <div class="_1t5ly150 vpyugz5 vpyugzm vpyugz8">
           <div class="roeg5j0 roeg5j7">
             <div class="_1t5ly151">
+              {{ if eq .aal "aal2" }}
+              <h2 class="vpyugz5 vpyugzm vpyugz8">Two-Factor Authentication</h2>
+              {{ else }}
               <h2 class="vpyugz5 vpyugzm vpyugz8">Sign In</h2>
+              {{ end }}
             </div>
             <!-- content start -->
             <div>
+              {{ if eq .aal "aal2" }}
+              <!-- aal2 start -->
+              <div class="roeg5j0 roeg5j7">
+                <div class="roeg5j0 roeg5j5">
+                  <div class="_1421i9r0 _1421i9r2 _1421i9r5 vpyugz5 vpyugzm vpyugz9" data-testid="ui/message/1010004">
+                    Please complete the second authentication challenge.</div>
+                </div>
+
+                {{ range $m := .ui.Messages }}
+                <div class="_1421i9r0 _1421i9r2 _1421i9r4 vpyugz5 vpyugzm vpyugz9" data-testid="ui/message/4010001">
+                  {{ $m.Text}}
+                </div>
+                {{ end }}
+
+                <!-- all froms start -->
+                {{ range $from := .ui.Froms }}
+                <!-- totp from start -->
+                {{ if and (eq $from.Display true) (eq $from.Group "totp") }}
+                <!-- form start -->
+                <form class="u030kk0" action="{{ $.ui.Action }}" method="{{ $.ui.Method }}">
+                  {{ range $gn := $from.GroupNodes }}
+                  <!-- default nodes start -->
+                  {{ if eq $gn.Name "default" }}
+                  {{ range $n := $gn.Nodes }}
+                  <!-- input start -->
+                  {{ if eq $n.Type "input" }}
+                  {{ if eq $n.Attributes.UiNodeInputAttributes.Type "hidden" }}
+                  <div class="roeg5j0 roeg5j3">
+                    <input type="hidden" style="width:100%" placeholder=""
+                      name="{{ $n.Attributes.UiNodeInputAttributes.Name }}" autocomplete=""
+                      value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                  </div>
+                  {{ end }}
+                  {{ end }}
+                  <!-- input end -->
+                  {{ end }}
+                  {{ end }}
+                  <!-- default nodes end -->
+
+                  <!-- totp nodes start -->
+                  {{ if eq $gn.Name "totp" }}
+                  <div class="roeg5j0 roeg5j7">
+                    <div class="roeg5j0 roeg5j5">
+                      {{ range $n := $gn.Nodes }}
+                      <!-- input start -->
+                      {{ if eq $n.Type "input" }}
+                      {{ if eq $n.Attributes.UiNodeInputAttributes.Type "text" }}
+                      <div data-testid="" class="roeg5j0 roeg5j3">
+                        <div class="vpyugz5 vpyugzm vpyugz8">
+                          {{ if $n.Meta.Label }}{{ $n.Meta.Label.Text }}{{ end }}
+                          {{ if eq $n.Attributes.UiNodeInputAttributes.Required true }}
+                          <span class="_1tgfa2l0">*</span>
+                          {{ end }}
+                        </div>
+                        <input type="text" class="_1tgfa2l1 vpyugz5 vpyugzm vpyugz8" style="width:100%" placeholder=" "
+                          name="{{ $n.Attributes.UiNodeInputAttributes.Name }}" autocomplete=""
+                          value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                      </div>
+                      {{ end }}
+                      {{ end }}
+                      <!-- input end -->
+                      {{ end }}
+                    </div>
+
+                    <div class="roeg5j0 roeg5j5">
+                      {{ range $n := $gn.Nodes }}
+                      <!-- input start -->
+                      {{ if eq $n.Type "input" }}
+                      {{ if eq $n.Attributes.UiNodeInputAttributes.Type "submit" }}
+                      {{ if eq $n.Attributes.UiNodeInputAttributes.Name "change_auth_code" }}
+                      <div class="_1421i9r0 _1421i9r2 _1421i9r7 vpyugz5 vpyugzm vpyugz9 _13ke3e86">
+                        <div class="vpyugz5 vpyugzm vpyugz9 w27ftz1 w27ftz2">
+                          <button style="border: 0; background-color: #fff; font-style: italic; cursor: pointer;"
+                            type="submit" name="{{ $n.Attributes.UiNodeInputAttributes.Name }}"
+                            value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">{{ if $n.Meta.Label }}{{
+                            $n.Meta.Label.Text }}{{ end }}</button>
+                        </div>
+                      </div>
+                      {{ else }}
+                      <div>
+                        <button class="xkj8ku0 xkj8ku1 xkj8ku5" style="width:100%" type="submit"
+                          name="{{ $n.Attributes.UiNodeInputAttributes.Name }}"
+                          value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                          {{ if $n.Meta.Label }}{{ $n.Meta.Label.Text }}{{ end }}
+                        </button>
+                      </div>
+                      {{ end }}
+                      {{ else if eq $n.Attributes.UiNodeInputAttributes.Type "hidden" }}
+                      <input type="hidden" style="width:100%" placeholder=""
+                        name="{{ $n.Attributes.UiNodeInputAttributes.Name }}" autocomplete=""
+                        value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                      {{ end }}
+                      {{ end }}
+                      <!-- input end -->
+                      {{ end }}
+                    </div>
+                  </div>
+                  {{ end }}
+                  <!-- totp nodes end -->
+
+                  {{ end }}
+                </form>
+                <!-- form end -->
+                {{ end }}
+                <!-- totp from end -->
+                {{ end }}
+                <!-- all froms end -->
+
+                <div class="_1421i9r0 _1421i9r2 _1421i9r7 vpyugz5 vpyugzm vpyugz9 _13ke3e86">
+                  Something's not working?&nbsp;<div class="vpyugz5 vpyugzm vpyugz9 w27ftz1 w27ftz2">
+                    <a class="w27ftz0" href="{{ .logoutUrl }}" data-testid="logout-link">Logout</a>
+                  </div>
+                </div>
+              </div>
+              <!-- aal2 start -->
+              {{ else }}
+              <!-- aal start -->
               <div class="roeg5j0 roeg5j7">
                 {{ range $m := .ui.Messages }}
                 <div class="_1421i9r0 _1421i9r2 _1421i9r4 vpyugz5 vpyugzm vpyugz9" data-testid="ui/message/4010001">
@@ -28,7 +149,7 @@
                 <!-- all froms start -->
                 {{ range $from := .ui.Froms }}
                 <!-- oidc from start -->
-                {{ if eq $from.Group "oidc" }}
+                {{ if and (eq $from.Display true) (eq $from.Group "oidc") }}
                 <hr class="_1312gjt1">
                 <!-- form start -->
                 <form class="u030kk0" action="{{ $.ui.Action }}" method="{{ $.ui.Method }}">
@@ -84,8 +205,8 @@
                 {{ end }}
                 <!-- oidc from end -->
 
-                <!-- password from end -->
-                {{ if eq $from.Group "password" }}
+                <!-- password from start -->
+                {{ if and (eq $from.Display true) (eq $from.Group "password") }}
                 <hr class="_1312gjt1">
                 <!-- form start -->
                 <form class="u030kk0" action="{{ $.ui.Action }}" method="{{ $.ui.Method }}">
@@ -186,21 +307,20 @@
                 <div class="_1421i9r0 _1421i9r2 _1421i9r7 vpyugz5 vpyugzm vpyugz9 _13ke3e86">
                   Don't have an account?&nbsp;
                   <div class="vpyugz5 vpyugzm vpyugz9 w27ftz1 w27ftz2">
-                    <a class="w27ftz0" href="{{ .registrationUrl }}"
-                      data-testid="signup-link">Sign up</a>
+                    <a class="w27ftz0" href="{{ .registrationUrl }}" data-testid="signup-link">Sign up</a>
                   </div>
                 </div>
 
               </div>
+              <!-- aal end -->
+              {{ end }}
             </div>
             <!-- content end -->
           </div>
         </div>
       </div>
 
-      <div class="ory-branding">
-        <div class="vpyugz5 vpyugzm vpyugz6 _13ke3e87">Protected by gunsluo</div>
-      </div>
+      {{ template "footer.html" . }}
     </div>
   </main>
 </body>

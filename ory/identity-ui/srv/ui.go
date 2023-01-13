@@ -1,6 +1,10 @@
 package srv
 
-import "github.com/gunsluo/go-example/ory/identity-ui/swagger/identityclient"
+import (
+	"strings"
+
+	"github.com/gunsluo/go-example/ory/identity-ui/swagger/identityclient"
+)
 
 type Group struct {
 	Name     string
@@ -9,6 +13,7 @@ type Group struct {
 
 type From struct {
 	Group      string       `json:"group"`
+	Display    bool         `json:"display"`
 	GroupNodes []GroupNodes `json:"group_nodes"`
 }
 
@@ -43,6 +48,63 @@ func groupLoginUi(ui identityclient.UiContainer) Froms {
 	return groupUi(ui, groups)
 }
 
+func groupRegistrationUi(ui identityclient.UiContainer) Froms {
+	groups := []Group{
+		{
+			Name:     "oidc",
+			Includes: []string{"oidc", "default"},
+		},
+		{
+			Name:     "password",
+			Includes: []string{"password", "default"},
+		},
+	}
+
+	return groupUi(ui, groups)
+}
+
+func groupSettingsUi(ui identityclient.UiContainer) (Froms, bool) {
+	groups := []Group{
+		{
+			Name:     "profile",
+			Includes: []string{"profile", "default"},
+		},
+		{
+			Name:     "password",
+			Includes: []string{"password", "default"},
+		},
+		{
+			Name:     "totp",
+			Includes: []string{"totp", "default"},
+		},
+	}
+
+	hasImage := fixedBase64ImageForTmpl(ui)
+	return groupUi(ui, groups), !hasImage
+}
+
+func groupVerificationUi(ui identityclient.UiContainer) Froms {
+	groups := []Group{
+		{
+			Name:     "captcha",
+			Includes: []string{"captcha", "default"},
+		},
+	}
+
+	return groupUi(ui, groups)
+}
+
+func groupRecovery(ui identityclient.UiContainer) Froms {
+	groups := []Group{
+		{
+			Name:     "captcha",
+			Includes: []string{"captcha", "default"},
+		},
+	}
+
+	return groupUi(ui, groups)
+}
+
 func groupUi(ui identityclient.UiContainer, groups []Group) Froms {
 	froms := Froms{
 		Action:   ui.Action,
@@ -60,6 +122,10 @@ func groupUi(ui identityclient.UiContainer, groups []Group) Froms {
 						froms.Froms[i].GroupNodes = make([]GroupNodes, len(g.Includes))
 					}
 
+					if n.Group == g.Name {
+						froms.Froms[i].Display = true
+					}
+
 					froms.Froms[i].GroupNodes[j].Name = n.Group
 					froms.Froms[i].GroupNodes[j].Nodes = append(froms.Froms[i].GroupNodes[j].Nodes, n)
 					break
@@ -69,4 +135,18 @@ func groupUi(ui identityclient.UiContainer, groups []Group) Froms {
 	}
 
 	return froms
+}
+
+func fixedBase64ImageForTmpl(ui identityclient.UiContainer) bool {
+	var has bool
+	for _, n := range ui.Nodes {
+		imageAttrs := n.Attributes.UiNodeImageAttributes
+		if imageAttrs != nil {
+			if strings.HasPrefix(imageAttrs.Src, "data:image/png;base64,") {
+				imageAttrs.Src = strings.TrimPrefix(imageAttrs.Src, "data:image/png;base64,")
+			}
+			has = true
+		}
+	}
+	return has
 }

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  {{ template "standard.html" . }}
+  <title>Index</title>
+  <link type="text/css" rel="stylesheet" href="/assets/css/auth-layout.css" />
+</head>
+
+<body>
+  <main data-testid="app-express">
+    <div class="auth-container spacing-16">
+      <div id="recovery">
+        <div class="_1t5ly150 vpyugz5 vpyugzm vpyugz8">
+          <div class="roeg5j0 roeg5j7">
+            <div class="_1t5ly151">
+              <h2 class="vpyugz5 vpyugzm vpyugz8">Recover your account</h2>
+            </div>
+
+            <!-- content start -->
+            <div>
+              <div class="roeg5j0 roeg5j7">
+                {{ range $m := .ui.Messages }}
+                <div class="_1421i9r0 _1421i9r2 _1421i9r4 vpyugz5 vpyugzm vpyugz9" data-testid="ui/message/4010001">
+                  {{ $m.Text}}
+                </div>
+                {{ end }}
+
+                <!-- all froms start -->
+                {{ range $from := .ui.Froms }}
+                {{ if and (eq $from.Display true) (eq $from.Group "captcha") }}
+                <hr class="_1312gjt1">
+                <!-- form start -->
+                <form class="u030kk0" action="{{ $.ui.Action }}" method="{{ $.ui.Method }}">
+                  {{ range $gn := $from.GroupNodes }}
+                  <!-- default nodes start -->
+                  {{ if eq $gn.Name "default" }}
+                  {{ range $n := $gn.Nodes }}
+                  <!-- input start -->
+                  {{ if eq $n.Type "input" }}
+                  {{ if eq $n.Attributes.UiNodeInputAttributes.Type "hidden" }}
+                  <div class="roeg5j0 roeg5j3">
+                    <input type="hidden" style="width:100%" placeholder=""
+                      name="{{ $n.Attributes.UiNodeInputAttributes.Name }}" autocomplete=""
+                      value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                  </div>
+                  {{ end }}
+                  {{ end }}
+                  <!-- input end -->
+                  {{ end }}
+                  {{ end }}
+                  <!-- default nodes end -->
+
+                  <!-- captcha nodes start -->
+                  {{ if eq $gn.Name "captcha" }}
+                  <div class="roeg5j0 roeg5j7">
+                    <!-- fields start -->
+                    <div class="roeg5j0 roeg5j5">
+                      {{ range $n := $gn.Nodes }}
+                      <!-- input start -->
+                      {{ if eq $n.Type "input" }}
+                      {{ if eq $n.Attributes.UiNodeInputAttributes.Type "text" }}
+                      <div data-testid="" class="roeg5j0 roeg5j3">
+                        <div class="vpyugz5 vpyugzm vpyugz8">
+                          {{ if $n.Meta.Label }}{{ $n.Meta.Label.Text }}{{ end }}
+                          {{ if eq $n.Attributes.UiNodeInputAttributes.Required true }}
+                          <span class="_1tgfa2l0">*</span>
+                          {{ end }}
+                        </div>
+                        <input type="text" class="_1tgfa2l1 vpyugz5 vpyugzm vpyugz8" style="width:100%" placeholder=" "
+                          name="{{ $n.Attributes.UiNodeInputAttributes.Name }}" autocomplete="" {{ if eq
+                          $n.Attributes.UiNodeInputAttributes.Required true }}required{{end}}
+                          value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                      </div>
+                      {{ else if eq $n.Attributes.UiNodeInputAttributes.Type "radio" }}
+                      <div data-testid="" class="roeg5j0 roeg5j3">
+                        <div class="vpyugz5 vpyugzm vpyugz8">
+                          <input id="{{ $n.Attributes.UiNodeInputAttributes.Id }}"
+                            name="{{ $n.Attributes.UiNodeInputAttributes.Name }}" type="radio"
+                            value="{{ $n.Attributes.UiNodeInputAttributes.Value }}" {{ if
+                            $n.Attributes.UiNodeInputAttributes.Checked }}checked{{end}}>
+                          {{ if $n.Meta.Label }}{{ $n.Meta.Label.Text }}{{ end }}
+                          {{ if eq $n.Attributes.UiNodeInputAttributes.Required true }}
+                          <span class="_1tgfa2l0">*</span>
+                          {{ end }}
+                        </div>
+                      </div>
+                      {{ end }}
+                      {{ end }}
+                      <!-- input end -->
+                      {{ end }}
+                    </div>
+
+                    <div class="roeg5j0 roeg5j5">
+                      {{ range $n := $gn.Nodes }}
+                      {{ if eq $n.Type "input" }}
+                      {{ if eq $n.Attributes.UiNodeInputAttributes.Type "submit" }}
+                      <div>
+                        <button class="xkj8ku0 xkj8ku1 xkj8ku5" style="width:100%" type="submit"
+                          name="{{ $n.Attributes.UiNodeInputAttributes.Name }}"
+                          value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                          {{ if $n.Meta.Label }}{{ $n.Meta.Label.Text }}{{ end }}
+                        </button>
+                      </div>
+                      {{ end }}
+                      {{ end }}
+                      {{ end }}
+                    </div>
+                    <!-- fields end -->
+                  </div>
+                  {{ end }}
+                  <!-- captcha nodes end -->
+                  {{ end }}
+                </form>
+                <!-- form end -->
+                {{ end }}
+                {{ end }}
+                <!-- all froms end -->
+
+                <div class="_1421i9r0 _1421i9r2 _1421i9r7 vpyugz5 vpyugzm vpyugz9 _13ke3e86">
+                  Remember your credentials?&nbsp;
+                  <div class="vpyugz5 vpyugzm vpyugz9 w27ftz1 w27ftz2">
+                    <a class="w27ftz0" href="{{ .loginUrl }}" data-testid="cta-link">Sign in</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- content end -->
+          </div>
+        </div>
+      </div>
+
+      {{ template "footer.html" . }}
+    </div>
+  </main>
+</body>
+
+</html>

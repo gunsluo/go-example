@@ -27,35 +27,102 @@ func (s *Server) login(c *gin.Context) {
 		Cookie(cookie).
 		Execute()
 	if err != nil {
-		if e := new(identityclient.GenericOpenAPIError); errors.As(err, &e) {
-			if jer, ok := e.Model().(identityclient.JsonErrorResponse); ok {
-				vs := url.Values{}
-				vs.Add("code", fmt.Sprintf("%v", jer.GetCode()))
-				vs.Add("message", jer.GetMsg())
-				s.gotoExecption(c, vs)
-				return
-			}
-		}
-
-		c.String(http.StatusInternalServerError, err.Error())
+		s.gotoExecptionWithError(c, err)
 		return
 	}
 
 	// debug
 	s.debugPrint("login ui", flow.Ui)
-
 	froms := groupLoginUi(flow.Ui)
 	c.HTML(http.StatusOK, "login.html", gin.H{
 		"ui":              froms,
+		"aal":             flow.GetRequestedAal(),
+		"logoutUrl":       "/logout",
 		"recoveryUrl":     "/recovery",
 		"registrationUrl": "/registration",
 	})
+}
+
+func (s *Server) session(c *gin.Context) {
+	ctx := c.Request.Context()
+	cookie := c.Request.Header.Get("cookie")
+
+	session, _, err := s.apiClient.SessionApi.ToSessionRequest(ctx).
+		//XSessionToken().
+		Cookie(cookie).
+		Execute()
+	if err != nil {
+		s.gotoExecptionWithError(c, err)
+		return
+	}
+
+	sessPretty, err := json.MarshalIndent(session, "", "  ")
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.HTML(http.StatusOK, "session.html", gin.H{
+		"authed":  true,
+		"session": string(sessPretty),
+		"nav": navTmplValues{
+			SessionUrl:  "#",
+			SettingsUrl: "/settings",
+			LogoutUrl:   "/logout",
+		},
+	})
+}
+
+func (s *Server) logout(c *gin.Context) {
+	ctx := c.Request.Context()
+	cookie := c.Request.Header.Get("cookie")
+
+	logoutFlow, _, err := s.apiClient.LogoutApi.InitBrowserLogoutFlowRequest(ctx).
+		Cookie(cookie).
+		Execute()
+	if err != nil {
+		s.gotoExecptionWithError(c, err)
+		return
+	}
+
+	var logoutUrl string
+	if uri, err := url.Parse(logoutFlow.LogoutUrl); err != nil {
+		s.gotoExecptionWithError(c, err)
+		return
+	} else {
+		if s.logoutReturnTo != "" {
+			// set return_to, it can also be set without this
+			q := uri.Query()
+			q.Set("return_to", s.logoutReturnTo)
+			uri.RawQuery = q.Encode()
+			logoutUrl = uri.String()
+		} else {
+			logoutUrl = logoutFlow.LogoutUrl
+		}
+	}
+
+	c.Redirect(http.StatusSeeOther, logoutUrl)
 }
 
 func (s *Server) gotoLogin(c *gin.Context, vs url.Values) {
 	redirectUrl := fmt.Sprintf("%s/self-service/login/browser?%s", s.identityEndpoint, vs.Encode())
 
 	c.Redirect(http.StatusSeeOther, redirectUrl)
+}
+
+func (s *Server) gotoExecptionWithError(c *gin.Context, err error) {
+	vs := url.Values{}
+	if e := new(identityclient.GenericOpenAPIError); errors.As(err, &e) {
+		if jer, ok := e.Model().(identityclient.JsonErrorResponse); ok {
+			vs.Add("code", fmt.Sprintf("%v", jer.GetCode()))
+			vs.Add("message", jer.GetMsg())
+		}
+	} else {
+		vs.Add("code", fmt.Sprintf("%v", identityclient.CODE__5000))
+		vs.Add("message", err.Error())
+	}
+
+	s.gotoExecption(c, vs)
 }
 
 func (s *Server) gotoExecption(c *gin.Context, vs url.Values) {

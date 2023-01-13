@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  {{ template "standard.html" . }}
+  <title>Index</title>
+  <link type="text/css" rel="stylesheet" href="/assets/css/content-layout.css" />
+</head>
+
+<body>
+  <main data-testid="app-express">
+    <div class="app-container">
+
+      <!-- nav start  -->
+      {{ template "nav.html" . }}
+      <!-- nav end  -->
+
+      <!-- container start  -->
+      <div class="container spacing-32">
+        <div class="content">
+          <div class="spacing-32">
+            <div class="spacing-32">
+              <div class="vpyugz5 vpyugzf _13ke3e85">Session Information</div>
+              <div class="vpyugz5 vpyugzm vpyugz8 _13ke3e86">Your browser holds an active Ory Session for 127.0.0.1:4455
+                and you are currently logged in as luoji@mock.com - changing properties inside Acount Settings will be
+                reflected in the decoded Ory Session.</div>
+            </div>
+
+            <div class="spacing-32-horizontal wrap-content">
+              <div class="session-code-box roeg5j0 roeg5j5 _1xw9xpq0">
+                <pre class="_13ke3e84 _1xw9xpq2">{{ .session }}</pre>
+              </div>
+              <div class="spacing-8 traits-box"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- container end  -->
+
+    </div>
+  </main>
+</body>
+
+</html>

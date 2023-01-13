@@ -18,6 +18,7 @@ type Server struct {
 	dir              string
 	identityEndpoint string
 	port             int
+	logoutReturnTo   string
 
 	apiClient *identityclient.APIClient
 	engine    *gin.Engine
@@ -64,6 +65,7 @@ func (s *Server) setRouter() {
 		},
 		unauthHandle: func(c *gin.Context, uai UnAuthInfo) {
 			// redirect to login page
+			c.Redirect(http.StatusSeeOther, "/login")
 		},
 	}
 	s.engine.GET("/", authmd.Handler(true), s.index)
@@ -71,8 +73,23 @@ func (s *Server) setRouter() {
 	// login
 	s.engine.GET("/login", s.login)
 
+	// logout
+	s.engine.GET("/logout", s.logout)
+
 	// sessions
-	s.engine.GET("/sessions", authmd.Handler(true), s.index)
+	s.engine.GET("/sessions", authmd.Handler(), s.session)
+
+	// registration
+	s.engine.GET("/registration", s.registration)
+
+	// verification
+	s.engine.GET("/verification", s.verification)
+
+	// recovery
+	s.engine.GET("/recovery", s.recovery)
+
+	// settings
+	s.engine.GET("/settings", authmd.Handler(), s.settings)
 
 	// execption
 	s.engine.GET("/execption", s.execption)

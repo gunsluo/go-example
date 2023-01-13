@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  {{ template "standard.html" . }}
+  <title>Index</title>
+  <link type="text/css" rel="stylesheet" href="/assets/css/auth-layout.css" />
+</head>
+
+<body>
+  <main data-testid="app-express">
+    <div class="auth-container spacing-16">
+      <div class="signup">
+        <div class="_1t5ly150 vpyugz5 vpyugzm vpyugz8">
+          <div class="roeg5j0 roeg5j7">
+            <div class="_1t5ly151">
+              <h2 class="vpyugz5 vpyugzm vpyugz8">Register an account</h2>
+            </div>
+            <!-- content start -->
+            <div>
+              <div class="roeg5j0 roeg5j7">
+                {{ range $m := .ui.Messages }}
+                <div class="_1421i9r0 _1421i9r2 _1421i9r4 vpyugz5 vpyugzm vpyugz9" data-testid="ui/message/4010001">
+                  {{ $m.Text}}
+                </div>
+                {{ end }}
+
+                <!-- all froms start -->
+                {{ range $from := .ui.Froms }}
+                <!-- oidc from start -->
+                {{ if and (eq $from.Display true) (eq $from.Group "oidc") }}
+                <hr class="_1312gjt1">
+                <!-- form start -->
+                <form class="u030kk0" action="{{ $.ui.Action }}" method="{{ $.ui.Method }}">
+                  {{ range $gn := $from.GroupNodes }}
+                  <!-- default nodes start -->
+                  {{ if eq $gn.Name "default" }}
+                  {{ range $n := $gn.Nodes }}
+                  <!-- input start -->
+                  {{ if eq $n.Type "input" }}
+                  {{ if eq $n.Attributes.UiNodeInputAttributes.Type "hidden" }}
+                  <div class="roeg5j0 roeg5j3">
+                    <input type="hidden" style="width:100%" placeholder=""
+                      name="{{ $n.Attributes.UiNodeInputAttributes.Name }}" autocomplete=""
+                      value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                  </div>
+                  {{ end }}
+                  {{ end }}
+                  <!-- input end -->
+                  {{ end }}
+                  {{ end }}
+                  <!-- default nodes end -->
+
+                  <!-- oidc nodes start -->
+                  {{ if eq $gn.Name "oidc" }}
+                  <div class="roeg5j0 roeg5j7">
+                    <div class="roeg5j0 roeg5j5">
+                      {{ range $n := $gn.Nodes }}
+                      <!-- todo -->
+                      {{ end }}
+
+                      <!-- <div>
+                        <button class="_16pmekl0 _16pmekl2 _16pmekl5" style="width:100%" type="submit" name="provider"
+                          value="github" formnovalidate="">
+                          <i class="fa-brands fa-github _16pmekl6 _16pmekl8"></i>Sign up with Github<i
+                            class="fa-brands fa-github _16pmekla _16pmeklc" style="visibility:hidden;opacity:0"></i>
+                        </button>
+                      </div>
+
+                      <div>
+                        <button class="_16pmekl0 _16pmekl2 _16pmekl5" style="width:100%" type="submit" name="provider"
+                          value="microsoft" formnovalidate="">
+                          <i class="fa-brands fa-microsoft _16pmekl6 _16pmekl8"></i>Sign up with Microsoft<i
+                            class="fa-brands fa-microsoft _16pmekla _16pmeklc" style="visibility:hidden;opacity:0"></i>
+                        </button>
+                      </div> -->
+                    </div>
+                  </div>
+                  {{ end }}
+                  <!-- oidc nodes end -->
+                  {{ end }}
+                </form>
+                <!-- form end -->
+                {{ end }}
+                <!-- oidc from end -->
+
+                <!-- password from start -->
+                {{ if and (eq $from.Display true) (eq $from.Group "password") }}
+                <hr class="_1312gjt1">
+                <!-- form start -->
+                <form class="u030kk0" action="{{ $.ui.Action }}" method="{{ $.ui.Method }}">
+                  {{ range $gn := $from.GroupNodes }}
+                  <!-- default nodes start -->
+                  {{ if eq $gn.Name "default" }}
+                  {{ range $n := $gn.Nodes }}
+                  <!-- input start -->
+                  {{ if eq $n.Type "input" }}
+                  {{ if eq $n.Attributes.UiNodeInputAttributes.Type "hidden" }}
+                  <div class="roeg5j0 roeg5j3">
+                    <input type="hidden" style="width:100%" placeholder=""
+                      name="{{ $n.Attributes.UiNodeInputAttributes.Name }}" autocomplete=""
+                      value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                  </div>
+                  {{ end }}
+                  {{ end }}
+                  <!-- input end -->
+                  {{ end }}
+                  {{ end }}
+                  <!-- default nodes end -->
+
+                  <!-- password nodes start -->
+                  {{ if eq $gn.Name "password" }}
+                  <div class="roeg5j0 roeg5j7">
+                    <!-- login fields start -->
+                    <div class="roeg5j0 roeg5j5">
+                      {{ range $n := $gn.Nodes }}
+                      <!-- input start -->
+                      {{ if eq $n.Type "input" }}
+                      {{ if eq $n.Attributes.UiNodeInputAttributes.Type "text" }}
+                      <div data-testid="" class="roeg5j0 roeg5j3">
+                        <div class="vpyugz5 vpyugzm vpyugz8">
+                          {{ if $n.Meta.Label }}{{ $n.Meta.Label.Text }}{{ end }}
+                          {{ if eq $n.Attributes.UiNodeInputAttributes.Required true }}
+                          <span class="_1tgfa2l0">*</span>
+                          {{ end }}
+                        </div>
+                        <input type="text" class="_1tgfa2l1 vpyugz5 vpyugzm vpyugz8" style="width:100%" placeholder=" "
+                          name="{{ $n.Attributes.UiNodeInputAttributes.Name }}" autocomplete="" {{ if eq
+                          $n.Attributes.UiNodeInputAttributes.Required true }}required{{end}}
+                          value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                      </div>
+                      {{ else if eq $n.Attributes.UiNodeInputAttributes.Type "password" }}
+                      <div data-testid="" class="roeg5j0 roeg5j3">
+                        <div class="vpyugz5 vpyugzm vpyugz8">
+                          {{ if $n.Meta.Label }}{{ $n.Meta.Label.Text }}{{ end }}
+                          {{ if eq $n.Attributes.UiNodeInputAttributes.Required true }}
+                          <span class="_1tgfa2l0">*</span>
+                          {{ end }}
+                        </div>
+                        <input type="password" class="_1tgfa2l1 vpyugz5 vpyugzm vpyugz8" style="width:100%"
+                          placeholder=" " name="{{ $n.Attributes.UiNodeInputAttributes.Name }}" autocomplete="" {{ if eq
+                          $n.Attributes.UiNodeInputAttributes.Required true }}required{{end}}>
+                      </div>
+                      {{ else if eq $n.Attributes.UiNodeInputAttributes.Type "radio" }}
+                      <div data-testid="" class="roeg5j0 roeg5j3">
+                        <div class="vpyugz5 vpyugzm vpyugz8">
+                          <input id="{{ $n.Attributes.UiNodeInputAttributes.Id }}"
+                            name="{{ $n.Attributes.UiNodeInputAttributes.Name }}" type="radio"
+                            value="{{ $n.Attributes.UiNodeInputAttributes.Value }}" {{ if
+                            $n.Attributes.UiNodeInputAttributes.Checked }}checked{{end}}>
+                          {{ if $n.Meta.Label }}{{ $n.Meta.Label.Text }}{{ end }}
+                          {{ if eq $n.Attributes.UiNodeInputAttributes.Required true }}
+                          <span class="_1tgfa2l0">*</span>
+                          {{ end }}
+                        </div>
+
+                      </div>
+                      {{ end }}
+                      {{ end }}
+                      <!-- input end -->
+                      {{ end }}
+                    </div>
+                    <div class="roeg5j0 roeg5j5">
+                      {{ range $n := $gn.Nodes }}
+                      {{ if eq $n.Type "input" }}
+                      {{ if eq $n.Attributes.UiNodeInputAttributes.Type "submit" }}
+                      <div>
+                        <button class="xkj8ku0 xkj8ku1 xkj8ku5" style="width:100%" type="submit"
+                          name="{{ $n.Attributes.UiNodeInputAttributes.Name }}"
+                          value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                          {{ if $n.Meta.Label }}{{ $n.Meta.Label.Text }}{{ end }}
+                        </button>
+                      </div>
+                      {{ end }}
+                      {{ end }}
+                      {{ end }}
+                    </div>
+                    <!-- login fields end -->
+                  </div>
+                  {{ end }}
+                  <!-- password nodes end -->
+                  {{ end }}
+                </form>
+                <!-- form end -->
+                {{ end }}
+                <!-- password from end -->
+                {{ end }}
+                <!-- all froms end -->
+
+                <div class="_1421i9r0 _1421i9r2 _1421i9r7 vpyugz5 vpyugzm vpyugz9 _13ke3e86">
+                  Already have an account?&nbsp;
+                  <div class="vpyugz5 vpyugzm vpyugz9 w27ftz1 w27ftz2">
+                    <a class="w27ftz0" href="{{ .loginUrl }}" data-testid="cta-link">Sign in</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- content end -->
+          </div>
+        </div>
+      </div>
+
+      {{ template "footer.html" . }}
+    </div>
+  </main>
+</body>
+
+</html>

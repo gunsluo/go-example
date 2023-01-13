@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  {{ template "standard.html" . }}
+  <title>Index</title>
+  <link type="text/css" rel="stylesheet" href="/assets/css/content-layout.css" />
+</head>
+
+<body>
+</body>
+<main data-testid="app-express">
+  <div class="app-container">
+    <!-- nav start  -->
+    {{ template "settings-nav.html" . }}
+    <!-- nav end  -->
+
+    <!-- container start  -->
+    <div class="container spacing-32">
+      <div class="content">
+        <div class="spacing-32">
+          <div class="spacing-32">
+            {{ range $m := .ui.Messages }}
+            <div class="_1421i9r0 _1421i9r2 _1421i9r4 vpyugz5 vpyugzm vpyugz9" data-testid="ui/message/4010001">
+              {{ $m.Text}}
+            </div>
+            {{ end }}
+
+            <div class="vpyugz5 vpyugzf _13ke3e85">Account Settings</div>
+            <div>
+              <div class="vpyugz5 vpyugzm vpyugz8 _13ke3e86">You are currently logged in as luoji@mock.com </div>
+              <div class="vpyugz5 vpyugzm vpyugz8 _13ke3e86">Here you can manage settings related to your account. Keep
+                in mind that certain actions require a you to re-authenticate.</div>
+            </div>
+
+            <hr class="_1312gjt1 divider-left">
+          </div>
+
+          <!-- all froms start -->
+          {{ range $from := .ui.Froms }}
+          <!-- profile from start -->
+          {{ if and (eq $from.Display true) (eq $from.Group "profile") }}
+          <div class="spacing-32" id="profile">
+            <div class="roeg5j0 roeg5j7">
+              <h3 class="vpyugz5 vpyugzm vpyugzd _13ke3e85">Profile Settings</h3>
+              <!-- form start -->
+              <form class="u030kk0" action="{{ $.ui.Action }}" method="{{ $.ui.Method }}">
+                {{ range $gn := $from.GroupNodes }}
+                <!-- default nodes start -->
+                {{ if eq $gn.Name "default" }}
+                {{ range $n := $gn.Nodes }}
+                <!-- input start -->
+                {{ if eq $n.Type "input" }}
+                {{ if eq $n.Attributes.UiNodeInputAttributes.Type "hidden" }}
+                <div class="roeg5j0 roeg5j3">
+                  <input type="hidden" style="width:100%" placeholder=""
+                    name="{{ $n.Attributes.UiNodeInputAttributes.Name }}" autocomplete=""
+                    value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                </div>
+                {{ end }}
+                {{ end }}
+                <!-- input end -->
+                {{ end }}
+                {{ end }}
+                <!-- default nodes end -->
+
+                <!-- profile nodes start -->
+                {{ if eq $gn.Name "profile" }}
+                <div class="roeg5j0 roeg5j7">
+                  <div class="roeg5j0 roeg5j5">
+                    {{ range $n := $gn.Nodes }}
+                    <!-- input start -->
+                    {{ if eq $n.Type "input" }}
+                    {{ if eq $n.Attributes.UiNodeInputAttributes.Type "text" }}
+                    <div data-testid="" class="roeg5j0 roeg5j3">
+                      <div class="vpyugz5 vpyugzm vpyugz8">
+                        {{ if $n.Meta.Label }}{{ $n.Meta.Label.Text }}{{ end }}
+                        {{ if eq $n.Attributes.UiNodeInputAttributes.Required true }}
+                        <span class="_1tgfa2l0">*</span>
+                        {{ end }}
+                      </div>
+                      <input type="text" class="_1tgfa2l1 vpyugz5 vpyugzm vpyugz8" style="width:100%" placeholder=" "
+                        name="{{ $n.Attributes.UiNodeInputAttributes.Name }}" autocomplete="" {{ if eq
+                        $n.Attributes.UiNodeInputAttributes.Required true }}required{{end}}
+                        value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                    </div>
+                    {{ end }}
+                    {{ else if eq $n.Type "text" }}
+                    <div data-testid="" class="roeg5j0 roeg5j3">
+                      <div class="vpyugz5 vpyugzm vpyugz8">
+                        {{ if $n.Meta.Label }}{{ $n.Meta.Label.Text }}{{ end }}
+                      </div>
+                      <div class="_1tgfa2l1 vpyugz5 vpyugzm vpyugz8">
+                        {{ $n.Attributes.UiNodeTextAttributes.Text.Text }}
+                      </div>
+                    </div>
+                    {{ end }}
+                    <!-- input end -->
+                    {{ end }}
+                  </div>
+
+                  <div class="roeg5j0 roeg5j5">
+                    {{ range $n := $gn.Nodes }}
+                    {{ if eq $n.Type "input" }}
+                    {{ if eq $n.Attributes.UiNodeInputAttributes.Type "submit" }}
+                    <div>
+                      <button class="xkj8ku0 xkj8ku1 xkj8ku5" style="width:auto" type="submit"
+                        name="{{ $n.Attributes.UiNodeInputAttributes.Name }}"
+                        value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                        {{ if $n.Meta.Label }}{{ $n.Meta.Label.Text }}{{ end }}
+                      </button>
+                    </div>
+                    {{ end }}
+                    {{ end }}
+                    {{ end }}
+                  </div>
+                </div>
+                {{ end }}
+                <!-- profile nodes end -->
+                {{ end }}
+              </form>
+              <!-- form end -->
+            </div>
+            <hr class="_1312gjt1 divider-left">
+          </div>
+          {{ end }}
+          <!-- profile from end -->
+
+          <!-- password from start -->
+          {{ if and (eq $from.Display true) (eq $from.Group "password") }}
+          <div class="spacing-32" id="password">
+            <div class="roeg5j0 roeg5j7">
+              <h3 class="vpyugz5 vpyugzm vpyugzd _13ke3e85">Change Password</h3>
+
+              <!-- form start -->
+              <form class="u030kk0" action="{{ $.ui.Action }}" method="{{ $.ui.Method }}">
+                {{ range $gn := $from.GroupNodes }}
+                <!-- default nodes start -->
+                {{ if eq $gn.Name "default" }}
+                {{ range $n := $gn.Nodes }}
+                <!-- input start -->
+                {{ if eq $n.Type "input" }}
+                {{ if eq $n.Attributes.UiNodeInputAttributes.Type "hidden" }}
+                <div class="roeg5j0 roeg5j3">
+                  <input type="hidden" style="width:100%" placeholder=""
+                    name="{{ $n.Attributes.UiNodeInputAttributes.Name }}" autocomplete=""
+                    value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                </div>
+                {{ end }}
+                {{ end }}
+                <!-- input end -->
+                {{ end }}
+                {{ end }}
+                <!-- default nodes end -->
+
+                <!-- password nodes start -->
+                {{ if eq $gn.Name "password" }}
+                <div class="roeg5j0 roeg5j7">
+                  <div class="roeg5j0 roeg5j5">
+                    {{ range $n := $gn.Nodes }}
+                    <!-- input start -->
+                    {{ if eq $n.Type "input" }}
+                    {{ if eq $n.Attributes.UiNodeInputAttributes.Type "password" }}
+                    <div data-testid="" class="roeg5j0 roeg5j3">
+                      <div class="vpyugz5 vpyugzm vpyugz8">
+                        {{ if $n.Meta.Label }}{{ $n.Meta.Label.Text }}{{ end }}
+                        {{ if eq $n.Attributes.UiNodeInputAttributes.Required true }}
+                        <span class="_1tgfa2l0">*</span>
+                        {{ end }}
+                      </div>
+                      <input type="password" class="_1tgfa2l1 vpyugz5 vpyugzm vpyugz8" style="width:100%"
+                        placeholder=" " name="{{ $n.Attributes.UiNodeInputAttributes.Name }}" autocomplete="" {{ if eq
+                        $n.Attributes.UiNodeInputAttributes.Required true }}required{{end}}>
+                    </div>
+                    {{ end }}
+                    {{ end }}
+                    <!-- input end -->
+                    {{ end }}
+                  </div>
+
+                  <div class="roeg5j0 roeg5j5">
+                    {{ range $n := $gn.Nodes }}
+                    {{ if eq $n.Type "input" }}
+                    {{ if eq $n.Attributes.UiNodeInputAttributes.Type "submit" }}
+                    <div>
+                      <button class="xkj8ku0 xkj8ku1 xkj8ku5" style="width:auto" type="submit"
+                        name="{{ $n.Attributes.UiNodeInputAttributes.Name }}"
+                        value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                        {{ if $n.Meta.Label }}{{ $n.Meta.Label.Text }}{{ end }}
+                      </button>
+                    </div>
+                    {{ end }}
+                    {{ end }}
+                    {{ end }}
+                  </div>
+                </div>
+                {{ end }}
+                <!-- password nodes end -->
+                {{ end }}
+              </form>
+              <!-- form end -->
+            </div>
+            <hr class="_1312gjt1 divider-left">
+          </div>
+          {{ end }}
+          <!-- password from start -->
+
+          <!-- totp from start -->
+          {{ if and (eq $from.Display true) (eq $from.Group "totp") }}
+          <div class="spacing-32" id="totp">
+            <div class="roeg5j0 roeg5j7">
+              <h3 class="vpyugz5 vpyugzm vpyugzd _13ke3e85">Manage 2FA TOTP Authenticator App</h3>
+              <!-- form start -->
+              <form class="u030kk0" action="{{ $.ui.Action }}" method="{{ $.ui.Method }}">
+                {{ range $gn := $from.GroupNodes }}
+                <!-- default nodes start -->
+                {{ if eq $gn.Name "default" }}
+                {{ range $n := $gn.Nodes }}
+                <!-- input start -->
+                {{ if eq $n.Type "input" }}
+                {{ if eq $n.Attributes.UiNodeInputAttributes.Type "hidden" }}
+                <div class="roeg5j0 roeg5j3">
+                  <input type="hidden" style="width:100%" placeholder=""
+                    name="{{ $n.Attributes.UiNodeInputAttributes.Name }}" autocomplete=""
+                    value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                </div>
+                {{ end }}
+                {{ end }}
+                <!-- input end -->
+                {{ end }}
+                {{ end }}
+                <!-- default nodes end -->
+
+                <!-- totp nodes end -->
+                {{ if eq $gn.Name "totp" }}
+                <div class="roeg5j0 roeg5j7">
+                  {{ if eq $.bind true }}
+                  <div class="roeg5j0 roeg5j5">
+                    {{ range $n := $gn.Nodes }}
+                    {{ if eq $n.Type "input" }}
+                    {{ if and (eq $n.Attributes.UiNodeInputAttributes.Type "submit") (eq
+                    $n.Attributes.UiNodeInputAttributes.Name "totp_unlink")}}
+                    <div>
+                      <button class="xkj8ku0 xkj8ku1 xkj8ku5" style="width:auto" type="submit"
+                        name="{{ $n.Attributes.UiNodeInputAttributes.Name }}"
+                        value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                        {{ if $n.Meta.Label }}{{ $n.Meta.Label.Text }}{{ end }}
+                      </button>
+                    </div>
+                    {{ end }}
+                    {{ end }}
+                    {{ end }}
+                  </div>
+
+                  <div class="roeg5j0 roeg5j5">
+                    {{ range $n := $gn.Nodes }}
+                    <!-- text start -->
+                    {{ if eq $n.Type "text" }}
+                    <div class="roeg5j0 roeg5j3 roeg5j1"
+                      style="display:inline-flex;flex-wrap:wrap;gap:3rem;max-width:fit-content;align-items:center"
+                      data-testid="">
+                      <div class="vpyugz5 vpyugzm" variant="body1" data-testid="" style="flex-basis:100%">
+                        <p>{{ $n.Meta.Label.Text }}</p>
+                      </div>
+                      {{ range $code := $n.Attributes.UiNodeTextAttributes.Text.Context.codes }}
+                      <pre data-testid=""><code>{{$code}}</code></pre>
+                      {{ end }}
+                    </div>
+                    {{ end }}
+                    <!-- text end -->
+                    {{ end }}
+                  </div>
+
+                  <div class="roeg5j0 roeg5j5">
+                    {{ range $n := $gn.Nodes }}
+                    {{ if eq $n.Type "input" }}
+                    {{ if and (eq $n.Attributes.UiNodeInputAttributes.Type "submit") (eq
+                    $n.Attributes.UiNodeInputAttributes.Name "recovery_codes_regenerate")}}
+                    <div>
+                      <button class="xkj8ku0 xkj8ku1 xkj8ku5" style="width:auto" type="submit"
+                        name="{{ $n.Attributes.UiNodeInputAttributes.Name }}"
+                        value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                        {{ if $n.Meta.Label }}{{ $n.Meta.Label.Text }}{{ end }}
+                      </button>
+                    </div>
+                    {{ else if eq $n.Attributes.UiNodeInputAttributes.Type "hidden" }}
+                    <input type="hidden" name="{{ $n.Attributes.UiNodeInputAttributes.Name }}"
+                      value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                    {{ end }}
+                    {{ end }}
+                    {{ end }}
+                  </div>
+                  {{ else }}
+
+                  <div class="roeg5j0 roeg5j5">
+                    {{ range $n := $gn.Nodes }}
+                    <!-- img start -->
+                    {{ if eq $n.Type "img" }}
+                    <div class="roeg5j0 roeg5j3">
+                      <div class="vpyugz5 vpyugzm vpyugz8">Authenticator app QR code</div>
+                      <img src="data:image/png;base64,{{ $n.Attributes.UiNodeImageAttributes.Src }}"
+                        width="{{ $n.Attributes.UiNodeImageAttributes.Width }}"
+                        height="{{ $n.Attributes.UiNodeImageAttributes.Height }}" alt="Authenticator app QR code"
+                        data-testid="">
+                    </div>
+                    {{ end }}
+                    <!-- img end -->
+
+                    <!-- text start -->
+                    {{ if eq $n.Type "text" }}
+                    <div class="roeg5j0 roeg5j3" data-testid="">
+                      <div class="vpyugz5 vpyugzm" variant="body1" data-testid="">{{ $n.Meta.Label.Text }}</div>
+                      <pre data-testid=""><code>{{ $n.Attributes.UiNodeTextAttributes.Text.Text }}</code></pre>
+                    </div>
+                    {{ end }}
+                    <!-- text end -->
+
+                    <!-- input start -->
+                    {{ if eq $n.Type "input" }}
+                    {{ if eq $n.Attributes.UiNodeInputAttributes.Type "text" }}
+                    <div data-testid="" class="roeg5j0 roeg5j3">
+                      <div class="vpyugz5 vpyugzm vpyugz8">
+                        {{ if $n.Meta.Label }}{{ $n.Meta.Label.Text }}{{ end }}
+                        {{ if eq $n.Attributes.UiNodeInputAttributes.Required true }}
+                        <span class="_1tgfa2l0">*</span>
+                        {{ end }}
+                      </div>
+                      <input type="text" class="_1tgfa2l1 vpyugz5 vpyugzm vpyugz8" style="width:100%" placeholder=" "
+                        name="{{ $n.Attributes.UiNodeInputAttributes.Name }}" autocomplete="" {{ if eq
+                        $n.Attributes.UiNodeInputAttributes.Required true }}required{{end}}
+                        value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                    </div>
+                    {{ end }}
+                    {{ end }}
+                    <!-- input end -->
+                    {{ end }}
+                  </div>
+
+                  <div class="roeg5j0 roeg5j5">
+                    {{ range $n := $gn.Nodes }}
+                    {{ if eq $n.Type "input" }}
+                    {{ if eq $n.Attributes.UiNodeInputAttributes.Type "submit" }}
+                    <div>
+                      <button class="xkj8ku0 xkj8ku1 xkj8ku5" style="width:auto" type="submit"
+                        name="{{ $n.Attributes.UiNodeInputAttributes.Name }}"
+                        value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                        {{ if $n.Meta.Label }}{{ $n.Meta.Label.Text }}{{ end }}
+                      </button>
+                    </div>
+                    {{ end }}
+                    {{ end }}
+                    {{ end }}
+                  </div>
+                  {{ end }}
+
+                </div>
+                {{ end }}
+                <!-- totp nodes end -->
+                {{ end }}
+              </form>
+              <!-- form end -->
+            </div>
+            <hr class="_1312gjt1 divider-left">
+          </div>
+          {{ end }}
+          <!-- totp from end -->
+          {{ end }}
+          <!-- all froms end -->
+
+
+          <div class="spacing-32">
+
+          </div>
+        </div>
+      </div>
+
+      {{ template "footer.html" . }}
+    </div>
+    <!-- container end  -->
+  </div>
+</main>
+
+</html>
