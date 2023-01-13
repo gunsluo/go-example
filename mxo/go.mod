@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/denisenkom/go-mssqldb v0.0.0-20200620013148-b91950f658ec
-	github.com/gin-gonic/gin v1.6.3
+	github.com/gin-gonic/gin v1.7.0
 	github.com/godror/godror v0.17.0
 	github.com/graph-gophers/graphql-go v0.0.0-20200622220639-c1d9693c95a6
 	github.com/jmoiron/sqlx v1.2.0
