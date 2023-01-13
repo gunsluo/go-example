@@ -3,7 +3,7 @@ module github.com/gunsluo/go-example/opentelemetry/demo
 go 1.14
 
 require (
-	github.com/gogo/protobuf v1.3.1
+	github.com/gogo/protobuf v1.3.2
 	github.com/jmoiron/sqlx v1.2.1-0.20190826204134-d7d95172beb5
 	github.com/lib/pq v1.7.1
 	github.com/luna-duclos/instrumentedsql v1.1.3
