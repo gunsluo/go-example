@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Exceljs</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.26.0/polyfill.js"></script>
+  <script src="exceljs-4.3.0/dist/exceljs.js"></script>
+</head>
+
+<body>
+  <form onsubmit="return false;" enctype="multipart/form-data" action="/upload/image" method="post">
+    <!-- <button id="pick-file" type="file">Pick File</button> -->
+    <input id="pick-file" type="file" />
+    <button id="upload-file" type="submit">upload</button>
+  </form>
+
+  <script>
+    // document.getElementById('pick-file').addEventListener('click', async () => {
+    //   const [fileHandle] = await window.showOpenFilePicker()
+    //   const file = await fileHandle.getFile()
+    //   const contents = await file.text()
+    //   console.log(contents)
+    // }, false)
+
+    document.getElementById('upload-file').addEventListener('click', () => {
+      const wb = new ExcelJS.Workbook()
+      const excelfile = document.getElementById("pick-file").files[0]
+      const reader = new FileReader()
+      reader.readAsArrayBuffer(excelfile)
+
+      reader.onload = () => {
+        const buffer = reader.result
+        wb.xlsx.load(buffer).then(workbook => {
+          // console.log(workbook, 'workbook instance')
+          workbook.eachSheet((sheet, id) => {
+            sheet.eachRow((row, rowIndex) => {
+              console.log(row.values, rowIndex)
+            })
+          })
+        })
+      }
+    }, false)
+
+  </script>
+
+</body>
