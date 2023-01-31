@@ -3608,10 +3608,36 @@ components:
     submitRegistrationFlowBody:
       discriminator:
         mapping:
+          oidc: '#/components/schemas/submitRegistrationFlowBodyWithOidc'
           password: '#/components/schemas/submitRegistrationFlowBodyWithPassword'
         propertyName: method
       oneOf:
       - $ref: '#/components/schemas/submitRegistrationFlowBodyWithPassword'
+      - $ref: '#/components/schemas/submitRegistrationFlowBodyWithOidc'
+    submitRegistrationFlowBodyWithOidc:
+      description: |-
+        SubmitRegistrationFlowBodyWithOidc is used to decode the registration form payload
+        when using the oidc method.
+      properties:
+        csrf_token:
+          description: The CSRF Token
+          type: string
+        method:
+          description: |-
+            Method to use
+
+            This field must be set to `oidc` when using the oidc method.
+          type: string
+        provider:
+          description: The provider to register with
+          type: string
+        traits:
+          $ref: '#/components/schemas/RegistrationTraits'
+      required:
+      - method
+      - provider
+      - traits
+      type: object
     submitRegistrationFlowBodyWithPassword:
       description: |-
         SubmitRegistrationFlowBodyWithPassword is used to decode the registration form payload

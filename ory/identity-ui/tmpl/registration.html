@@ -56,24 +56,29 @@
                   <div class="roeg5j0 roeg5j7">
                     <div class="roeg5j0 roeg5j5">
                       {{ range $n := $gn.Nodes }}
-                      <!-- todo -->
-                      {{ end }}
-
-                      <!-- <div>
-                        <button class="_16pmekl0 _16pmekl2 _16pmekl5" style="width:100%" type="submit" name="provider"
-                          value="github" formnovalidate="">
-                          <i class="fa-brands fa-github _16pmekl6 _16pmekl8"></i>Sign up with Github<i
-                            class="fa-brands fa-github _16pmekla _16pmeklc" style="visibility:hidden;opacity:0"></i>
+                      <!-- input start -->
+                      {{ if eq $n.Type "input" }}
+                      {{ if eq $n.Attributes.UiNodeInputAttributes.Type "submit" }}
+                      <div>
+                        <button class="_16pmekl0 _16pmekl2 _16pmekl5" style="width:100%" type="submit"
+                          name="{{ $n.Attributes.UiNodeInputAttributes.Name }}"
+                          value="{{ $n.Attributes.UiNodeInputAttributes.Value }}" formnovalidate="">
+                          <i
+                            class="fa-brands fa-{{ $n.Attributes.UiNodeInputAttributes.Value }} _16pmekl6 _16pmekl8"></i>
+                          {{ if $n.Meta.Label }}{{ $n.Meta.Label.Text }}{{ end }}
+                          <i class="fa-brands fa-{{ $n.Attributes.UiNodeInputAttributes.Value }} _16pmekla _16pmeklc"
+                            style="visibility:hidden;opacity:0"></i>
                         </button>
                       </div>
-
-                      <div>
-                        <button class="_16pmekl0 _16pmekl2 _16pmekl5" style="width:100%" type="submit" name="provider"
-                          value="microsoft" formnovalidate="">
-                          <i class="fa-brands fa-microsoft _16pmekl6 _16pmekl8"></i>Sign up with Microsoft<i
-                            class="fa-brands fa-microsoft _16pmekla _16pmeklc" style="visibility:hidden;opacity:0"></i>
-                        </button>
-                      </div> -->
+                      {{ else if eq $n.Attributes.UiNodeInputAttributes.Type "hidden" }}
+                      <div class="roeg5j0 roeg5j3">
+                        <input type="hidden" name="{{ $n.Attributes.UiNodeInputAttributes.Name }}"
+                          value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                      </div>
+                      {{ end }}
+                      {{ end }}
+                      <!-- input end -->
+                      {{ end }}
                     </div>
                   </div>
                   {{ end }}

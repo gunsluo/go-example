@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -23,6 +22,7 @@ func main() {
 	// for _, alias := range []string{"4"} {
 	for _, alias := range []string{"1", "2", "3", "4"} {
 		cfgPath := fmt.Sprintf("config/boxes-%s.json", alias)
+
 		imagePath := fmt.Sprintf("input/%s.jpeg", alias)
 
 		st := time.Now()
@@ -108,11 +108,13 @@ func recognizeImage(imagePath string, conf BoxesConfig) {
 		}
 
 		b := &bytes.Buffer{}
-		if err := copyImage(bufio.NewWriter(b), img, ext); err != nil {
+		// if err := copyImage(bufio.NewWriter(b), img, ext); err != nil {
+		if err := copyImage(b, img, ext); err != nil {
 			panic(err)
 		}
 
 		client.SetImageFromBytes(b.Bytes())
+		// client.SetImage(imagePath)
 
 		text, err := client.Text()
 		if err != nil {

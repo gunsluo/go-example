@@ -17,7 +17,15 @@ import (
 
 // SubmitRegistrationFlowBody - struct for SubmitRegistrationFlowBody
 type SubmitRegistrationFlowBody struct {
+	SubmitRegistrationFlowBodyWithOidc *SubmitRegistrationFlowBodyWithOidc
 	SubmitRegistrationFlowBodyWithPassword *SubmitRegistrationFlowBodyWithPassword
+}
+
+// SubmitRegistrationFlowBodyWithOidcAsSubmitRegistrationFlowBody is a convenience function that returns SubmitRegistrationFlowBodyWithOidc wrapped in SubmitRegistrationFlowBody
+func SubmitRegistrationFlowBodyWithOidcAsSubmitRegistrationFlowBody(v *SubmitRegistrationFlowBodyWithOidc) SubmitRegistrationFlowBody {
+	return SubmitRegistrationFlowBody{
+		SubmitRegistrationFlowBodyWithOidc: v,
+	}
 }
 
 // SubmitRegistrationFlowBodyWithPasswordAsSubmitRegistrationFlowBody is a convenience function that returns SubmitRegistrationFlowBodyWithPassword wrapped in SubmitRegistrationFlowBody
@@ -32,6 +40,19 @@ func SubmitRegistrationFlowBodyWithPasswordAsSubmitRegistrationFlowBody(v *Submi
 func (dst *SubmitRegistrationFlowBody) UnmarshalJSON(data []byte) error {
 	var err error
 	match := 0
+	// try to unmarshal data into SubmitRegistrationFlowBodyWithOidc
+	err = newStrictDecoder(data).Decode(&dst.SubmitRegistrationFlowBodyWithOidc)
+	if err == nil {
+		jsonSubmitRegistrationFlowBodyWithOidc, _ := json.Marshal(dst.SubmitRegistrationFlowBodyWithOidc)
+		if string(jsonSubmitRegistrationFlowBodyWithOidc) == "{}" { // empty struct
+			dst.SubmitRegistrationFlowBodyWithOidc = nil
+		} else {
+			match++
+		}
+	} else {
+		dst.SubmitRegistrationFlowBodyWithOidc = nil
+	}
+
 	// try to unmarshal data into SubmitRegistrationFlowBodyWithPassword
 	err = newStrictDecoder(data).Decode(&dst.SubmitRegistrationFlowBodyWithPassword)
 	if err == nil {
@@ -47,6 +68,7 @@ func (dst *SubmitRegistrationFlowBody) UnmarshalJSON(data []byte) error {
 
 	if match > 1 { // more than 1 match
 		// reset to nil
+		dst.SubmitRegistrationFlowBodyWithOidc = nil
 		dst.SubmitRegistrationFlowBodyWithPassword = nil
 
 		return fmt.Errorf("Data matches more than one schema in oneOf(SubmitRegistrationFlowBody)")
@@ -59,6 +81,10 @@ func (dst *SubmitRegistrationFlowBody) UnmarshalJSON(data []byte) error {
 
 // Marshal data from the first non-nil pointers in the struct to JSON
 func (src SubmitRegistrationFlowBody) MarshalJSON() ([]byte, error) {
+	if src.SubmitRegistrationFlowBodyWithOidc != nil {
+		return json.Marshal(&src.SubmitRegistrationFlowBodyWithOidc)
+	}
+
 	if src.SubmitRegistrationFlowBodyWithPassword != nil {
 		return json.Marshal(&src.SubmitRegistrationFlowBodyWithPassword)
 	}
@@ -71,6 +97,10 @@ func (obj *SubmitRegistrationFlowBody) GetActualInstance() (interface{}) {
 	if obj == nil {
 		return nil
 	}
+	if obj.SubmitRegistrationFlowBodyWithOidc != nil {
+		return obj.SubmitRegistrationFlowBodyWithOidc
+	}
+
 	if obj.SubmitRegistrationFlowBodyWithPassword != nil {
 		return obj.SubmitRegistrationFlowBodyWithPassword
 	}

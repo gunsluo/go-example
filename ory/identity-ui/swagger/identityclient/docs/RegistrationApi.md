@@ -168,7 +168,7 @@ import (
 
 func main() {
     flow := "flow_example" // string | The Registration Flow ID  The value for this parameter comes from `flow` URL Query parameter sent to your application (e.g. `/registration?flow=abcde`).
-    submitRegistrationFlowBody := openapiclient.submitRegistrationFlowBody{SubmitRegistrationFlowBodyWithPassword: openapiclient.NewSubmitRegistrationFlowBodyWithPassword("ConfirmPassword_example", "Method_example", "Password_example", *openapiclient.NewRegistrationTraits("Type_example"))} // SubmitRegistrationFlowBody | 
+    submitRegistrationFlowBody := openapiclient.submitRegistrationFlowBody{SubmitRegistrationFlowBodyWithOidc: openapiclient.NewSubmitRegistrationFlowBodyWithOidc("Method_example", "Provider_example", *openapiclient.NewRegistrationTraits("Type_example"))} // SubmitRegistrationFlowBody | 
     cookie := "cookie_example" // string | HTTP Cookies  When using the SDK in a browser app, on the server side you must include the HTTP Cookie Header sent by the client to your server here. This ensures that CSRF and session cookies are respected. (optional)
 
     configuration := openapiclient.NewConfiguration()

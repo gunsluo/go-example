@@ -139,6 +139,7 @@ Class | Method | HTTP request | Description
  - [SubmitRecoveryFlowBody](docs/SubmitRecoveryFlowBody.md)
  - [SubmitRecoveryFlowBodyWithCaptcha](docs/SubmitRecoveryFlowBodyWithCaptcha.md)
  - [SubmitRegistrationFlowBody](docs/SubmitRegistrationFlowBody.md)
+ - [SubmitRegistrationFlowBodyWithOidc](docs/SubmitRegistrationFlowBodyWithOidc.md)
  - [SubmitRegistrationFlowBodyWithPassword](docs/SubmitRegistrationFlowBodyWithPassword.md)
  - [SubmitRegistrationFlowResponse](docs/SubmitRegistrationFlowResponse.md)
  - [SubmitSettingsFlowBody](docs/SubmitSettingsFlowBody.md)

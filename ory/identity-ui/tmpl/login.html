@@ -191,6 +191,11 @@
                             style="visibility:hidden;opacity:0"></i>
                         </button>
                       </div>
+                      {{ else if eq $n.Attributes.UiNodeInputAttributes.Type "hidden" }}
+                      <div class="roeg5j0 roeg5j3">
+                        <input type="hidden" name="{{ $n.Attributes.UiNodeInputAttributes.Name }}"
+                          value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                      </div>
                       {{ end }}
                       {{ end }}
                       <!-- input end -->

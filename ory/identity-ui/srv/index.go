@@ -49,6 +49,7 @@ func (s *Server) index(c *gin.Context) {
 		"authed": true,
 		"nav": navTmplValues{
 			SessionUrl:  "/sessions",
+			VerifyUrl:   "/verification",
 			SettingsUrl: "/settings",
 			LogoutUrl:   "/logout",
 		},

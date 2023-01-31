@@ -6,15 +6,16 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **ConfirmPassword** | **string** | Password to sign the user up with | 
 **CsrfToken** | Pointer to **string** | The CSRF Token | [optional] 
-**Method** | **string** | Method to use  This field must be set to &#x60;password&#x60; when using the password method. | 
+**Method** | **string** | Method to use  This field must be set to &#x60;oidc&#x60; when using the oidc method. | 
 **Password** | **string** | Password to sign the user up with | 
 **Traits** | [**RegistrationTraits**](RegistrationTraits.md) |  | 
+**Provider** | **string** | The provider to register with | 
 
 ## Methods
 
 ### NewSubmitRegistrationFlowBody
 
-`func NewSubmitRegistrationFlowBody(confirmPassword string, method string, password string, traits RegistrationTraits, ) *SubmitRegistrationFlowBody`
+`func NewSubmitRegistrationFlowBody(confirmPassword string, method string, password string, traits RegistrationTraits, provider string, ) *SubmitRegistrationFlowBody`
 
 NewSubmitRegistrationFlowBody instantiates a new SubmitRegistrationFlowBody object
 This constructor will assign default values to properties that have it defined,
@@ -132,6 +133,26 @@ and a boolean to check if the value has been set.
 `func (o *SubmitRegistrationFlowBody) SetTraits(v RegistrationTraits)`
 
 SetTraits sets Traits field to given value.
+
+
+### GetProvider
+
+`func (o *SubmitRegistrationFlowBody) GetProvider() string`
+
+GetProvider returns the Provider field if non-nil, zero value otherwise.
+
+### GetProviderOk
+
+`func (o *SubmitRegistrationFlowBody) GetProviderOk() (*string, bool)`
+
+GetProviderOk returns a tuple with the Provider field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetProvider
+
+`func (o *SubmitRegistrationFlowBody) SetProvider(v string)`
+
+SetProvider sets Provider field to given value.
 
 
 

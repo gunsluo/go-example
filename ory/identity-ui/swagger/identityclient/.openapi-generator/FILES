@@ -56,6 +56,7 @@ docs/SubmitLoginFlowResponse.md
 docs/SubmitRecoveryFlowBody.md
 docs/SubmitRecoveryFlowBodyWithCaptcha.md
 docs/SubmitRegistrationFlowBody.md
+docs/SubmitRegistrationFlowBodyWithOidc.md
 docs/SubmitRegistrationFlowBodyWithPassword.md
 docs/SubmitRegistrationFlowResponse.md
 docs/SubmitSettingsFlowBody.md
@@ -122,6 +123,7 @@ model_submit_login_flow_response.go
 model_submit_recovery_flow_body.go
 model_submit_recovery_flow_body_with_captcha.go
 model_submit_registration_flow_body.go
+model_submit_registration_flow_body_with_oidc.go
 model_submit_registration_flow_body_with_password.go
 model_submit_registration_flow_response.go
 model_submit_settings_flow_body.go
