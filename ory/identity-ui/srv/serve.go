@@ -21,7 +21,8 @@ type Server struct {
 	logoutReturnTo   string
 
 	apiClient *identityclient.APIClient
-	engine    *gin.Engine
+
+	engine *gin.Engine
 }
 
 func New() (*Server, error) {
@@ -44,6 +45,22 @@ func New() (*Server, error) {
 	configuration := identityclient.NewConfiguration()
 	configuration.Servers = identityclient.ServerConfigurations{{URL: identityEndpoint}}
 	s.apiClient = identityclient.NewAPIClient(configuration)
+
+	// hydraEndpoint := os.Getenv(envHydraEndpoint)
+	// _, err = url.Parse(hydraEndpoint)
+	// if err != nil {
+	// 	log.Fatalf("unable to parse hydra endpoint[%s]", hydraEndpoint)
+	// }
+
+	// hydraConfig := HydraConfig{
+	// 	Endpoint: hydraEndpoint,
+	// 	Timeout:  10 * time.Second,
+	// }
+	// hyClient, err := NewHydraClient(hydraConfig)
+	// if err != nil {
+	// 	log.Fatalf("unable to new hydra client[%s]", hydraConfig.Endpoint)
+	// }
+	// s.hydraClient = hyClient
 
 	s.setRouter()
 	return s, nil
@@ -93,6 +110,9 @@ func (s *Server) setRouter() {
 
 	// execption
 	s.engine.GET("/execption", s.execption)
+
+	// consent ui
+	s.engine.GET("/consent", s.consent)
 }
 
 func (s *Server) Run() {
@@ -102,5 +122,6 @@ func (s *Server) Run() {
 
 const (
 	envIdentityEndpoint = "IDENTITY_ENDPOINT"
+	envHydraEndpoint    = "HYDRA_ENDPOINT"
 	envSrvPort          = "PORT"
 )

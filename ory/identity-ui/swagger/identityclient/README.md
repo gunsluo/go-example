@@ -78,6 +78,9 @@ All URIs are relative to *http://localhost*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+*ConsentApi* | [**GetConsentFlowRequest**](docs/ConsentApi.md#getconsentflowrequest) | **Get** /self-service/consent/flows | # Get Consent Flow
+*ConsentApi* | [**InitBrowserConsentFlowRequest**](docs/ConsentApi.md#initbrowserconsentflowrequest) | **Get** /self-service/consent/browser | # Initialize Consent Flow for Browsers
+*ConsentApi* | [**SubmitConsentFlowRequest**](docs/ConsentApi.md#submitconsentflowrequest) | **Post** /self-service/consent | # Submit a Consent Flow
 *LoginApi* | [**GetLoginFlowRequest**](docs/LoginApi.md#getloginflowrequest) | **Get** /self-service/login/flows | # Get Login Flow
 *LoginApi* | [**InitBrowserLoginFlowRequest**](docs/LoginApi.md#initbrowserloginflowrequest) | **Get** /self-service/login/browser | # Initialize Login Flow for Browsers
 *LoginApi* | [**SubmitLoginFlowRequest**](docs/LoginApi.md#submitloginflowrequest) | **Post** /self-service/login | # Submit a Login Flow
@@ -105,6 +108,7 @@ Class | Method | HTTP request | Description
  - [AuthenticatorAssuranceLevel](docs/AuthenticatorAssuranceLevel.md)
  - [BrowserLocationChangeRequiredResponse](docs/BrowserLocationChangeRequiredResponse.md)
  - [Code](docs/Code.md)
+ - [ConsentFlow](docs/ConsentFlow.md)
  - [CredentialsType](docs/CredentialsType.md)
  - [FlowType](docs/FlowType.md)
  - [Identity](docs/Identity.md)
@@ -118,6 +122,7 @@ Class | Method | HTTP request | Description
  - [JsonErrorResponse](docs/JsonErrorResponse.md)
  - [LoginFlow](docs/LoginFlow.md)
  - [OAuth2Client](docs/OAuth2Client.md)
+ - [OAuth2ConsentRequest](docs/OAuth2ConsentRequest.md)
  - [OAuth2ConsentRequestOpenIDConnectContext](docs/OAuth2ConsentRequestOpenIDConnectContext.md)
  - [OAuth2LoginRequest](docs/OAuth2LoginRequest.md)
  - [RecoveryFlow](docs/RecoveryFlow.md)
@@ -131,6 +136,8 @@ Class | Method | HTTP request | Description
  - [SettingsFlow](docs/SettingsFlow.md)
  - [SettingsMethod](docs/SettingsMethod.md)
  - [SettingsState](docs/SettingsState.md)
+ - [SubmitConsentFlowBody](docs/SubmitConsentFlowBody.md)
+ - [SubmitConsentFlowBodyWithDefault](docs/SubmitConsentFlowBodyWithDefault.md)
  - [SubmitLoginFlowBody](docs/SubmitLoginFlowBody.md)
  - [SubmitLoginFlowBodyWithOidc](docs/SubmitLoginFlowBodyWithOidc.md)
  - [SubmitLoginFlowBodyWithPassword](docs/SubmitLoginFlowBodyWithPassword.md)

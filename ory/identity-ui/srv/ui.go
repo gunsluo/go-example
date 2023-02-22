@@ -105,6 +105,17 @@ func groupRecovery(ui identityclient.UiContainer) Froms {
 	return groupUi(ui, groups)
 }
 
+func groupConsentUi(ui identityclient.UiContainer) Froms {
+	groups := []Group{
+		{
+			Name:     "consent",
+			Includes: []string{"consent", "default"},
+		},
+	}
+
+	return groupUi(ui, groups)
+}
+
 func groupUi(ui identityclient.UiContainer, groups []Group) Froms {
 	froms := Froms{
 		Action:   ui.Action,

@@ -12,6 +12,8 @@ func (s *Server) registration(c *gin.Context) {
 	flowId := c.Query("flow")
 	if flowId == "" {
 		vs := url.Values{}
+		// loginChallenge := c.Query("login_challenge")
+		// vs.Add("login_challenge", loginChallenge)
 		s.gotoRegistration(c, vs)
 		return
 	}

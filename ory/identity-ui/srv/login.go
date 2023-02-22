@@ -16,6 +16,16 @@ func (s *Server) login(c *gin.Context) {
 	flowId := c.Query("flow")
 	if flowId == "" {
 		vs := url.Values{}
+
+		// oauth2
+		loginChallenge := c.Query("login_challenge")
+		if loginChallenge != "" {
+			// vs.Add("aal", "")
+			// vs.Add("refresh", "")
+			// vs.Add("return_to", "")
+			vs.Add("login_challenge", loginChallenge)
+		}
+
 		s.gotoLogin(c, vs)
 		return
 	}
@@ -31,15 +41,21 @@ func (s *Server) login(c *gin.Context) {
 		return
 	}
 
+	var oauthClient *identityclient.OAuth2Client
+	if flow.Oauth2LoginRequest != nil {
+		oauthClient = flow.Oauth2LoginRequest.Client
+	}
+
 	// debug
 	s.debugPrint("login ui", flow.Ui)
 	froms := groupLoginUi(flow.Ui)
 	c.HTML(http.StatusOK, "login.html", gin.H{
+		"oauthClient":     oauthClient,
 		"ui":              froms,
 		"aal":             flow.GetRequestedAal(),
 		"logoutUrl":       "/logout",
 		"recoveryUrl":     "/recovery",
-		"registrationUrl": "/registration",
+		"registrationUrl": "/registration?login_challenge=" + flow.GetOauth2LoginChallenge(),
 	})
 }
 

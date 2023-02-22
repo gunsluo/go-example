@@ -7,6 +7,253 @@ info:
 servers:
 - url: /
 paths:
+  /self-service/consent:
+    post:
+      description: |-
+        Use this endpoint to complete a consent flow. This endpoint
+        behaves differently for API and browser flows.
+
+        API flows expect `application/json` to be sent in the body and responds with
+        HTTP 200 and a application/json body with the session token on success;
+        HTTP 410 if the original flow expired with the appropriate error messages set and optionally a `use_flow_id` parameter in the body;
+        HTTP 400 on form validation errors.
+
+        Browser flows expect a Content-Type of `application/x-www-form-urlencoded` or `application/json` to be sent in the body and respond with
+        a HTTP 303 redirect to the post/after consent URL or the `return_to` value if it was set and if the consent succeeded;
+        a HTTP 303 redirect to the consent UI URL with the flow ID containing the validation errors otherwise.
+
+        More information can be found at:
+      operationId: submitConsentFlowRequest
+      parameters:
+      - description: |-
+          The Consent Flow ID
+
+          The value for this parameter comes from `flow` URL Query parameter sent to your
+          application (e.g. `/login?flow=abcde`).
+        explode: true
+        in: query
+        name: flow
+        required: true
+        schema:
+          type: string
+        style: form
+      - description: The Session Token of the Identity performing the consent flow.
+        explode: false
+        in: header
+        name: X-Session-Token
+        required: false
+        schema:
+          type: string
+        style: simple
+      - description: |-
+          HTTP Cookies
+
+          When using the SDK in a browser app, on the server side you must include the HTTP Cookie Header
+          sent by the client to your server here. This ensures that CSRF and session cookies are respected.
+        explode: false
+        in: header
+        name: Cookie
+        required: false
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/submitConsentFlowBody'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/submitConsentFlowBody'
+        required: true
+        x-originalParamName: Body
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/consentFlow'
+          description: consentFlow
+        "303":
+          description: Empty responses are sent when, for example, resources are deleted.
+            The HTTP status code for empty responses is typically 201.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/consentFlow'
+          description: consentFlow
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/jsonErrorResponse'
+          description: jsonErrorResponse
+      summary: '# Submit a Consent Flow'
+      tags:
+      - consent
+  /self-service/consent/browser:
+    get:
+      description: |-
+        This endpoint initializes a browser-based user consent flow. This endpoint will set the appropriate
+        cookies and anti-CSRF measures required for browser-based flows.
+
+        If this endpoint is opened as a link in the browser, it will be redirected to
+        `selfservice.flows.consent.ui_url` with the flow ID set as the query parameter `?flow=`. If a valid user session
+        exists already, the browser will be redirected to `urls.default_redirect_url` unless the query parameter
+        `?refresh=true` was set.
+
+        If this endpoint is called via an AJAX request, the response contains the flow without a redirect. In the
+        case of an error, the `error.id` of the JSON response body can be one of:
+
+        `security_csrf_violation`: Unable to fetch the flow because a CSRF violation occurred.
+        `security_identity_mismatch`: The requested `?return_to` address is not allowed to be used. Adjust this in the configuration!
+
+        This endpoint is NOT INTENDED for clients that do not have a browser (Chrome, Firefox, ...) as cookies are needed.
+      operationId: initBrowserConsentFlowRequest
+      parameters:
+      - description: The URL to return the browser to after the flow was completed.
+        explode: true
+        in: query
+        name: return_to
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: |-
+          HTTP Cookies
+
+          When using the SDK in a browser app, on the server side you must include the HTTP Cookie Header
+          sent by the client to your server here. This ensures that CSRF and session cookies are respected.
+        explode: false
+        in: header
+        name: Cookie
+        required: false
+        schema:
+          type: string
+        style: simple
+      - description: |-
+          An optional Hydra consent challenge. If present, Kratos will cooperate with
+          Ory Hydra to act as an OAuth2 identity provider.
+
+          The value for this parameter comes from `consent_challenge` URL Query parameter sent to your
+          application (e.g. `/consent?consent_challenge=abcde`).
+        explode: true
+        in: query
+        name: consent_challenge
+        required: true
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/consentFlow'
+          description: consentFlow
+        "303":
+          description: Empty responses are sent when, for example, resources are deleted.
+            The HTTP status code for empty responses is typically 201.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/jsonErrorResponse'
+          description: jsonErrorResponse
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/jsonErrorResponse'
+          description: jsonErrorResponse
+      summary: '# Initialize Consent Flow for Browsers'
+      tags:
+      - consent
+  /self-service/consent/flows:
+    get:
+      description: |-
+        This endpoint returns a consent flow's context with, for example, error details and other information.
+
+        Browser flows expect the anti-CSRF cookie to be included in the request's HTTP Cookie Header.
+        For AJAX requests you must ensure that cookies are included in the request or requests will fail.
+
+        If you use the browser-flow for server-side apps, the services need to run on a common top-level-domain
+        and you need to forward the incoming HTTP Cookie header to this endpoint:
+
+        ```js
+        pseudo-code example
+        router.get('/consent', async function (req, res) {
+        const flow = await client.getSelfServiceConsentFlow(req.header('cookie'), req.query['flow'])
+
+        res.render('consent', flow)
+        })
+        ```
+
+        This request may fail due to several reasons. The `error.id` can be one of:
+
+        `session_already_available`: The user is already signed in.
+        `self_service_flow_expired`: The flow is expired and you should request a new one.
+      operationId: getConsentFlowRequest
+      parameters:
+      - description: |-
+          The Consent Flow ID
+
+          The value for this parameter comes from `flow` URL Query parameter sent to your
+          application (e.g. `/consent?flow=abcde`).
+        explode: true
+        in: query
+        name: id
+        required: true
+        schema:
+          type: string
+        style: form
+      - description: |-
+          HTTP Cookies
+
+          When using the SDK in a browser app, on the server side you must include the HTTP Cookie Header
+          sent by the client to your server here. This ensures that CSRF and session cookies are respected.
+        explode: false
+        in: header
+        name: Cookie
+        required: false
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/consentFlow'
+          description: consentFlow
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/jsonErrorResponse'
+          description: jsonErrorResponse
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/jsonErrorResponse'
+          description: jsonErrorResponse
+        "410":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/jsonErrorResponse'
+          description: jsonErrorResponse
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/jsonErrorResponse'
+          description: jsonErrorResponse
+      summary: '# Get Consent Flow'
+      tags:
+      - consent
   /self-service/login:
     post:
       description: |-
@@ -1974,6 +2221,159 @@ components:
         Connect flows. Usually, OAuth 2.0 clients are generated for applications which
         want to consume your OAuth 2.0 or OpenID Connect capabilities.
       type: object
+    OAuth2ConsentRequest:
+      description: OAuth2ConsentRequest struct for OAuth2ConsentRequest
+      example:
+        requested_access_token_audience:
+        - requested_access_token_audience
+        - requested_access_token_audience
+        login_challenge: login_challenge
+        subject: subject
+        amr:
+        - amr
+        - amr
+        oidc_context:
+          login_hint: login_hint
+          ui_locales:
+          - ui_locales
+          - ui_locales
+          id_token_hint_claims:
+            key: '{}'
+          acr_values:
+          - acr_values
+          - acr_values
+          display: display
+        skip: true
+        request_url: request_url
+        acr: acr
+        context: '{}'
+        challenge: challenge
+        client:
+          metadata: '{}'
+          token_endpoint_auth_signing_alg: token_endpoint_auth_signing_alg
+          client_uri: client_uri
+          jwt_bearer_grant_access_token_lifespan: jwt_bearer_grant_access_token_lifespan
+          jwks: '{}'
+          logo_uri: logo_uri
+          created_at: 2000-01-23T04:56:07.000+00:00
+          registration_client_uri: registration_client_uri
+          allowed_cors_origins:
+          - allowed_cors_origins
+          - allowed_cors_origins
+          refresh_token_grant_access_token_lifespan: refresh_token_grant_access_token_lifespan
+          registration_access_token: registration_access_token
+          client_id: client_id
+          token_endpoint_auth_method: token_endpoint_auth_method
+          userinfo_signed_response_alg: userinfo_signed_response_alg
+          authorization_code_grant_id_token_lifespan: authorization_code_grant_id_token_lifespan
+          authorization_code_grant_refresh_token_lifespan: authorization_code_grant_refresh_token_lifespan
+          client_credentials_grant_access_token_lifespan: client_credentials_grant_access_token_lifespan
+          updated_at: 2000-01-23T04:56:07.000+00:00
+          scope: scope
+          request_uris:
+          - request_uris
+          - request_uris
+          client_secret: client_secret
+          backchannel_logout_session_required: true
+          backchannel_logout_uri: backchannel_logout_uri
+          client_name: client_name
+          policy_uri: policy_uri
+          owner: owner
+          audience:
+          - audience
+          - audience
+          authorization_code_grant_access_token_lifespan: authorization_code_grant_access_token_lifespan
+          post_logout_redirect_uris:
+          - post_logout_redirect_uris
+          - post_logout_redirect_uris
+          grant_types:
+          - grant_types
+          - grant_types
+          subject_type: subject_type
+          refresh_token_grant_refresh_token_lifespan: refresh_token_grant_refresh_token_lifespan
+          redirect_uris:
+          - redirect_uris
+          - redirect_uris
+          sector_identifier_uri: sector_identifier_uri
+          frontchannel_logout_session_required: true
+          frontchannel_logout_uri: frontchannel_logout_uri
+          refresh_token_grant_id_token_lifespan: refresh_token_grant_id_token_lifespan
+          implicit_grant_id_token_lifespan: implicit_grant_id_token_lifespan
+          client_secret_expires_at: 0
+          implicit_grant_access_token_lifespan: implicit_grant_access_token_lifespan
+          jwks_uri: jwks_uri
+          request_object_signing_alg: request_object_signing_alg
+          tos_uri: tos_uri
+          contacts:
+          - contacts
+          - contacts
+          response_types:
+          - response_types
+          - response_types
+        login_session_id: login_session_id
+        requested_scope:
+        - requested_scope
+        - requested_scope
+      properties:
+        acr:
+          description: ACR represents the Authentication AuthorizationContext Class
+            Reference value for this authentication session. You can use it to express
+            that, for example, a user authenticated using two factor authentication.
+          type: string
+        amr:
+          items:
+            type: string
+          type: array
+        challenge:
+          description: ID is the identifier (\"authorization challenge\") of the consent
+            authorization request. It is used to identify the session.
+          type: string
+        client:
+          $ref: '#/components/schemas/OAuth2Client'
+        context:
+          type: object
+        login_challenge:
+          description: LoginChallenge is the login challenge this consent challenge
+            belongs to. It can be used to associate a login and consent request in
+            the login & consent app.
+          type: string
+        login_session_id:
+          description: LoginSessionID is the login session ID. If the user-agent reuses
+            a login session (via cookie / remember flag) this ID will remain the same.
+            If the user-agent did not have an existing authentication session (e.g.
+            remember is false) this will be a new random value. This value is used
+            as the \"sid\" parameter in the ID Token and in OIDC Front-/Back- channel
+            logout. It's value can generally be used to associate consecutive login
+            requests by a certain user.
+          type: string
+        oidc_context:
+          $ref: '#/components/schemas/OAuth2ConsentRequestOpenIDConnectContext'
+        request_url:
+          description: RequestURL is the original OAuth 2.0 Authorization URL requested
+            by the OAuth 2.0 client. It is the URL which initiates the OAuth 2.0 Authorization
+            Code or OAuth 2.0 Implicit flow. This URL is typically not needed, but
+            might come in handy if you want to deal with additional request parameters.
+          type: string
+        requested_access_token_audience:
+          items:
+            type: string
+          type: array
+        requested_scope:
+          items:
+            type: string
+          type: array
+        skip:
+          description: Skip, if true, implies that the client has requested the same
+            scopes from the same user previously. If true, you must not ask the user
+            to grant the requested scopes. You must however either allow or deny the
+            consent request using the usual API call.
+          type: boolean
+        subject:
+          description: Subject is the user ID of the end-user that authenticated.
+            Now, that end user needs to grant or deny the scope requested by the OAuth
+            2.0 client.
+          type: string
+      type: object
     OAuth2ConsentRequestOpenIDConnectContext:
       description: OAuth2ConsentRequestOpenIDConnectContext struct for OAuth2ConsentRequestOpenIDConnectContext
       example:
@@ -2329,6 +2729,7 @@ components:
         ScopeMissing                  Code = 6034 // ScopeMissing
         IDTokenMissing                Code = 6035 // IDTokenMissing
         ContinueFlow                  Code = 6036 // ContinueFlow
+        ConsentFlowExpired            Code = 6037 // ConsentFlowExpired
         IdentityNotFound              Code = 6050 // IdentityNotFound
         IdentityMissing               Code = 6051 // IdentityMissing
         IdentityHasVerified           Code = 6052 // IdentityHasVerified
@@ -2395,6 +2796,8 @@ components:
       - 6034
       - 6035
       - 6036
+      - 6037
+      - 6038
       - 6050
       - 6051
       - 6052
@@ -2421,6 +2824,290 @@ components:
       format: int64
       title: Code
       type: integer
+    consentFlow:
+      description: |-
+        This object represents a consent flow. A consent flow is initiated at the "Initiate Consent API / Browser Flow"
+        endpoint by a client.
+
+        Once a consent flow is completed successfully, will be redirect oauth client back url.
+      example:
+        method: method
+        created_at: 2000-01-23T04:56:07.000+00:00
+        return_to: http://127.0.0.1:4555
+        not_ask: true
+        issued_at: 2000-01-23T04:56:07.000+00:00
+        request_url: http://127.0.0.1:4433/self-service/consent/browser?aal=&refresh=&return_to=
+        oauth2_consent_challenge: oauth2_consent_challenge
+        oauth2_consent_request:
+          requested_access_token_audience:
+          - requested_access_token_audience
+          - requested_access_token_audience
+          login_challenge: login_challenge
+          subject: subject
+          amr:
+          - amr
+          - amr
+          oidc_context:
+            login_hint: login_hint
+            ui_locales:
+            - ui_locales
+            - ui_locales
+            id_token_hint_claims:
+              key: '{}'
+            acr_values:
+            - acr_values
+            - acr_values
+            display: display
+          skip: true
+          request_url: request_url
+          acr: acr
+          context: '{}'
+          challenge: challenge
+          client:
+            metadata: '{}'
+            token_endpoint_auth_signing_alg: token_endpoint_auth_signing_alg
+            client_uri: client_uri
+            jwt_bearer_grant_access_token_lifespan: jwt_bearer_grant_access_token_lifespan
+            jwks: '{}'
+            logo_uri: logo_uri
+            created_at: 2000-01-23T04:56:07.000+00:00
+            registration_client_uri: registration_client_uri
+            allowed_cors_origins:
+            - allowed_cors_origins
+            - allowed_cors_origins
+            refresh_token_grant_access_token_lifespan: refresh_token_grant_access_token_lifespan
+            registration_access_token: registration_access_token
+            client_id: client_id
+            token_endpoint_auth_method: token_endpoint_auth_method
+            userinfo_signed_response_alg: userinfo_signed_response_alg
+            authorization_code_grant_id_token_lifespan: authorization_code_grant_id_token_lifespan
+            authorization_code_grant_refresh_token_lifespan: authorization_code_grant_refresh_token_lifespan
+            client_credentials_grant_access_token_lifespan: client_credentials_grant_access_token_lifespan
+            updated_at: 2000-01-23T04:56:07.000+00:00
+            scope: scope
+            request_uris:
+            - request_uris
+            - request_uris
+            client_secret: client_secret
+            backchannel_logout_session_required: true
+            backchannel_logout_uri: backchannel_logout_uri
+            client_name: client_name
+            policy_uri: policy_uri
+            owner: owner
+            audience:
+            - audience
+            - audience
+            authorization_code_grant_access_token_lifespan: authorization_code_grant_access_token_lifespan
+            post_logout_redirect_uris:
+            - post_logout_redirect_uris
+            - post_logout_redirect_uris
+            grant_types:
+            - grant_types
+            - grant_types
+            subject_type: subject_type
+            refresh_token_grant_refresh_token_lifespan: refresh_token_grant_refresh_token_lifespan
+            redirect_uris:
+            - redirect_uris
+            - redirect_uris
+            sector_identifier_uri: sector_identifier_uri
+            frontchannel_logout_session_required: true
+            frontchannel_logout_uri: frontchannel_logout_uri
+            refresh_token_grant_id_token_lifespan: refresh_token_grant_id_token_lifespan
+            implicit_grant_id_token_lifespan: implicit_grant_id_token_lifespan
+            client_secret_expires_at: 0
+            implicit_grant_access_token_lifespan: implicit_grant_access_token_lifespan
+            jwks_uri: jwks_uri
+            request_object_signing_alg: request_object_signing_alg
+            tos_uri: tos_uri
+            contacts:
+            - contacts
+            - contacts
+            response_types:
+            - response_types
+            - response_types
+          login_session_id: login_session_id
+          requested_scope:
+          - requested_scope
+          - requested_scope
+        expires_at: 2000-01-23T04:56:07.000+00:00
+        ui:
+          nodes:
+          - meta:
+              label:
+                context: '{}'
+                id: id
+                text: text
+                type: type
+            messages:
+            - context: '{}'
+              id: id
+              text: text
+              type: type
+            - context: '{}'
+              id: id
+              text: text
+              type: type
+            type: text
+            group: default
+          - meta:
+              label:
+                context: '{}'
+                id: id
+                text: text
+                type: type
+            messages:
+            - context: '{}'
+              id: id
+              text: text
+              type: type
+            - context: '{}'
+              id: id
+              text: text
+              type: type
+            type: text
+            group: default
+          method: method
+          action: action
+          messages:
+          - context: '{}'
+            id: id
+            text: text
+            type: type
+          - context: '{}'
+            id: id
+            text: text
+            type: type
+        updated_at: 2000-01-23T04:56:07.000+00:00
+        identity:
+          traits:
+            mobile: mobile
+            email: email
+          updated_at: 2000-01-23T04:56:07.000+00:00
+          credentials:
+            key:
+              updated_at: 2000-01-23T04:56:07.000+00:00
+              identifiers:
+              - identifier: identifier
+                updated_at: 2000-01-23T04:56:07.000+00:00
+                created_at: 2000-01-23T04:56:07.000+00:00
+                id: id
+                properties: '{}'
+              - identifier: identifier
+                updated_at: 2000-01-23T04:56:07.000+00:00
+                created_at: 2000-01-23T04:56:07.000+00:00
+                id: id
+                properties: '{}'
+              created_at: 2000-01-23T04:56:07.000+00:00
+              id: id
+              config: '{}'
+          subject: subject
+          verifiable_addresses:
+          - identifier: identifier
+            verified: true
+            id: id
+            primary: true
+          - identifier: identifier
+            verified: true
+            id: id
+            primary: true
+          created_at: 2000-01-23T04:56:07.000+00:00
+          id: id
+          source: source
+          locked: true
+        id: o86sAg8exAbU96qx4gZMfu
+        state: state
+      properties:
+        created_at:
+          description: CreatedAt is a helper struct field for.
+          format: date-time
+          type: string
+        expires_at:
+          description: |-
+            ExpiresAt is the time (UTC) when the flow expires. If the user still wishes to log in,
+            a new flow has to be initiated.
+          format: date-time
+          type: string
+        id:
+          description: |-
+            ID represents the flow's unique ID. When performing the consent flow, this
+            represents the id in the consent UI's query parameter: http://<selfservice.flows.consent.ui_url>/?flow=<flow_id>
+          example: o86sAg8exAbU96qx4gZMfu
+          type: string
+        identity:
+          $ref: '#/components/schemas/Identity'
+        issued_at:
+          description: IssuedAt is the time (UTC) when the flow started.
+          format: date-time
+          type: string
+        method:
+          title: ConsentMethod represents several different consent method, like default
+            and so on.
+          type: string
+        not_ask:
+          description: NotAsk stores whether this consent flow should keep user session.
+          type: boolean
+        oauth2_consent_challenge:
+          description: |-
+            OAuth 2.0 Consent Challenge.
+
+            This value is set using the `consent_challenge` query parameter of the registration and consent endpoints.
+            If set will cooperate with OAuth2 and OpenID to act as an OAuth2 server / OpenID Provider.
+          type: string
+        oauth2_consent_request:
+          $ref: '#/components/schemas/OAuth2ConsentRequest'
+        request_url:
+          description: |-
+            RequestURL is the initial URL that was requested from Identity. It can be used
+            to forward information contained in the URL's path or query for example.
+          example: http://127.0.0.1:4433/self-service/consent/browser?aal=&refresh=&return_to=
+          type: string
+        return_to:
+          description: ReturnTo contains the requested return_to URL.
+          example: http://127.0.0.1:4555
+          type: string
+        state:
+          description: |-
+            The state represents the state of the consent flow.
+
+            ```
+            accepted: ask the user to accepted
+            rejected: reject consent by the user
+            ```
+          title: Consent Flow State
+          type: string
+        type:
+          $ref: '#/components/schemas/flowType'
+        ui:
+          $ref: '#/components/schemas/uiContainer'
+        updated_at:
+          description: UpdatedAt is a helper struct field for.
+          format: date-time
+          type: string
+      required:
+      - expires_at
+      - id
+      - identity
+      - issued_at
+      - request_url
+      - state
+      - type
+      - ui
+      title: Consent Flow
+      type: object
+    consentMethod:
+      title: ConsentMethod represents several different consent method, like default
+        and so on.
+      type: string
+    consentState:
+      description: |-
+        The state represents the state of the consent flow.
+
+        ```
+        accepted: ask the user to accepted
+        rejected: reject consent by the user
+        ```
+      title: Consent Flow State
+      type: string
     credentialsType:
       description: and so on.
       enum:
@@ -3433,6 +4120,43 @@ components:
       - success
       title: 'State represents the state of this flow. It knows two states:'
       type: string
+    submitConsentFlowBody:
+      discriminator:
+        mapping:
+          default: '#/components/schemas/submitConsentFlowBodyWithDefault'
+        propertyName: method
+      oneOf:
+      - $ref: '#/components/schemas/submitConsentFlowBodyWithDefault'
+    submitConsentFlowBodyWithDefault:
+      properties:
+        action:
+          description: Action is allow or deny.
+          type: string
+        csrf_token:
+          description: Sending the anti-csrf token is only required for browser login
+            flows.
+          type: string
+        method:
+          description: Method should be set to "consent".
+          type: string
+        not_ask:
+          description: |-
+            Do Not Ask Me
+
+            If set to true, don't ask me again.
+          type: boolean
+        scope:
+          description: scope is selected by the user.
+          items:
+            type: string
+          type: array
+      required:
+      - action
+      - method
+      - not_ask
+      - scope
+      title: submitConsentFlowBodyWithDefault is used to decode the consent form payload.
+      type: object
     submitLoginFlowBody:
       discriminator:
         mapping:
@@ -3988,6 +4712,7 @@ components:
             totp TOTPGroup
             lookup_secret LookupGroup
             webauthn WebAuthnGroup
+            consent ConsentGroup
           enum:
           - default
           - password
@@ -3998,6 +4723,7 @@ components:
           - totp
           - lookup_secret
           - webauthn
+          - consent
           type: string
           x-go-enum-desc: |-
             default DefaultGroup
@@ -4009,6 +4735,7 @@ components:
             totp TOTPGroup
             lookup_secret LookupGroup
             webauthn WebAuthnGroup
+            consent ConsentGroup
         messages:
           items:
             $ref: '#/components/schemas/uiText'

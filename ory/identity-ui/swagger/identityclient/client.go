@@ -48,6 +48,8 @@ type APIClient struct {
 
 	// API Services
 
+	ConsentApi ConsentApi
+
 	LoginApi LoginApi
 
 	LogoutApi LogoutApi
@@ -79,6 +81,7 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	c.common.client = c
 
 	// API Services
+	c.ConsentApi = (*ConsentApiService)(&c.common)
 	c.LoginApi = (*LoginApiService)(&c.common)
 	c.LogoutApi = (*LogoutApiService)(&c.common)
 	c.RecoveryApi = (*RecoveryApiService)(&c.common)

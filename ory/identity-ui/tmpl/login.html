@@ -25,6 +25,16 @@
               {{ if eq .aal "aal2" }}
               <!-- aal2 start -->
               <div class="roeg5j0 roeg5j7">
+                {{ if .oauthClient }}
+                <div class="_1421i9r0 _1421i9r2 _1421i9r7 vpyugz5 vpyugzm vpyugz9">To authenticate 
+                  {{ if .oauthClient.ClientName }}
+                    {{ .oauthClient.ClientName }}
+                  {{ else if .oauthClient.ClientId }}
+                    {{ .oauthClient.ClientId }}
+                  {{ end }}
+                </div>
+                {{ end }}
+
                 <div class="roeg5j0 roeg5j5">
                   <div class="_1421i9r0 _1421i9r2 _1421i9r5 vpyugz5 vpyugzm vpyugz9" data-testid="ui/message/1010004">
                     Please complete the second authentication challenge.</div>
@@ -136,10 +146,20 @@
                   </div>
                 </div>
               </div>
-              <!-- aal2 start -->
+              <!-- aal2 end -->
               {{ else }}
               <!-- aal start -->
               <div class="roeg5j0 roeg5j7">
+                {{ if .oauthClient }}
+                <div class="_1421i9r0 _1421i9r2 _1421i9r7 vpyugz5 vpyugzm vpyugz9">To authenticate 
+                  {{ if .oauthClient.ClientName }}
+                    {{ .oauthClient.ClientName }}
+                  {{ else if .oauthClient.ClientId }}
+                    {{ .oauthClient.ClientId }}
+                  {{ end }}
+                </div>
+                {{ end }}
+
                 {{ range $m := .ui.Messages }}
                 <div class="_1421i9r0 _1421i9r2 _1421i9r4 vpyugz5 vpyugzm vpyugz9" data-testid="ui/message/4010001">
                   {{ $m.Text}}
