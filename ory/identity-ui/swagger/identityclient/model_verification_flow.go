@@ -26,6 +26,9 @@ type VerificationFlow struct {
 	// IssuedAt is the time (UTC) when the request occurred.
 	IssuedAt *time.Time `json:"issued_at,omitempty"`
 	Method *VerificationMethod `json:"method,omitempty"`
+	// OAuth 2.0 Login Challenge.  This value is set using the `login_challenge` query parameter of the registration and login endpoints. If set will cooperate with OAuth2 and OpenID to act as an OAuth2 server / OpenID Provider.
+	Oauth2LoginChallenge *string `json:"oauth2_login_challenge,omitempty"`
+	Oauth2LoginRequest *OAuth2LoginRequest `json:"oauth2_login_request,omitempty"`
 	// RequestURL is the initial URL that was requested from Identity. It can be used to forward information contained in the URL's path or query for example.
 	RequestUrl *string `json:"request_url,omitempty"`
 	// ReturnTo contains the requested return_to URL.
@@ -208,6 +211,70 @@ func (o *VerificationFlow) HasMethod() bool {
 // SetMethod gets a reference to the given VerificationMethod and assigns it to the Method field.
 func (o *VerificationFlow) SetMethod(v VerificationMethod) {
 	o.Method = &v
+}
+
+// GetOauth2LoginChallenge returns the Oauth2LoginChallenge field value if set, zero value otherwise.
+func (o *VerificationFlow) GetOauth2LoginChallenge() string {
+	if o == nil || o.Oauth2LoginChallenge == nil {
+		var ret string
+		return ret
+	}
+	return *o.Oauth2LoginChallenge
+}
+
+// GetOauth2LoginChallengeOk returns a tuple with the Oauth2LoginChallenge field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *VerificationFlow) GetOauth2LoginChallengeOk() (*string, bool) {
+	if o == nil || o.Oauth2LoginChallenge == nil {
+		return nil, false
+	}
+	return o.Oauth2LoginChallenge, true
+}
+
+// HasOauth2LoginChallenge returns a boolean if a field has been set.
+func (o *VerificationFlow) HasOauth2LoginChallenge() bool {
+	if o != nil && o.Oauth2LoginChallenge != nil {
+		return true
+	}
+
+	return false
+}
+
+// SetOauth2LoginChallenge gets a reference to the given string and assigns it to the Oauth2LoginChallenge field.
+func (o *VerificationFlow) SetOauth2LoginChallenge(v string) {
+	o.Oauth2LoginChallenge = &v
+}
+
+// GetOauth2LoginRequest returns the Oauth2LoginRequest field value if set, zero value otherwise.
+func (o *VerificationFlow) GetOauth2LoginRequest() OAuth2LoginRequest {
+	if o == nil || o.Oauth2LoginRequest == nil {
+		var ret OAuth2LoginRequest
+		return ret
+	}
+	return *o.Oauth2LoginRequest
+}
+
+// GetOauth2LoginRequestOk returns a tuple with the Oauth2LoginRequest field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *VerificationFlow) GetOauth2LoginRequestOk() (*OAuth2LoginRequest, bool) {
+	if o == nil || o.Oauth2LoginRequest == nil {
+		return nil, false
+	}
+	return o.Oauth2LoginRequest, true
+}
+
+// HasOauth2LoginRequest returns a boolean if a field has been set.
+func (o *VerificationFlow) HasOauth2LoginRequest() bool {
+	if o != nil && o.Oauth2LoginRequest != nil {
+		return true
+	}
+
+	return false
+}
+
+// SetOauth2LoginRequest gets a reference to the given OAuth2LoginRequest and assigns it to the Oauth2LoginRequest field.
+func (o *VerificationFlow) SetOauth2LoginRequest(v OAuth2LoginRequest) {
+	o.Oauth2LoginRequest = &v
 }
 
 // GetRequestUrl returns the RequestUrl field value if set, zero value otherwise.
@@ -394,6 +461,12 @@ func (o VerificationFlow) MarshalJSON() ([]byte, error) {
 	}
 	if o.Method != nil {
 		toSerialize["method"] = o.Method
+	}
+	if o.Oauth2LoginChallenge != nil {
+		toSerialize["oauth2_login_challenge"] = o.Oauth2LoginChallenge
+	}
+	if o.Oauth2LoginRequest != nil {
+		toSerialize["oauth2_login_request"] = o.Oauth2LoginRequest
 	}
 	if o.RequestUrl != nil {
 		toSerialize["request_url"] = o.RequestUrl

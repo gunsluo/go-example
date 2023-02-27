@@ -12,6 +12,10 @@ func (s *Server) verification(c *gin.Context) {
 	flowId := c.Query("flow")
 	if flowId == "" {
 		vs := url.Values{}
+		loginChallenge := c.Query("login_challenge")
+		if loginChallenge != "" {
+			vs.Add("login_challenge", loginChallenge)
+		}
 		s.gotoVerification(c, vs)
 		return
 	}
@@ -33,8 +37,8 @@ func (s *Server) verification(c *gin.Context) {
 	c.HTML(http.StatusOK, "verification.html", gin.H{
 		"ui":              froms,
 		"state":           flow.State,
-		"loginUrl":        "/login",
-		"registrationUrl": "/registration",
+		"loginUrl":        "/login?login_challenge=" + flow.GetOauth2LoginChallenge(),
+		"registrationUrl": "/registration?login_challenge=" + flow.GetOauth2LoginChallenge(),
 	})
 }
 

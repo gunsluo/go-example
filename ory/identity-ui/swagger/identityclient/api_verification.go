@@ -271,10 +271,15 @@ type VerificationApiApiInitBrowserVerificationFlowRequestRequest struct {
 	ctx context.Context
 	ApiService VerificationApi
 	returnTo *string
+	loginChallenge *string
 }
 
 func (r VerificationApiApiInitBrowserVerificationFlowRequestRequest) ReturnTo(returnTo string) VerificationApiApiInitBrowserVerificationFlowRequestRequest {
 	r.returnTo = &returnTo
+	return r
+}
+func (r VerificationApiApiInitBrowserVerificationFlowRequestRequest) LoginChallenge(loginChallenge string) VerificationApiApiInitBrowserVerificationFlowRequestRequest {
+	r.loginChallenge = &loginChallenge
 	return r
 }
 
@@ -327,6 +332,9 @@ func (a *VerificationApiService) InitBrowserVerificationFlowRequestExecute(r Ver
 
 	if r.returnTo != nil {
 		localVarQueryParams.Add("return_to", parameterToString(*r.returnTo, ""))
+	}
+	if r.loginChallenge != nil {
+		localVarQueryParams.Add("login_challenge", parameterToString(*r.loginChallenge, ""))
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}

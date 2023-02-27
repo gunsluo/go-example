@@ -6,14 +6,18 @@ import (
 	"net/url"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gunsluo/go-example/ory/identity-ui/swagger/identityclient"
 )
 
 func (s *Server) registration(c *gin.Context) {
 	flowId := c.Query("flow")
 	if flowId == "" {
 		vs := url.Values{}
-		// loginChallenge := c.Query("login_challenge")
-		// vs.Add("login_challenge", loginChallenge)
+		loginChallenge := c.Query("login_challenge")
+		if loginChallenge != "" {
+			vs.Add("login_challenge", loginChallenge)
+		}
+
 		s.gotoRegistration(c, vs)
 		return
 	}
@@ -30,12 +34,18 @@ func (s *Server) registration(c *gin.Context) {
 		return
 	}
 
+	var oauthClient *identityclient.OAuth2Client
+	if flow.Oauth2LoginRequest != nil {
+		oauthClient = flow.Oauth2LoginRequest.Client
+	}
+
 	// debug
 	s.debugPrint("registration ui", flow.Ui)
 	froms := groupRegistrationUi(flow.Ui)
 	c.HTML(http.StatusOK, "registration.html", gin.H{
-		"ui":       froms,
-		"loginUrl": "/login",
+		"oauthClient": oauthClient,
+		"ui":          froms,
+		"loginUrl":    "/login?login_challenge=" + flow.GetOauth2LoginChallenge(),
 	})
 }
 

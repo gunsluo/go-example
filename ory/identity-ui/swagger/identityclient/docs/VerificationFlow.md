@@ -9,6 +9,8 @@ Name | Type | Description | Notes
 **Id** | **string** | ID represents the request&#39;s unique ID. When performing the verification flow, this represents the id in the verify ui&#39;s query parameter: http://&lt;selfservice.flows.verification.ui_url&gt;?request&#x3D;&lt;id&gt;  type: string | 
 **IssuedAt** | Pointer to **time.Time** | IssuedAt is the time (UTC) when the request occurred. | [optional] 
 **Method** | Pointer to [**VerificationMethod**](VerificationMethod.md) |  | [optional] 
+**Oauth2LoginChallenge** | Pointer to **string** | OAuth 2.0 Login Challenge.  This value is set using the &#x60;login_challenge&#x60; query parameter of the registration and login endpoints. If set will cooperate with OAuth2 and OpenID to act as an OAuth2 server / OpenID Provider. | [optional] 
+**Oauth2LoginRequest** | Pointer to [**OAuth2LoginRequest**](OAuth2LoginRequest.md) |  | [optional] 
 **RequestUrl** | Pointer to **string** | RequestURL is the initial URL that was requested from Identity. It can be used to forward information contained in the URL&#39;s path or query for example. | [optional] 
 **ReturnTo** | Pointer to **string** | ReturnTo contains the requested return_to URL. | [optional] 
 **State** | [**VerificationState**](VerificationState.md) |  | 
@@ -154,6 +156,56 @@ SetMethod sets Method field to given value.
 `func (o *VerificationFlow) HasMethod() bool`
 
 HasMethod returns a boolean if a field has been set.
+
+### GetOauth2LoginChallenge
+
+`func (o *VerificationFlow) GetOauth2LoginChallenge() string`
+
+GetOauth2LoginChallenge returns the Oauth2LoginChallenge field if non-nil, zero value otherwise.
+
+### GetOauth2LoginChallengeOk
+
+`func (o *VerificationFlow) GetOauth2LoginChallengeOk() (*string, bool)`
+
+GetOauth2LoginChallengeOk returns a tuple with the Oauth2LoginChallenge field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetOauth2LoginChallenge
+
+`func (o *VerificationFlow) SetOauth2LoginChallenge(v string)`
+
+SetOauth2LoginChallenge sets Oauth2LoginChallenge field to given value.
+
+### HasOauth2LoginChallenge
+
+`func (o *VerificationFlow) HasOauth2LoginChallenge() bool`
+
+HasOauth2LoginChallenge returns a boolean if a field has been set.
+
+### GetOauth2LoginRequest
+
+`func (o *VerificationFlow) GetOauth2LoginRequest() OAuth2LoginRequest`
+
+GetOauth2LoginRequest returns the Oauth2LoginRequest field if non-nil, zero value otherwise.
+
+### GetOauth2LoginRequestOk
+
+`func (o *VerificationFlow) GetOauth2LoginRequestOk() (*OAuth2LoginRequest, bool)`
+
+GetOauth2LoginRequestOk returns a tuple with the Oauth2LoginRequest field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetOauth2LoginRequest
+
+`func (o *VerificationFlow) SetOauth2LoginRequest(v OAuth2LoginRequest)`
+
+SetOauth2LoginRequest sets Oauth2LoginRequest field to given value.
+
+### HasOauth2LoginRequest
+
+`func (o *VerificationFlow) HasOauth2LoginRequest() bool`
+
+HasOauth2LoginRequest returns a boolean if a field has been set.
 
 ### GetRequestUrl
 

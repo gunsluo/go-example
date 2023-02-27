@@ -80,7 +80,7 @@ No authorization required
 
 ## InitBrowserVerificationFlowRequest
 
-> VerificationFlow InitBrowserVerificationFlowRequest(ctx).ReturnTo(returnTo).Execute()
+> VerificationFlow InitBrowserVerificationFlowRequest(ctx).ReturnTo(returnTo).LoginChallenge(loginChallenge).Execute()
 
 # Initialize Verification Flow for Browser Clients
 
@@ -100,10 +100,11 @@ import (
 
 func main() {
     returnTo := "returnTo_example" // string | The URL to return the browser to after the flow was completed. (optional)
+    loginChallenge := "loginChallenge_example" // string | OAuth 2.0 Login Challenge.  If set will cooperate with OAuth2 and OpenID to act as an OAuth2 server / OpenID Provider.  The value for this parameter comes from `login_challenge` URL Query parameter sent to your application (e.g. `/verification?login_challenge=abcde`).  This feature is compatible with Identity when not running on the Network. (optional)
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.VerificationApi.InitBrowserVerificationFlowRequest(context.Background()).ReturnTo(returnTo).Execute()
+    resp, r, err := apiClient.VerificationApi.InitBrowserVerificationFlowRequest(context.Background()).ReturnTo(returnTo).LoginChallenge(loginChallenge).Execute()
     if err != nil {
         fmt.Fprintf(os.Stderr, "Error when calling `VerificationApi.InitBrowserVerificationFlowRequest``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -125,6 +126,7 @@ Other parameters are passed through a pointer to a apiInitBrowserVerificationFlo
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **returnTo** | **string** | The URL to return the browser to after the flow was completed. | 
+ **loginChallenge** | **string** | OAuth 2.0 Login Challenge.  If set will cooperate with OAuth2 and OpenID to act as an OAuth2 server / OpenID Provider.  The value for this parameter comes from &#x60;login_challenge&#x60; URL Query parameter sent to your application (e.g. &#x60;/verification?login_challenge&#x3D;abcde&#x60;).  This feature is compatible with Identity when not running on the Network. | 
 
 ### Return type
 
