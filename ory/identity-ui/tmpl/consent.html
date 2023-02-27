@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  {{ template "standard.html" . }}
+  <title>Index</title>
+  <link type="text/css" rel="stylesheet" href="/assets/css/auth-layout.css" />
+</head>
+
+<body>
+  <main data-testid="app-express">
+    <div class="auth-container spacing-16">
+      <div class="consent">
+        <div class="_1t5ly150 vpyugz5 vpyugzm vpyugz8">
+          <div class="roeg5j0 roeg5j7">
+
+            <div class="_1t5ly151">
+              <h2 class="vpyugz5 vpyugzm vpyugz8">An application asks for your authorization</h2>
+            </div>
+
+            <hr class="_1312gjt1">
+            <!-- content start -->
+            <div>
+              <div class="roeg5j0 roeg5j7">
+                {{ range $m := .ui.Messages }}
+                <div class="_1421i9r0 _1421i9r2 _1421i9r4 vpyugz5 vpyugzm vpyugz9" data-testid="ui/message/4010001">
+                  {{ $m.Text}}
+                </div>
+                {{ end }}
+
+                <div class="_1421i9r0 _1421i9r2 _1421i9r7 vpyugz5 vpyugzm vpyugz9">
+                  Hi {{ if .identity.Traits.Email }}{{ .identity.Traits.Email }}{{ end }},
+                  application {{ if .oauthClient.ClientName }}{{ .oauthClient.ClientName }}{{ end }} wants access
+                  resources on your behalf and to:
+                </div>
+
+                <!-- all froms start -->
+                {{ range $from := .ui.Froms }}
+                <!-- consent from start -->
+                {{ if and (eq $from.Display true) (eq $from.Group "consent") }}
+                <!-- form start -->
+                <form class="u030kk0" action="{{ $.ui.Action }}" method="{{ $.ui.Method }}">
+                  {{ range $gn := $from.GroupNodes }}
+                  <!-- default nodes start -->
+                  {{ if eq $gn.Name "default" }}
+                  {{ range $n := $gn.Nodes }}
+                  <!-- input start -->
+                  {{ if eq $n.Type "input" }}
+                  {{ if eq $n.Attributes.UiNodeInputAttributes.Type "hidden" }}
+                  <div class="roeg5j0 roeg5j3">
+                    <input type="hidden" placeholder="" name="{{ $n.Attributes.UiNodeInputAttributes.Name }}"
+                      autocomplete="" value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                  </div>
+                  {{ end }}
+                  {{ end }}
+                  <!-- input end -->
+                  {{ end }}
+                  {{ end }}
+                  <!-- default nodes end -->
+
+                  <!-- consent nodes start -->
+                  {{ if eq $gn.Name "consent" }}
+                  <div class="roeg5j0 roeg5j7">
+                    <div class="roeg5j0 roeg5j5">
+                      {{ range $n := $gn.Nodes }}
+                      <!-- input start -->
+                      {{ if eq $n.Type "input" }}
+                      {{ if and (eq $n.Attributes.UiNodeInputAttributes.Type "checkbox") (eq
+                      $n.Attributes.UiNodeInputAttributes.Name "scope") }}
+                      <div class="roeg5j0 roeg5j3">
+                        <div class="vpyugz5 vpyugzm vpyugz8">
+                          <input type="checkbox" placeholder="" name="{{ $n.Attributes.UiNodeInputAttributes.Name }}"
+                            autocomplete="" value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                          {{ if $n.Meta.Label }}{{ $n.Meta.Label.Text }}{{ end }}
+                        </div>
+                      </div>
+                      {{ end }}
+                      {{ end }}
+                      <!-- input end -->
+                      {{ end }}
+                    </div>
+
+                    <div class="roeg5j0 roeg5j5">
+                      <div class="_1421i9r0 _1421i9r2 _1421i9r7 vpyugz5 vpyugzm vpyugz9">
+                        Do you want to be asked next time when this application wants to access your data? The
+                        application will not be able to ask for more permissions without your consent.
+                      </div>
+
+                      {{ range $n := $gn.Nodes }}
+                      <!-- input start -->
+                      {{ if eq $n.Type "input" }}
+                      {{ if and (eq $n.Attributes.UiNodeInputAttributes.Type "checkbox") (eq
+                      $n.Attributes.UiNodeInputAttributes.Name "not_ask") }}
+                      <div class="roeg5j0 roeg5j3">
+                        <div class="vpyugz5 vpyugzm vpyugz8">
+                          <input type="checkbox" placeholder="" name="{{ $n.Attributes.UiNodeInputAttributes.Name }}"
+                            autocomplete="" value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                          {{ if $n.Meta.Label }}{{ $n.Meta.Label.Text }}{{ end }}
+                        </div>
+                      </div>
+                      {{ end }}
+                      {{ end }}
+                      <!-- input end -->
+                      {{ end }}
+                    </div>
+
+                    <!-- submit button start -->
+                    <div class="roeg5j0 roeg5j5">
+                      {{ range $n := $gn.Nodes }}
+                      {{ if eq $n.Type "input" }}
+                      {{ if eq $n.Attributes.UiNodeInputAttributes.Type "submit" }}
+                      <div>
+                        <button class="xkj8ku0 xkj8ku1 xkj8ku5" style="width:100%" type="submit"
+                          name="{{ $n.Attributes.UiNodeInputAttributes.Name }}"
+                          value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                          {{ if $n.Meta.Label }}{{ $n.Meta.Label.Text }}{{ end }}
+                        </button>
+                      </div>
+                      {{ else if eq $n.Attributes.UiNodeInputAttributes.Type "hidden" }}
+                      <div class="roeg5j0 roeg5j3">
+                        <input type="hidden" style="width:100%" placeholder=""
+                          name="{{ $n.Attributes.UiNodeInputAttributes.Name }}" autocomplete=""
+                          value="{{ $n.Attributes.UiNodeInputAttributes.Value }}">
+                      </div>
+                      {{ end }}
+                      {{ end }}
+                      {{ end }}
+                    </div>
+                    <!-- submit button end -->
+                  </div>
+                  {{ end }}
+                  <!-- consent nodes end -->
+                  {{ end }}
+                </form>
+                <!-- form end -->
+                {{ end }}
+                <!-- consent from end -->
+                {{ end }}
+                <!-- all froms end -->
+              </div>
+            </div>
+            <!-- content end -->
+          </div>
+
+        </div>
+      </div>
+
+      {{ template "footer.html" . }}
+    </div>
+  </main>
+</body>
+
+</html>

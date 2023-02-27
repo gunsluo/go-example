@@ -592,6 +592,19 @@ paths:
         schema:
           type: string
         style: form
+      - description: |-
+          An optional Hydra logout challenge. If present, Kratos will cooperate with
+          Ory Hydra to act as an OAuth2 identity provider.
+
+          The value for this parameter comes from `logout_challenge` URL Query parameter sent to your
+          application (e.g. `/logout?logout_challenge=abcde`).
+        explode: true
+        in: query
+        name: logout_challenge
+        required: false
+        schema:
+          type: string
+        style: form
       responses:
         "204":
           description: Empty responses are sent when, for example, resources are deleted.
@@ -623,6 +636,19 @@ paths:
         When calling this endpoint from a backend, please ensure to properly forward the HTTP cookies.
       operationId: initBrowserLogoutFlowRequest
       parameters:
+      - description: |-
+          An optional Hydra logout challenge. If present, Kratos will cooperate with
+          Ory Hydra to act as an OAuth2 identity provider.
+
+          The value for this parameter comes from `logout_challenge` URL Query parameter sent to your
+          application (e.g. `/logout?logout_challenge=abcde`).
+        explode: true
+        in: query
+        name: logout_challenge
+        required: false
+        schema:
+          type: string
+        style: form
       - description: |-
           HTTP Cookies
 
@@ -3239,7 +3265,7 @@ components:
       type: string
     initBrowserLogoutFlowResponse:
       example:
-        logout_url: http://127.0.0.1:4544/self-service/login?flow=k8dcbjz6SiTmrSRUSg9xWi
+        logout_url: http://127.0.0.1:4544/self-service/logout?flow=k8dcbjz6SiTmrSRUSg9xWi
         logout_token: k8dcbjz6SiTmrSRUSg9xWi
       properties:
         logout_token:
@@ -3251,7 +3277,7 @@ components:
             LogoutURL can be opened in a browser to sign the user out.
 
             format: uri
-          example: http://127.0.0.1:4544/self-service/login?flow=k8dcbjz6SiTmrSRUSg9xWi
+          example: http://127.0.0.1:4544/self-service/logout?flow=k8dcbjz6SiTmrSRUSg9xWi
           type: string
       required:
       - logout_token

@@ -11,7 +11,7 @@ Method | HTTP request | Description
 
 ## InitBrowserLogoutFlowRequest
 
-> InitBrowserLogoutFlowResponse InitBrowserLogoutFlowRequest(ctx).Cookie(cookie).Execute()
+> InitBrowserLogoutFlowResponse InitBrowserLogoutFlowRequest(ctx).LogoutChallenge(logoutChallenge).Cookie(cookie).Execute()
 
 # Create a Logout URL for Browsers
 
@@ -30,11 +30,12 @@ import (
 )
 
 func main() {
+    logoutChallenge := "logoutChallenge_example" // string | An optional Hydra logout challenge. If present, Kratos will cooperate with Ory Hydra to act as an OAuth2 identity provider.  The value for this parameter comes from `logout_challenge` URL Query parameter sent to your application (e.g. `/logout?logout_challenge=abcde`). (optional)
     cookie := "cookie_example" // string | HTTP Cookies  If you call this endpoint from a backend, please include the original Cookie header in the request. (optional)
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.LogoutApi.InitBrowserLogoutFlowRequest(context.Background()).Cookie(cookie).Execute()
+    resp, r, err := apiClient.LogoutApi.InitBrowserLogoutFlowRequest(context.Background()).LogoutChallenge(logoutChallenge).Cookie(cookie).Execute()
     if err != nil {
         fmt.Fprintf(os.Stderr, "Error when calling `LogoutApi.InitBrowserLogoutFlowRequest``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -55,6 +56,7 @@ Other parameters are passed through a pointer to a apiInitBrowserLogoutFlowReque
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
+ **logoutChallenge** | **string** | An optional Hydra logout challenge. If present, Kratos will cooperate with Ory Hydra to act as an OAuth2 identity provider.  The value for this parameter comes from &#x60;logout_challenge&#x60; URL Query parameter sent to your application (e.g. &#x60;/logout?logout_challenge&#x3D;abcde&#x60;). | 
  **cookie** | **string** | HTTP Cookies  If you call this endpoint from a backend, please include the original Cookie header in the request. | 
 
 ### Return type
@@ -77,7 +79,7 @@ No authorization required
 
 ## SubmitLogoutFlowRequest
 
-> SubmitLogoutFlowRequest(ctx).Token(token).ReturnTo(returnTo).Execute()
+> SubmitLogoutFlowRequest(ctx).Token(token).ReturnTo(returnTo).LogoutChallenge(logoutChallenge).Execute()
 
 # Complete Self-Service Logout
 
@@ -98,10 +100,11 @@ import (
 func main() {
     token := "token_example" // string | A Valid Logout Token  If you do not have a logout token because you only have a session cookie, call `/self-service/logout/urls` to generate a URL for this endpoint. (optional)
     returnTo := "returnTo_example" // string | The URL to return to after the logout was completed. (optional)
+    logoutChallenge := "logoutChallenge_example" // string | An optional Hydra logout challenge. If present, Kratos will cooperate with Ory Hydra to act as an OAuth2 identity provider.  The value for this parameter comes from `logout_challenge` URL Query parameter sent to your application (e.g. `/logout?logout_challenge=abcde`). (optional)
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    resp, r, err := apiClient.LogoutApi.SubmitLogoutFlowRequest(context.Background()).Token(token).ReturnTo(returnTo).Execute()
+    resp, r, err := apiClient.LogoutApi.SubmitLogoutFlowRequest(context.Background()).Token(token).ReturnTo(returnTo).LogoutChallenge(logoutChallenge).Execute()
     if err != nil {
         fmt.Fprintf(os.Stderr, "Error when calling `LogoutApi.SubmitLogoutFlowRequest``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -122,6 +125,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **token** | **string** | A Valid Logout Token  If you do not have a logout token because you only have a session cookie, call &#x60;/self-service/logout/urls&#x60; to generate a URL for this endpoint. | 
  **returnTo** | **string** | The URL to return to after the logout was completed. | 
+ **logoutChallenge** | **string** | An optional Hydra logout challenge. If present, Kratos will cooperate with Ory Hydra to act as an OAuth2 identity provider.  The value for this parameter comes from &#x60;logout_challenge&#x60; URL Query parameter sent to your application (e.g. &#x60;/logout?logout_challenge&#x3D;abcde&#x60;). | 
 
 ### Return type
 

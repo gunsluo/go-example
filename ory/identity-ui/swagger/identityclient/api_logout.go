@@ -78,9 +78,14 @@ type LogoutApiService service
 type LogoutApiApiInitBrowserLogoutFlowRequestRequest struct {
 	ctx context.Context
 	ApiService LogoutApi
+	logoutChallenge *string
 	cookie *string
 }
 
+func (r LogoutApiApiInitBrowserLogoutFlowRequestRequest) LogoutChallenge(logoutChallenge string) LogoutApiApiInitBrowserLogoutFlowRequestRequest {
+	r.logoutChallenge = &logoutChallenge
+	return r
+}
 func (r LogoutApiApiInitBrowserLogoutFlowRequestRequest) Cookie(cookie string) LogoutApiApiInitBrowserLogoutFlowRequestRequest {
 	r.cookie = &cookie
 	return r
@@ -137,6 +142,9 @@ func (a *LogoutApiService) InitBrowserLogoutFlowRequestExecute(r LogoutApiApiIni
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 
+	if r.logoutChallenge != nil {
+		localVarQueryParams.Add("logout_challenge", parameterToString(*r.logoutChallenge, ""))
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -218,6 +226,7 @@ type LogoutApiApiSubmitLogoutFlowRequestRequest struct {
 	ApiService LogoutApi
 	token *string
 	returnTo *string
+	logoutChallenge *string
 }
 
 func (r LogoutApiApiSubmitLogoutFlowRequestRequest) Token(token string) LogoutApiApiSubmitLogoutFlowRequestRequest {
@@ -226,6 +235,10 @@ func (r LogoutApiApiSubmitLogoutFlowRequestRequest) Token(token string) LogoutAp
 }
 func (r LogoutApiApiSubmitLogoutFlowRequestRequest) ReturnTo(returnTo string) LogoutApiApiSubmitLogoutFlowRequestRequest {
 	r.returnTo = &returnTo
+	return r
+}
+func (r LogoutApiApiSubmitLogoutFlowRequestRequest) LogoutChallenge(logoutChallenge string) LogoutApiApiSubmitLogoutFlowRequestRequest {
+	r.logoutChallenge = &logoutChallenge
 	return r
 }
 
@@ -284,6 +297,9 @@ func (a *LogoutApiService) SubmitLogoutFlowRequestExecute(r LogoutApiApiSubmitLo
 	}
 	if r.returnTo != nil {
 		localVarQueryParams.Add("return_to", parameterToString(*r.returnTo, ""))
+	}
+	if r.logoutChallenge != nil {
+		localVarQueryParams.Add("logout_challenge", parameterToString(*r.logoutChallenge, ""))
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}

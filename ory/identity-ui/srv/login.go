@@ -92,9 +92,11 @@ func (s *Server) session(c *gin.Context) {
 func (s *Server) logout(c *gin.Context) {
 	ctx := c.Request.Context()
 	cookie := c.Request.Header.Get("cookie")
+	logoutChallenge := c.Query("logout_challenge")
 
 	logoutFlow, _, err := s.apiClient.LogoutApi.InitBrowserLogoutFlowRequest(ctx).
 		Cookie(cookie).
+		LogoutChallenge(logoutChallenge).
 		Execute()
 	if err != nil {
 		s.gotoExecptionWithError(c, err)

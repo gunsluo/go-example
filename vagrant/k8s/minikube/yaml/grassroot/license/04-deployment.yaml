@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: license
-        image: registry.gitlab.com/target-digital-transformation/license-manager:1.7.2
+        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/license-manager:1.7.6
         command: 
          - license-manager
          - serve

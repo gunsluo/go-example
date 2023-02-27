@@ -46,22 +46,6 @@ func New() (*Server, error) {
 	configuration.Servers = identityclient.ServerConfigurations{{URL: identityEndpoint}}
 	s.apiClient = identityclient.NewAPIClient(configuration)
 
-	// hydraEndpoint := os.Getenv(envHydraEndpoint)
-	// _, err = url.Parse(hydraEndpoint)
-	// if err != nil {
-	// 	log.Fatalf("unable to parse hydra endpoint[%s]", hydraEndpoint)
-	// }
-
-	// hydraConfig := HydraConfig{
-	// 	Endpoint: hydraEndpoint,
-	// 	Timeout:  10 * time.Second,
-	// }
-	// hyClient, err := NewHydraClient(hydraConfig)
-	// if err != nil {
-	// 	log.Fatalf("unable to new hydra client[%s]", hydraConfig.Endpoint)
-	// }
-	// s.hydraClient = hyClient
-
 	s.setRouter()
 	return s, nil
 }
