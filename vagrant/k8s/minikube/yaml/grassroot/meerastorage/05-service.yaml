@@ -12,5 +12,9 @@ spec:
     targetPort: 8181
     protocol: TCP
     name: http
+  - port: 9191
+    targetPort: 9191
+    protocol: TCP
+    name: s3
   selector:
     app: meerastorage
