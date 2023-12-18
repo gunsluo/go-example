@@ -14,7 +14,7 @@ class App {
       const v1 = parseInt($('#v1').val())
       const v2 = parseInt($('#v2').val())
 
-      const result = '<p>' + this.add(v1, v2) + '</p>'
+      const result = '<p>' + add(v1, v2) + '</p>'
       $('#result').html(result)
     })
 
@@ -33,6 +33,17 @@ class App {
   }
 
   init() {
+    this.loadGoWasm()
+  }
+
+  async loadGoWasm() {
+    const go = new Go();
+    let mod, inst;
+    WebAssembly.instantiateStreaming(fetch("add.wasm"), go.importObject).then(async (result) => {
+      mod = result.module;
+      inst = result.instance;
+      await go.run(inst);
+    });
   }
 }
 
