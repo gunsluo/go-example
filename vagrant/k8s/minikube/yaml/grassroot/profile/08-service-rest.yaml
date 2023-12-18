@@ -1,16 +1,16 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: sessmsconsole
+  name: pfrest
   namespace: grassroot
   labels:
-    svc: sessmsconsole
+    svc: pfrest
 spec:
   type: LoadBalancer
   ports:
-  - port: 28080
-    targetPort: 80
+  - port: 5052
+    targetPort: 5052
     protocol: TCP
-    name: rest
+    name: http
   selector:
-    app: sessmsconsole
+    app: pfrest

@@ -53,9 +53,12 @@ data:
         key_path: ""
         server_name: ""
       ses: "sessmsgrpc.grassroot:6000"
-      oidc: http://dex.dmz:25556
+      oidc:
+        address: http://dex.dmz:25556
+        client_id: "example-app"
+        client_secret: "ZXhhbXBsZS1hcHAtc2VjcmV0"
       sso: 
-        address: "dex.dmz:5557"
+        address: "dex.dmz:25557"
         ca_path: ""
         crt_path: ""
         key_path: ""

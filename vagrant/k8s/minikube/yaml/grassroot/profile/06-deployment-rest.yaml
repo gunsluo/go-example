@@ -1,32 +1,37 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pfgrpc
+  name: pfrest
   namespace: grassroot
 spec:
   selector:
     matchLabels:
-      app: pfgrpc
+      app: pfrest
   replicas: 1
   template:
     metadata:
       labels:
-        app: pfgrpc
+        app: pfrest
     spec:
       containers:
-      - name: pfgrpc
+      - name: pfrest
         image: registry.gitlab.com/target-digital-transformation/profile-be:v1.93.8
         command: 
          - /usr/local/bin/profile-serve
          - profile
-         - grpc
-         - --address=:5051
+         - graphql
+         - --address=:5052
          - --dsn=postgres://postgres:password@postgres.infra/profile?sslmode=disable
          - --oidc=http://dex.grassroot:5556
+         - --url-prefix=/rest
+         - --ac-grpc=acgrpc.grassroot:7001 
          - --sso-dex-grpc-addr=dex.grassroot:5557
+         - --bypass-license=true
+         - --cors-hosts=*
          - --redis=redis.infra:6379
-         - --sso-sync-addr=amqp://guest:guest@rabbitmq.infra:5672/
+         - --hook_security_key=hook-security-key
+         - --verbose
         ports:
-        - containerPort: 5051
+        - containerPort: 5052
       imagePullSecrets:
       - name: registry.gitlab.com

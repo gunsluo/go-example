@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: dex
-        image: registry.gitlab.com/target-digital-transformation/sso:3.22.7
+        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sso:4.0.1
         command: 
          - dex
          - serve 

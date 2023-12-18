@@ -5,10 +5,115 @@ metadata:
   namespace: grassroot
 data:
   config.yaml: |
-    # The base path of dex and the external name of the OpenID Connect service.
-    # This is the canonical URL that all clients MUST use to refer to dex. If a
-    # path is provided, dex's HTTP service will listen at a non-root URL.
-    issuer: http://dex.grassroot:5556
+    version: 1.0.0
+
+    logger:
+      level: "debug"
+
+    # Configuration for the HTTP Serve.
+    serve:
+      http:
+        endpoint: 0.0.0.0:5556
+        cors:
+          enabled: true
+          maxAge: 12h
+          allowedOrigins:
+            - "*"
+          allowedMethods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+            - HEAD
+            - OPTIONS
+          allowedHeaders:
+            - "*"
+          allowCredentials: true
+        credential:
+          key:
+          cert:
+      grpc:
+        endpoint: 0.0.0.0:5557
+        credential:
+          ca:
+          key:
+          cert:
+      telemetry:
+        endpoint: 0.0.0.0:5558
+      cron:
+        invitation:
+          # the unit is minute
+          scanExpiredPeriod: 10
+          maxScan: 150
+      # admin conosole
+      admin:
+        dir: /admin
+        cookieExpired: 7200
+        apiEndpoint:
+
+
+    oauth:
+      # The base path of dex and the external name of the OpenID Connect service.
+      # This is the canonical URL that all clients MUST use to refer to dex. If a
+      # path is provided, dex's HTTP service will listen at a non-root URL.
+      issuer: http://dex.grassroot:5556
+
+      responseTypes: ["code", "token", "id_token"]
+      skipApprovalScreen: true
+
+      # Connector selected by default when redirect to sso. The value is
+      # empty string, it is local connector.
+      defaultSelectedConnector:
+
+      token:
+        # Expiration time of tokens, originally configured as expiry.idTokens
+        lifespan: 24h
+        reusableRefreshToken: false
+        signingKeys:
+          # Originally configured as expiry.signingKeys
+          lifespan: 6h
+          enableStaticKey: false
+          staticKeyPath: examples/private.pem
+        exchange:
+          authCode:
+            # originally configured as exchangeToken.secretKey
+            secretKey: exchangeSecretKey
+            # originally configured as exchangeToken.expiry
+            expiry: 30s
+
+
+      authReq:
+        # Expiration time of auth request, originally configured as expiry.authReq
+        lifespan: 24h
+        # Expiration time that Authreq can no longer refresh.
+        # Originally configured as expiry.authReqInvalid
+        unusableLifespan: 72h
+
+      mfa:
+        enable: true
+        config:
+          # enum of: [contact, account, contact-account, account-contact]
+          mobilePolicy: contact
+          proxyLink: 
+          weight: primary
+          # enum of: [rev, ses, sms, none]
+          loginPolicy: none
+          # enum of: [rev, ses, sms, none]
+          resetPolicy: none
+        totp:
+          issuer: Target
+          digits: 6
+          period: 30s
+          # sha1 sha256 sha512 md5
+          algorithm: "sha1"
+        ses:
+          digits: 4
+          expiry: 60s
+        sms:
+          digits: 4
+          expiry: 60s
+
 
     # The storage configuration determines where dex stores its state. Supported
     # options include SQL flavors and Kubernetes third party resources.
@@ -18,133 +123,240 @@ data:
       type: postgres
       config:
         dsn: postgres://postgres:password@postgres.infra:5432/sso?sslmode=disable
+        # connMaxLifetime: 0s
+        # maxOpenConns: 100
+        # maxIdleConns: 100
 
-    # Configuration for the HTTP endpoints.
-    web:
-      http: 0.0.0.0:5556
-      allowedOrigins: ["*"]
-      # Uncomment for HTTPS options.
-      # https: 127.0.0.1:5554
-      # tlsCert: /etc/dex/tls.crt
-      # tlsKey: /etc/dex/tls.key
 
-    frontend:
-      Theme: fluxble
-      Issuer: Fluxble
-      Dir: /web
+    strategy:
+      disableSignup: false
+      verifiedCodeLength: 4
+      enablePasswordDB: true
+      identity:
+        mobile:
+          format: E164
+          mode: strict # enum of ['strict', 'normal'], default normal
+      password:
+        # # to set minimum length of password. the default value is 6.
+        # minLength: 6
+        # # to set password check rules.
+        # #  - (?=.*[A-Z]): at least one capital letter
+        # #  - (?=.*[0-9]): at least one decimal digit
+        # checkRule:
+        # # to set a checking rule error message.
+        # errMsg:
+        # # is allowed the same/different password. The default value is false
+        # isAllowedSamePassword: true
+        # # is allowed the expired password login. The default value is false
+        # isAllowedExpiredPasswordLogin: true
+        
+        # notifyType: email
+        # # the next expiration date will be set [expiredPeriod] after user updating the password.
+        # # when the value is "", there is no notification to send.
+        # # must to be set an integer "m" (minute) or "h" (hour). such as "0h", "24h".
+        # # users are blocked to send email:
+        # #   - users are deleted
+        # #   - users are locked
+        # #   - unverified emails
+        # expiredPeriod: 24h
+        # notifyEmailLifespan: 24h
 
-    admin:
-      dir: /admin
-      cookieExpired: 7200
+        # # notification will be sent by email [reminderPeriod] before the expiration date
+        # # must to be set an integer "m" (minute) or "h" (hour). such as "0h", "24h".
+        # reminderPeriod: 168h
+        # # notification every [reminderInterval] within the beginning reminder date and the expiration date
+        # # must to be set an integer "m" (minute) or "h" (hour). such as "0h", "24h".
+        # reminderInterval: 24h
+      auditLog:
+        enable: false
+        geoIPFilePath: 
+      disableUnbind3TPLogin: false
+      ac:
+        skip: true
+        grpc:
+          endpoint: 127.0.0.1:7001
+          insecure: true
+          # maxRetries: 3
+          # retryTimeout: 10s
+          # ca: ca.crt
+          # cert: server.crt
+          # key: server.key
+          # serverName:
+      # Expiration time of active email, originally configured as expiry.activeEmail
+      activeEmailLifespan: 30m
+      # Expiration time of reset email, originally configured as expiry.resetPasswordEmail
+      resetPasswordEmailLifespan: 24h
 
-    # Configuration for telemetry
-    telemetry:
-      http: 0.0.0.0:5558
 
-    # Uncomment this block to enable the gRPC API. This values MUST be different
-    # from the HTTP endpoints.
-    grpc:
-      addr: :5557
-    #  tlsCert: examples/grpc-client/server.crt
-    #  tlsKey: examples/grpc-client/server.key
-    #  tlsClientCA: /etc/dex/client.crt
+    # The session configuration determines where session to store.
+    session:
+      enable: true
+      # set the cookie expired time
+      expiry: 168h
+      cookie:
+        name: "x_session_id"
+        sameSite: lax
+        path: ""
+        domain: ""
+      type: ensess
+      config:
+        # the length of one secret must be >= 32
+        secrets:
+          - ooy5seechah6eiVae9yahng9fahToog7
+      # type: memory
+      # config:
+      #   period: 6h
 
-    # Uncomment this block to enable configuration for the expiration time durations.
-    # expiry:
-    #   signingKeys: "6h"
-    #   idTokens: "24h"
 
-    # Options for controlling the logger.
-    # logger:
-    #   level: "debug"
-    #   format: "text" # can also be "json"
+    secrets:
+      hook:
+        # originally configured as signature.key
+        key: hook-security-key
+        expiry: 60s
 
-    # Uncomment this block to control which response types dex supports. For example
-    # the following response types enable the implicit flow for web-only clients.
-    # Defaults to ["code"], the code flow.
-    oauth2:
-      skipApprovalScreen: true
-    #   responseTypes: ["code", "token", "id_token"]
+
+    flows:
+      # login:
+      #   before:
+      #     hooks:
+      #       - type: web_hook
+      #         description: an example
+      #         trigger: true/fasle
+      #         metadata: []
+      #         config:
+      #           method: post
+      #           url: http://127.0.0.1:8090/hook/login/before
+      #           with_token: true
+      #   after:
+      #     hooks:
+      # registration:
+      #   check_user:
+      #     enabled: true
+      #     hook:
+      #       type: web_hook
+      #       description: an example
+      #       config:
+      #         method: post
+      #         url: http://127.0.0.1:8090/hook/logout/before
+      #   before:
+      #     hooks:
+      #   after:
+      #     hooks:
+      # logout:
+      #   before:
+      #     hooks:
+      #       - type: web_hook
+      #         description: an example
+      #         config:
+      #           method: post
+      #           url: http://127.0.0.1:8090/hook/logout/before
+      #           with_token: true
+      #   after:
+      #     hooks:
 
     regions:
-      enableSyncStaticPassword: true
-      syncAddr: amqp://guest:guest@rabbitmq.infra:5672/
-      # syncAddr: "amqps://rabbitmq-tls:5671/"
-      # serverName: "localhost"
-      # tlsCA: "/certs/ca_cert.pem"
-      # tlsCert: "/certs/client/client_cert.pem"
-      # tlsKey: "/certs/client/client_key.pem" 
-      regions:
-        - name: default
-          serverName: "dev.local"
-          matchDomains:
-            - "*"
-          client:
-            id: example-app
-            authType: authorization_code
-            state: "I wish to wash my irish wristwatch"
-            scopes: ["openid", "profile", "email", "mobile", "offline_access"]
-            redirectURI: "http://127.0.0.1:4444/callback"
-          profile:
-            enable: true
-            enableLoginSync: true
-            # to set a list of connector ids which are allowed sync to profile. the default value is `["local"]`.
-            # such as `["*"]`, `["local"]`, `["local", "github"]`.
-            allowedConnectorIds: ["*"]
-            allowedSyncRegions: ["default"]
+      - name: default
+        serverName: "dev.local"
+        usePkce: true
+        redirectURI: http://127.0.0.1:4444/callback
+        matchDomains:
+          - "*"
+        matchURIs:
+          - "http://sso-dex:4444/callback"
+          - "http://127.0.0.1:4444/callback"
+          - "http://gettoken.grassroot:4444/callback"
+          - "http://acrest.grassroot:7002/ui/oauth2"
+          - "http://127.0.0.1:7002/ui/oauth2"
+        sync:
+          type: web_hook
+          metadata: [identity]
+          config:
+            method: post
+            url: http://pfrest.grassroot:5052/api/v1/user/profile/by/action
+          loggedin: true
+          registered: true
+          deletedUser: true
+          updatedUser: true
+          initStaticUser: true
+
 
 
     # Instead of reading from an external storage, use this list of clients.
     #
     # If this option isn't chosen clients may be added through the gRPC API.
-    staticClients:
+    clients:
       - id: example-app
         redirectURIs:
         - 'http://localhost:4444/callback'
         - 'http://127.0.0.1:4444/callback'
         - 'http://gettoken.grassroot:4444/callback'
+        - 'http://127.0.0.1:5555/oidc/oauth'
+        - 'http://localhost:5555/oidc/oauth'
         name: 'example app'
         secret: ZXhhbXBsZS1hcHAtc2VjcmV0
-
-
-    connectors:
-    #- type: mockCallback
-    #  id: mock
-    #  name: Example
-
-    # Let dex keep a list of passwords which can be used to login to dex.
-    enablePasswordDB: true
 
     # A static list of passwords to login the end user. By identifying here, dex
     # won't look in its underlying storage for passwords.
     #
     # If this option isn't chosen users may be added through the gRPC API.
-    staticPasswords:
-    - email: "admin@example.com"
-      # bcrypt hash of the string "password"
-      hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
-      username: "admin"
-      userID: "08a8684b-db88-4b73-90a9-3cd1661f5466"
+    passwords:
+      - email: "admin@example.com"
+        # bcrypt hash of the string "password"
+        hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
+        username: "admin"
+        userID: "08a8684b-db88-4b73-90a9-3cd1661f5466"
+
+    connectors:
 
 
-    mailManager:
-      gRpcAddr: "sessmsgrpc.grassroot:6000"
-      sender: "no-reply@digitalenergycloud.com"
-      issuer: "Fluxble"
+    notification:
+      ses:
+        skip: false
+        sender: "no-reply@digitalenergycloud.com"
+        issuer: "Fluxble"
+        grpc:
+          endpoint: sessmsgrpc.grassroot:6000
+          insecure: true
+          # maxRetries: 3
+          # retryTimeout: 10s
+          # ca: ca.crt
+          # cert: server.crt
+          # key: server.key
+          # serverName:
+      sms:
+        skip: false
+        grpc:
+          endpoint: sessmsgrpc.grassroot:6000
+          insecure: true
+          # maxRetries: 3
+          # retryTimeout: 10s
+          # ca: ca.crt
+          # cert: server.crt
+          # key: server.key
+          # serverName:
 
-    smManager:
-      gRpcAddr: "sessmsgrpc.grassroot:6000"
 
-    accessControl:
-        #enable: true
-        #grpcAddr: ${env:// .acgrpcaddr}
-    
-    enableSignup: true
-
-    exchangeToken:
-      secretKey: 123123
-      expiry: 60s
-
-    staticKey:
-      enable: true
-      privateKeyPath: /usr/local/config/private.pem
+    # Retained for compatibility and will be deleted thereafter
+    deprecated:
+      cookieDomain:
+      errBackLink:
+      frontend:
+        theme: oia
+        issuer: OIA
+        dir: /web
+        logoUrl:
+        enterpriseRegisterUrl:
+      terms:
+        privacyPolicyUrl: ""
+        privacyPolicyPath: ""
+        # terms-of-service
+        termsOfServiceUrl: ""
+        # user needs to accept the system terms of service when they do:
+        #  1. on the sign up procedure
+        #  2. and on the first login (they could be created by admin).
+        termsOfServicePath: "./examples/terms-of-service.html"
+        # to set mode of terms of service
+        #  1. "on": show the term on the sign up procedure and on the first login (they could be created by admin).
+        #  2. "loop": show the term on the sign up procedure and on login every time.
+        #  3. "off": not to show the term link
+        termsOfServiceMode: "close"

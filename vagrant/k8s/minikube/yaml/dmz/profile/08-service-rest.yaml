@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: pfrest
+  namespace: dmz
+  labels:
+    svc: pfrest
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 25052
+    targetPort: 25052
+    protocol: TCP
+    name: http
+  selector:
+    app: pfrest

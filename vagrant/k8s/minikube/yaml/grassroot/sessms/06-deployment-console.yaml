@@ -55,7 +55,7 @@ spec:
       - name: sessmsconsole
         image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sessms-console:2.2.1
         ports:
-        - containerPort: 6100
+        - containerPort: 28080
         env:
         - name: ENVA_ENV_FILES
           value: ""

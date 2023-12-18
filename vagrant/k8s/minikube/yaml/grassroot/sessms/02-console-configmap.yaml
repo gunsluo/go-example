@@ -12,6 +12,6 @@ data:
       appState: 'senderconsole',
       appTokenURL: 'http://dex.grassroot:5556/token',
       appAuthURL: 'http://dex.grassroot:5556/auth',
-      appRedirectURL: 'http://sessmsconsole.grassroot:8080/oauth2'
+      appRedirectURL: 'http://sessmsconsole.grassroot:28080/oauth2'
     }
     

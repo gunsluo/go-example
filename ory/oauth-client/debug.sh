@@ -15,7 +15,7 @@ if [ "$1" = "pkce" ]; then
 
   # public-client
   go run main.go \
-    -client-id 139a63a5-5212-4ae2-9354-20df922e7c95 \
+    -client-id 81ee13a7-c621-43e6-9709-e0a94cbddc33 \
     -endpoint http://127.0.0.1:4444 \
     -port 5555 \
     -scope openid,offline \

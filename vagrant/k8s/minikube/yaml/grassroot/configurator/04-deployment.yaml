@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: configurator
-        image: registry.gitlab.com/target-digital-transformation/subscription-store:4.32.3
+        image: registry.gitlab.com/target-digital-transformation/subscription-store:v4.32.9
         command: 
          - /usr/local/bin/subscription-store 
          - serve
