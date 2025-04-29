@@ -14,19 +14,19 @@ spec:
         app: pfgrpc
     spec:
       containers:
-      - name: pfgrpc
-        image: registry.gitlab.com/target-digital-transformation/profile-be:v1.93.8
-        command: 
-         - /usr/local/bin/profile-serve
-         - profile
-         - grpc
-         - --address=:25051
-         - --dsn=postgres://postgres:password@postgres.infra/dmzprofile?sslmode=disable
-         - --oidc=http://dex.dmz:25556
-         - --sso-dex-grpc-addr=dex.dmz:25557
-         - --redis=redis.infra:6379
-         - --sso-sync-addr=amqp://guest:guest@rabbitmq.dmz:25672/
-        ports:
-        - containerPort: 25051
+        - name: pfgrpc
+          image: registry.gitlab.com/target-digital-transformation/devops/tespkg/profile-be:2.0.7-oia-mixedmanual
+          command:
+            - /usr/local/bin/profile-serve
+            - profile
+            - grpc
+            - --address=:25051
+            - --dsn=postgres://postgres:password@postgres.infra/dmzprofile?sslmode=disable
+            - --oidc=http://dex.dmz:25556
+            - --sso-dex-grpc-addr=dex.dmz:25557
+            - --redis=redis.infra:6379
+            - --sso-sync-addr=amqp://guest:guest@rabbitmq.dmz:25672/
+          ports:
+            - containerPort: 25051
       imagePullSecrets:
-      - name: registry.gitlab.com
+        - name: registry.gitlab.com

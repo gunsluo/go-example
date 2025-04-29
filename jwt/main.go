@@ -2,89 +2,72 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtSecret = []byte("secret")
-
-type user struct {
-	UserID   uint64 `json:"userID"`
-	UserName string `json:"userName"`
-	IsAdmin  bool   `json:"isAdmin"`
-}
-
-type userClaims struct {
-	user
-	jwt.StandardClaims
-}
+var (
+	hmacSampleSecret = []byte("secret")
+)
 
 func main() {
-	token, err := login("admin", "admin")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("login token:", token)
 
-	if ok := auth(token); ok {
-		fmt.Println("auth pass")
-	} else {
-		fmt.Println("auth failed")
-	}
-}
-
-func login(username, password string) (string, error) {
-	userParam := struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-	}{
-		Username: username,
-		Password: password,
-	}
-
-	if userParam.Username != "admin" || userParam.Password != "admin" {
-		return "", fmt.Errorf("invalid login")
-	}
-
-	//generate token
-	expire := time.Now().Add(time.Hour * 1).Unix()
-	//var expire int64 = 1518013920
-	// Create the Claims
-	claims := userClaims{
-		user: user{
-			UserID:   1,
-			UserName: userParam.Username,
-			IsAdmin:  true,
-		},
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expire,
-			Issuer:    "login",
+	// Create claims with multiple fields populated
+	claims := MyCustomClaims{
+		"bar",
+		jwt.RegisteredClaims{
+			// A usual scenario is to set the expiration time relative to the current time
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			NotBefore: jwt.NewNumericDate(time.Now()),
+			Issuer:    "test",
+			Subject:   "somebody",
+			ID:        "1",
+			Audience:  []string{"somebody_else"},
 		},
 	}
+
+	fmt.Printf("foo: %v\n", claims.Foo)
+
+	// Create claims while leaving out some of the optional fields
+	// claims = MyCustomClaims{
+	// 	"bar",
+	// 	jwt.RegisteredClaims{
+	// 		// Also fixed dates can be used for the NumericDate
+	// 		ExpiresAt: jwt.NewNumericDate(time.Unix(1516239022, 0)),
+	// 		Issuer:    "test",
+	// 	},
+	// }
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, _ := token.SignedString(jwtSecret)
+	tokenString, err := token.SignedString(hmacSampleSecret)
+	fmt.Println(tokenString, err)
 
-	return signedToken, nil
+	token, err = jwt.ParseWithClaims(tokenString, &MyCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return hmacSampleSecret, nil
+	}, jwt.WithLeeway(5*time.Second))
+	if err != nil {
+		log.Fatal(err)
+	} else if claims, ok := token.Claims.(*MyCustomClaims); ok {
+		fmt.Println(claims.Foo, claims.RegisteredClaims.Issuer)
+	} else {
+		log.Fatal("unknown claims type, cannot proceed")
+	}
+
+	// token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+	// 	"foo": "bar",
+	// 	"nbf": time.Date(2015, 10, 10, 12, 0, 0, 0, time.UTC).Unix(),
+	// })
+	//
+	// // Sign and get the complete encoded token as a string using the secret
+	// tokenString, err := token.SignedString(hmacSampleSecret)
+	//
+	// fmt.Println(tokenString, err)
 }
 
-func auth(jwtToken string) bool {
-	// parse tokentoken
-	token, err := jwt.ParseWithClaims(jwtToken, &userClaims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method")
-		}
-		return jwtSecret, nil
-	})
-	if err != nil {
-		return false
-	}
-
-	_, ok := token.Claims.(*userClaims)
-	if !ok || !token.Valid {
-		return false
-	}
-
-	return true
+type MyCustomClaims struct {
+	Foo string `json:"foo"`
+	jwt.RegisteredClaims
 }

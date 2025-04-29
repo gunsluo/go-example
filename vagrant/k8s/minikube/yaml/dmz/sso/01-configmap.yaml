@@ -198,14 +198,8 @@ data:
         sameSite: lax
         path: ""
         domain: ""
-      type: ensess
+      type: redis
       config:
-        # the length of one secret must be >= 32
-        secrets:
-          - ooy5seechah6eiVae9yahng9fahToog7
-      # type: memory
-      # config:
-      #   period: 6h
 
 
     secrets:
@@ -253,6 +247,14 @@ data:
       #           with_token: true
       #   after:
       #     hooks:
+
+
+    redis:
+      prefix: sso
+      address: redis.infra:6379
+      username:
+      password:
+      db: 0
 
     regions:
       - name: default

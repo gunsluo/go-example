@@ -14,22 +14,22 @@ spec:
         app: dex
     spec:
       containers:
-      - name: dex
-        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sso:4.0.1
-        command: 
-         - dex
-         - serve 
-         - /usr/local/config/config.yaml
-        ports:
-        - containerPort: 25556
-        - containerPort: 25557
-        volumeMounts:
-        - name: sso-config
-          mountPath: /usr/local/config/config.yaml
-          subPath: config.yaml
-        - name: sso-private-key
-          mountPath: /usr/local/config/private.pem
-          subPath: private.pem
+        - name: dex
+          image: registry.gitlab.com/target-digital-transformation/devops/tespkg/sso:4.4.1
+          command:
+            - dex
+            - serve
+            - /usr/local/config/config.yaml
+          ports:
+            - containerPort: 25556
+            - containerPort: 25557
+          volumeMounts:
+            - name: sso-config
+              mountPath: /usr/local/config/config.yaml
+              subPath: config.yaml
+            - name: sso-private-key
+              mountPath: /usr/local/config/private.pem
+              subPath: private.pem
       volumes:
         - name: sso-config
           configMap:
@@ -38,4 +38,4 @@ spec:
           configMap:
             name: sso-private-key
       imagePullSecrets:
-      - name: registry.gitlab.com
+        - name: registry.gitlab.com

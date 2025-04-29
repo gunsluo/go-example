@@ -198,22 +198,18 @@ data:
         sameSite: lax
         path: ""
         domain: ""
-      type: ensess
+      type: redis
       config:
-        # the length of one secret must be >= 32
-        secrets:
-          - ooy5seechah6eiVae9yahng9fahToog7
-      # type: memory
-      # config:
-      #   period: 6h
-
 
     secrets:
       hook:
         # originally configured as signature.key
-        key: hook-security-key
-        expiry: 60s
-
+        signature:
+          # hs256 hs512
+          method: hs256
+          issuer: sso-hook
+          key: hook-security-key
+          expiry: 60s
 
     flows:
       # login:
@@ -253,6 +249,13 @@ data:
       #           with_token: true
       #   after:
       #     hooks:
+
+    redis:
+      prefix: sso
+      address: redis.infra:6379
+      username:
+      password:
+      db: 0
 
     regions:
       - name: default
@@ -294,6 +297,7 @@ data:
         - 'http://localhost:5555/oidc/oauth'
         name: 'example app'
         secret: ZXhhbXBsZS1hcHAtc2VjcmV0
+        allowedAuthTypes: ["authorization_code", "password_credentials", "client_credentials", "implicit"]
 
     # A static list of passwords to login the end user. By identifying here, dex
     # won't look in its underlying storage for passwords.

@@ -14,24 +14,24 @@ spec:
         app: pfrest
     spec:
       containers:
-      - name: pfrest
-        image: registry.gitlab.com/target-digital-transformation/profile-be:v1.93.8
-        command: 
-         - /usr/local/bin/profile-serve
-         - profile
-         - graphql
-         - --address=:25052
-         - --dsn=postgres://postgres:password@postgres.infra/dmzprofile?sslmode=disable
-         - --oidc=http://dex.dmz:25556
-         - --url-prefix=/rest
-         - --ac-grpc=acgrpc.dmz:27001 
-         - --sso-dex-grpc-addr=dex.dmz:25557
-         - --bypass-license=true
-         - --cors-hosts=*
-         - --redis=redis.infra:6379
-         - --hook_security_key=hook-security-key
-         - --verbose
-        ports:
-        - containerPort: 25052
+        - name: pfrest
+          image: registry.gitlab.com/target-digital-transformation/devops/tespkg/profile-be:2.0.0-oia-mixedmanual
+          command:
+            - /usr/local/bin/profile-serve
+            - profile
+            - graphql
+            - --address=:25052
+            - --dsn=postgres://postgres:password@postgres.infra/dmzprofile?sslmode=disable
+            - --oidc=http://dex.dmz:25556
+            - --url-prefix=/rest
+            - --ac-grpc=acgrpc.dmz:27001
+            - --sso-dex-grpc-addr=dex.dmz:25557
+            - --bypass-license=true
+            - --cors-hosts=*
+            - --redis=redis.infra:6379
+            - --hook_security_key=hook-security-key
+            - --verbose
+          ports:
+            - containerPort: 25052
       imagePullSecrets:
-      - name: registry.gitlab.com
+        - name: registry.gitlab.com

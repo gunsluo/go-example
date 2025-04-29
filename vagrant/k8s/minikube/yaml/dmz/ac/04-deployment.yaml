@@ -14,24 +14,24 @@ spec:
         app: acgrpc
     spec:
       containers:
-      - name: acgrpc
-        image: registry.gitlab.com/target-digital-transformation/devops/tespkg/access-control:4.1.0
-        command: 
-         - /usr/local/bin/ac-serve 
-         - serve 
-         - -c
-         - /usr/local/config/config.yaml
-         - grpc
-         - --verbose
-        ports:
-        - containerPort: 27001
-        volumeMounts:
-        - name: ac-config
-          mountPath: /usr/local/config/config.yaml
-          subPath: config.yaml
+        - name: acgrpc
+          image: registry.gitlab.com/target-digital-transformation/devops/tespkg/access-control:4.1.2
+          command:
+            - /usr/local/bin/ac-serve
+            - serve
+            - -c
+            - /usr/local/config/config.yaml
+            - grpc
+            - --verbose
+          ports:
+            - containerPort: 27001
+          volumeMounts:
+            - name: ac-config
+              mountPath: /usr/local/config/config.yaml
+              subPath: config.yaml
       volumes:
         - name: ac-config
           configMap:
             name: ac-config
       imagePullSecrets:
-      - name: registry.gitlab.com
+        - name: registry.gitlab.com

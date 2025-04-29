@@ -14,32 +14,33 @@ spec:
         app: configurator
     spec:
       containers:
-      - name: configurator
-        image: registry.gitlab.com/target-digital-transformation/subscription-store:v4.32.9
-        command: 
-         - /usr/local/bin/subscription-store 
-         - serve
-         - --address=:29302
-         - --grpc-address=:29301
-         - --ac-grpc=acgrpc.dmz:27001
-         - --profile-grpc=pfgrpc.dmz:25051
-         - --dsn=postgres://postgres:password@postgres.infra/dmzconfigurator?sslmode=disable
-         - --oidc=http://dex.dmz:25556
-         - --cors-hosts=*
-         - --redis-addr=redis.infra:6379
-         - --license-grpc=license.dmz:26000
-         - --rabbitmq-dsn=amqp://guest:guest@rabbitmq.infra:5672/
-        ports:
-        - containerPort: 29301
-        - containerPort: 29302
-        env:
-        - name: MEERA_APP_PRODUCT_WORKSPACE_URL
-          value: "http://127.0.0.1:29302"
-        - name: TARGET_CONFIGURATOR_SUPER_ADMIN
-          value: "CiQwOGE4Njg0Yi1kYjg4LTRiNzMtOTBhOS0zY2QxNjYxZjU0NjYSBWxvY2Fs"
-        - name: CLIENT_ID
-          value: "configurator"
-        - name: CLIENT_SECRET
-          value: "CEmDmDPI10s3gaKKID4tFhqgW8V3wjAa"
+        - name: configurator
+          image: registry.gitlab.com/target-digital-transformation/devops/tespkg/configurator-be-v1:4.33.7-oia-mixedmanual
+          command:
+            - /usr/local/bin/subscription-store
+            - serve
+            - --address=:29302
+            - --grpc-address=:29301
+            - --ac-grpc=acgrpc.dmz:27001
+            - --profile-grpc=pfgrpc.dmz:25051
+            - --dsn=postgres://postgres:password@postgres.infra/dmzconfigurator?sslmode=disable
+            - --oidc=http://dex.dmz:25556
+            - --cors-hosts=*
+            - --redis-addr=redis.infra:6379
+            - --license-grpc=license.dmz:26000
+            - --rabbitmq-dsn=amqp://guest:guest@rabbitmq.infra:5672/
+            - --notification-grpc=127.0.0.1:29111
+          ports:
+            - containerPort: 29301
+            - containerPort: 29302
+          env:
+            - name: MEERA_APP_PRODUCT_WORKSPACE_URL
+              value: "http://127.0.0.1:29302"
+            - name: TARGET_CONFIGURATOR_SUPER_ADMIN
+              value: "CiQwOGE4Njg0Yi1kYjg4LTRiNzMtOTBhOS0zY2QxNjYxZjU0NjYSBWxvY2Fs"
+            - name: CLIENT_ID
+              value: "configurator"
+            - name: CLIENT_SECRET
+              value: "CEmDmDPI10s3gaKKID4tFhqgW8V3wjAa"
       imagePullSecrets:
-      - name: registry.gitlab.com
+        - name: registry.gitlab.com

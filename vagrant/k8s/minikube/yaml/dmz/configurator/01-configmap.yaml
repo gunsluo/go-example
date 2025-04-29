@@ -65,7 +65,7 @@ data:
         server_name: ""
       license: "license.dmz:26000"
       notification: "localhost:6565"
-      redis: "redis.infra:6379"
+      redis: "redis://redis.infra:6379"
       rabbitmq: "amqp://rabbitmq.infra:5672"
       org_chart: "localhost:9503"
       sender_mail: "info@fluxble.com"
@@ -88,3 +88,23 @@ data:
       uploaderEmail: "uploader@target-energysolutions.com"
       uploaderPassword: "WhKWPgJNp3Domb1NaufaOfReW"
       jwtToken: "Tes9tinas2kmskajirn"
+    bootOptions:
+      hiddenGlobalRoles: "target-subscription-store:org-global-admin,target-license-manager:admin,target-license-manager:super-admin"
+    ormOptions:
+      maxIdleConns: 50
+      maxOpenConns: 1000
+      connMaxLifetime: 1
+      dsn: "postgres://postgres:password@postgres.infra:5432/dmzconfigurator?sslmode=disable"
+    cache:
+      interval: 1
+      concurrency: 3000
+      expired: 60
+      redis_first: true
+    hooks:
+      jwtKey: "5F9-C=AF,FJN+RVV(S2D(SFF"
+      expired: 360
+      joinOrganization: oia
+    payment:
+      ombGatewayURL: https://api.dev.meeraspace.com/epay/omb/reachlm
+      ombWebhookPath: v2/payment
+      ombCallbackServiceURL: http://localhost:9001
