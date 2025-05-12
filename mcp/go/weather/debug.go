@@ -16,16 +16,16 @@ func main() {
 	}
 
 	// 解析命令行参数
-	command := os.Args[1]      // 目标程序命令
-	errorLogFile := os.Args[2] // 错误日志文件路径
+	command := os.Args[1]     // 目标程序命令
+	logFilePath := os.Args[2] // 错误日志文件路径
 
 	// 打开错误日志文件
-	errorFile, err := os.OpenFile(errorLogFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		fmt.Printf("Failed to open error log file: %v\n", err)
 		return
 	}
-	defer errorFile.Close()
+	defer logFile.Close()
 
 	// 创建目标程序的执行命令
 	cmd := exec.Command(command)
@@ -41,11 +41,11 @@ func main() {
 		fmt.Printf("Failed to create stdout pipe: %v\n", err)
 		return
 	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		fmt.Printf("Failed to create stderr pipe: %v\n", err)
-		return
-	}
+	// stderr, err := cmd.StderrPipe()
+	// if err != nil {
+	// 	fmt.Printf("Failed to create stderr pipe: %v\n", err)
+	// 	return
+	// }
 
 	// 启动目标程序
 	if err := cmd.Start(); err != nil {
@@ -57,19 +57,21 @@ func main() {
 	go func() {
 		scanner := bufio.NewScanner(stdout)
 		for scanner.Scan() {
-			fmt.Println(scanner.Text()) // 打印到终端
+			text := scanner.Text()
+			fmt.Println(text)                      // 打印到终端
+			fmt.Fprintln(logFile, "output: "+text) // 写入日志文件
 		}
 	}()
 
-	// 使用 goroutine 收集标准错误并写入日志文件
-	go func() {
-		scanner := bufio.NewScanner(stderr)
-		for scanner.Scan() {
-			errorLine := scanner.Text()
-			fmt.Fprintln(errorFile, errorLine) // 写入错误日志文件
-			fmt.Println("Error:", errorLine)   // 同时打印到终端
-		}
-	}()
+	// // 使用 goroutine 收集标准错误并写入日志文件
+	// go func() {
+	// 	scanner := bufio.NewScanner(stderr)
+	// 	for scanner.Scan() {
+	// 		errorLine := scanner.Text()
+	// 		fmt.Fprintln(logFile, errorLine) // 写入错误日志文件
+	// 		fmt.Println("Error:", errorLine) // 同时打印到终端
+	// 	}
+	// }()
 
 	// 从标准输入读取用户输入并发送到目标程序
 	scanner := bufio.NewScanner(os.Stdin)
@@ -79,7 +81,8 @@ func main() {
 		if strings.TrimSpace(input) == "exit" {
 			break
 		}
-		fmt.Fprintln(stdin, input) // 发送到目标程序的标准输入
+		fmt.Fprintln(stdin, input)             // 发送到目标程序的标准输入
+		fmt.Fprintln(logFile, "input: "+input) // 写入日志文件
 	}
 
 	// 关闭标准输入以通知目标程序结束输入
